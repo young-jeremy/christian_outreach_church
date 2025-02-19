@@ -1,0 +1,189 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Opportunity Details -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <h1 class="h2 mb-1">{{ opportunity.title }}</h1>
+                            <p class="text-muted mb-0">
+                                <i class="bi bi-people-fill"></i> {{ opportunity.ministry.name }}
+                            </p>
+                        </div>
+                        <span class="badge bg-{{ opportunity.status|yesno:'success,warning,danger' }} fs-6">
+                            {{ opportunity.get_status_display }}
+                        </span>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Description</h5>
+                        <p>{{ opportunity.description|linebreaks }}</p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Requirements</h5>
+                        <p>{{ opportunity.requirements|linebreaks }}</p>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Details</h5>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="bi bi-calendar"></i>
+                                    <strong>Dates:</strong>
+                                    {{ opportunity.start_date|date:"M d, Y" }}
+                                    {% if opportunity.end_date %} - {{ opportunity.end_date|date:"M d, Y" }}{% endif %}
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-clock"></i>
+                                    <strong>Time Commitment:</strong>
+                                    {{ opportunity.time_commitment }}
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-geo-alt"></i>
+                                    <strong>Location:</strong>
+                                    {{ opportunity.location }}
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                    <strong>Frequency:</strong>
+                                    {{ opportunity.get_frequency_display }}
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Contact</h5>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="bi bi-person"></i>
+                                    <strong>Coordinator:</strong>
+                                    {{ opportunity.coordinator.get_full_name }}
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-envelope"></i>
+                                    <strong>Email:</strong>
+                                    {{ opportunity.coordinator.email }}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    {% if user.is_authenticated %}
+                    {% if not has_signed_up %}
+                    {% if not opportunity.is_full and opportunity.status == 'open' %}
+                    <a href="{% url 'volunteers:signup' opportunity.slug %}"
+                       class="btn btn-primary">
+                        Sign Up to Volunteer
+                    </a>
+                    {% elif opportunity.is_full %}
+                    <button class="btn btn-secondary" disabled>
+                        Opportunity Full
+                    </button>
+                    {% endif %}
+                    {% else %}
+                    {% if signup.status == 'pending' %}
+                    <div class="alert alert-info">
+                        Your application is pending review.
+                        <a href="{% url 'volunteers:cancel_signup' opportunity.slug %}"
+                           class="btn btn-outline-danger btn-sm ms-2">
+                            Cancel Signup
+                        </a>
+                    </div>
+                    {% elif signup.status == 'approved' %}
+                    <div class="alert alert-success">
+                        You're approved to volunteer!
+                        <a href="{% url 'volunteers:cancel_signup' opportunity.slug %}"
+                           class="btn btn-outline-danger btn-sm ms-2">
+                            Cancel Signup
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                    {% if is_coordinator %}
+                    <div class="mt-3">
+                        <a href="{% url 'volunteers:edit_opportunity' opportunity.slug %}"
+                           class="btn btn-outline-primary me-2">
+                            Edit Opportunity
+                        </a>
+                        <a href="{% url 'volunteers:delete_opportunity' opportunity.slug %}"
+                           class="btn btn-outline-danger">
+                            Delete Opportunity
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary">
+                        Login to Volunteer
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Volunteer Stats -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Volunteer Stats</h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Current Volunteers</h6>
+                            <p class="text-muted mb-0">
+                                {{ opportunity.volunteers.count }}
+                                {% if opportunity.max_volunteers %}
+                                of {{ opportunity.max_volunteers }}
+                                {% endif %}
+                            </p>
+                        </div>
+                        {% if opportunity.max_volunteers %}
+                        <div class="progress" style="width: 100px;">
+                            <div class="progress-bar" role="progressbar"
+                                 style="width: {{ opportunity.volunteers.count|div:opportunity.max_volunteers|mul:100 }}%">
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if is_coordinator %}
+            <!-- Volunteer List -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Volunteer List</h5>
+                    <div class="list-group list-group-flush">
+                        {% for signup in opportunity.volunteersignup_set.all %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">{{ signup.volunteer.get_full_name }}</h6>
+                                    <small class="text-muted">
+                                        Signed up {{ signup.signup_date|date:"M d, Y" }}
+                                    </small>
+                                </div>
+                                <span class="badge bg-{{ signup.status|yesno:'success,warning,danger' }}">
+                                    {{ signup.get_status_display }}
+                                </span>
+                            </div>
+                            {% if signup.notes %}
+                            <p class="small mb-0 mt-2">{{ signup.notes }}</p>
+                            {% endif %}
+                        </div>
+                        {% empty %}
+                        <p class="text-muted mb-0">No volunteers yet</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

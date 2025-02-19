@@ -1,0 +1,206 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load video_filters %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2">Watch History</h1>
+                    <p class="text-muted">Track your watched videos</p>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <form class="d-flex gap-2">
+                        <input type="search" name="search" class="form-control"
+                               placeholder="Search watched videos..." value="{{ search_query }}">
+
+                        <select name="filter" class="form-select" style="width: auto;">
+                            <option value="">All Videos</option>
+                            <option value="completed"
+                                    {% if filter_type == 'completed' %}selected{% endif %}>
+                            Completed
+                            </option>
+                            <option value="in_progress" {% if filter_type == 'in_progress' %}selected{% endif %}>
+                            In Progress
+                            </option>
+                        </select>
+
+                        <select name="sort" class="form-select" style="width: auto;">
+                            <option value="-watched_at" {% if sort == '-watched_at' %}selected{% endif %}>
+                            Recently Watched
+                            </option>
+                            <option value="watched_at" {% if sort == 'watched_at' %}selected{% endif %}>
+                            Oldest First
+                            </option>
+                            <option value="video__title" {% if sort == 'video__title' %}selected{% endif %}>
+                            Title A-Z
+                            </option>
+                        </select>
+
+                        <button type="submit" class="btn btn-primary">Apply</button>
+                        {% if search_query or filter_type or sort != '-watched_at' %}
+                        <a href="{% url 'videos:category_list' %}" class="btn btn-outline-secondary">Clear</a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+
+            <!-- Videos Grid -->
+            <div class="row g-4">
+                {% for watched in watched_videos %}
+                <div class="col-md-4 col-lg-3">
+                    <div class="card h-100">
+                        <div class="position-relative">
+                            <img src="{{ watched.video.thumbnail.url }}"
+                                 class="card-img-top"
+                                 alt="{{ watched.video.title }}">
+
+                            {% if watched.completed %}
+                            <span class="badge bg-success position-absolute top-0 end-0 m-2">
+                                Completed
+                            </span>
+                            {% else %}
+                            <div class="progress position-absolute bottom-0 start-0 end-0" style="height: 4px;">
+                                {% with progress=watched.watch_duration.total_seconds|divide:watched.video.duration.total_seconds|multiply:100 %}
+                                <div class="progress-bar" role="progressbar"
+                                     style="width: {% if progress %}{{ progress }}{% else %}0{% endif %}%"></div>
+                                {% endwith %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="card-body">
+                            <h5 class="card-title">{{ watched.video.title }}</h5>
+                            <p class="card-text text-muted">
+                                Watched {{ watched.watched_at|timesince }} ago
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">Duration: {{ watched.video.duration }}</small>
+                                <a href="{% url 'videos:short_video_details' watched.video.id %}"
+                                   class="btn btn-outline-primary btn-sm">
+                                    Watch Again
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <div class="empty-state">
+                        <i class="bi bi-clock-history display-1 text-muted"></i>
+                        <h3 class="mt-3">No Watch History</h3>
+                        {% if search_query %}
+                        <p>No videos match your search criteria</p>
+                        <a href="{% url 'videos:watched_videos' %}" class="btn btn-outline-primary">
+                            Clear Search
+                        </a>
+                        {% else %}
+                        <p>Start watching videos to build your history!</p>
+                        <a href="{% url 'videos:category_list' %}" class="btn btn-primary">
+                            Browse Videos
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if watched_videos.has_other_pages %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if watched_videos.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?page={{ watched_videos.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+                            Previous
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in watched_videos.paginator.page_range %}
+                    <li class="page-item {% if watched_videos.number == num %}active{% endif %}">
+                        <a class="page-link"
+                           href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endfor %}
+
+                    {% if watched_videos.has_next %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?page={{ watched_videos.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+                            Next
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const video = document.querySelector('video');
+        if (video) {
+            let lastUpdateTime = 0;
+
+            video.addEventListener('timeupdate', function() {
+                const now = Date.now();
+                if (now - lastUpdateTime > 5000) {  // Update every 5 seconds
+                    updateWatchProgress();
+                    lastUpdateTime = now;
+                }
+            });
+
+            video.addEventListener('ended', function() {
+                updateWatchProgress(true);
+            });
+        }
+    });
+
+    function updateWatchProgress(completed = false) {
+        const video = document.querySelector('video');
+        if (!video) return;
+
+        fetch(`{% url 'videos:mark_video_watched' video.dataset.videoId %}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                duration: video.currentTime,
+                completed: completed
+            })
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

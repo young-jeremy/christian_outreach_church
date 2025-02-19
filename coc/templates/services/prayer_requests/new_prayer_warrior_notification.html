@@ -1,0 +1,29 @@
+{% extends 'email/base_email.html' %}
+
+{% block content %}
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <h2 style="color: #333;">Someone is Praying for You</h2>
+
+    <p>Dear {{ prayer.requester.get_full_name|default:prayer.requester.username }},</p>
+
+    <p>
+        {{ warrior.get_full_name|default:warrior.username }} has committed to pray for your request:
+        <strong>{{ prayer.title }}</strong>
+    </p>
+
+    <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <p style="color: #4a5568;">{{ prayer.request|truncatewords:50 }}</p>
+    </div>
+
+    <p>
+        Your prayer request now has {{ prayer.prayer_count }}
+        {% if prayer.prayer_count == 1 %}person{% else %}people{% endif %}
+        praying.
+    </p>
+
+    <a href="{{ site_url }}{% url 'community:prayer_request_detail' prayer.id %}"
+       style="background: #3182ce; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
+        View Prayer Request
+    </a>
+</div>
+{% endblock %}

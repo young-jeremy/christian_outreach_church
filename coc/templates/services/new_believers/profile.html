@@ -1,0 +1,126 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 mb-2">{{ believer.user.get_full_name }}</h1>
+                            <p class="mb-0">
+                                <i class="bi bi-calendar-event"></i> 
+                                Salvation Date: {{ believer.salvation_date|date:"F j, Y" }}
+                            </p>
+                        </div>
+                        {% if believer.baptism_status %}
+                        <span class="badge bg-light text-primary">
+                            <i class="bi bi-water"></i> Baptized on {{ believer.baptism_date|date:"F j, Y" }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Spiritual Journey -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">My Testimony</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ believer.salvation_story|linebreaks }}</p>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i>
+                            Salvation through: {{ believer.get_salvation_type_display }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Overview -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Discipleship Progress</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <div class="display-4 text-primary">{{ completed_tracks }}</div>
+                                <small class="text-muted">Tracks Completed</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <div class="display-4 text-success">{{ mentorship_sessions.count }}</div>
+                                <small class="text-muted">Upcoming Sessions</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <div class="display-4 text-info">{{ recent_prayers.count }}</div>
+                                <small class="text-muted">Active Prayers</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'services:discipleship_tracks' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-book text-primary"></i> View Discipleship Tracks
+                    </a>
+                    <a href="{% url 'services:schedule_session' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-people text-success"></i> Schedule Mentoring Session
+                    </a>
+                    <a href="{% url 'services:prayer_journal' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-journal-text text-info"></i> Open Prayer Journal
+                    </a>
+                    <a href="{% url 'services:bible_reading_plans' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-book-half text-warning"></i> Bible Reading Plans
+                    </a>
+                </div>
+            </div>
+
+            <!-- Upcoming Sessions -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Upcoming Sessions</h5>
+                    <a href="{% url 'services:mentorship_sessions' %}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for session in mentorship_sessions %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Session with {{ session.mentor.get_full_name }}</h6>
+                            <small>{{ session.scheduled_time|timeuntil }}</small>
+                        </div>
+                        <p class="mb-1">{{ session.get_session_type_display }}</p>
+                    </div>
+                    {% empty %}
+                    <div class="list-group-item text-center py-3">
+                        <p class="mb-0 text-muted">No upcoming sessions</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

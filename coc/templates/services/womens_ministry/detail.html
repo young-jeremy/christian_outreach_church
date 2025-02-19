@@ -1,0 +1,210 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Back button and title -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="{% url 'services:womens_ministry_list' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Back to Ministries
+        </a>
+        {% if user.is_authenticated and ministry.leader == user %}
+        <a href="{% url 'services:ministry_event_create' ministry_slug=ministry.slug %}"
+           class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create Event
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                {% if ministry.image %}
+                <img src="{{ ministry.image.url }}"
+                     class="card-img-top"
+                     alt="{{ ministry.title }}"
+                     style="height: 300px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <h1 class="card-title mb-3">{{ ministry.title }}</h1>
+                    <div class="mb-4">
+                        <span class="badge bg-primary me-2">{{ ministry.get_ministry_type_display }}</span>
+                        <span class="text-muted">
+                            <i class="bi bi-people-fill me-1"></i>
+                            {{ ministry.members.count }} members
+                        </span>
+                    </div>
+
+                    <!-- Ministry Description -->
+                    <div class="mb-4">
+                        <h5>About This Ministry</h5>
+                        <p class="card-text">{{ ministry.description|linebreaks }}</p>
+                    </div>
+
+                    <!-- Meeting Information -->
+                    <div class="mb-4">
+                        <h5>Meeting Details</h5>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <div class="d-flex mb-2">
+                                    <i class="bi bi-clock me-2"></i>
+                                    <div>
+                                        <strong>Meeting Time:</strong><br>
+                                        {{ ministry.meeting_time|date:"l" }}s at {{ ministry.meeting_time|date:"g:i A" }}
+                                    </div>
+                                </div>
+                                <div class="d-flex">
+                                    <i class="bi bi-geo-alt me-2"></i>
+                                    <div>
+                                        <strong>Location:</strong><br>
+                                        {{ ministry.location }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upcoming Events -->
+                    <div class="mb-4">
+                        <h5>Upcoming Events</h5>
+                        {% for event in events %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-title mb-1">{{ event.title }}</h6>
+                                        <p class="card-text">{{ event.description }}</p>
+                                    </div>
+                                    {% if event.image %}
+                                    <img src="{{ event.image.url }}"
+                                         alt=""
+                                         class="rounded"
+                                         style="width: 100px; height: 100px; object-fit: cover;">
+                                    {% endif %}
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <div class="text-muted">
+                                        <i class="bi bi-calendar me-1"></i>
+                                        {{ event.date|date:"F j, Y g:i A" }}
+                                    </div>
+                                    <div class="text-muted">
+                                        <i class="bi bi-geo-alt me-1"></i>
+                                        {{ event.location }}
+                                    </div>
+                                </div>
+                                {% if user.is_authenticated %}
+                                <div class="mt-3">
+                                    <button class="btn btn-outline-primary btn-sm attend-event"
+                                            data-event-id="{{ event.id }}">
+                                        {% if user in event.attendees.all %}
+                                        <i class="bi bi-check-circle-fill"></i> Attending
+                                        {% else %}
+                                        <i class="bi bi-plus-circle"></i> Attend
+                                        {% endif %}
+                                    </button>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No upcoming events scheduled.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Leader Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Ministry Leader</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        {% if ministry.leader.profile.avatar %}
+                        <img src="{{ ministry.leader.profile.avatar.url }}"
+                             alt=""
+                             class="rounded-circle me-3"
+                             style="width: 64px; height: 64px; object-fit: cover;">
+                        {% endif %}
+                        <div>
+                            <h6 class="mb-1">{{ ministry.leader.profile.display_name }}</h6>
+                            <p class="text-muted mb-0">
+                                <small>Leading since {{ ministry.created_at|date:"F Y" }}</small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Join Ministry Button -->
+            {% if user.is_authenticated and user != ministry.leader %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <button class="btn btn-primary w-100 join-ministry"
+                            data-ministry-id="{{ ministry.id }}">
+                        {% if user in ministry.members.all %}
+                        <i class="bi bi-person-check-fill"></i> Member
+                        {% else %}
+                        <i class="bi bi-person-plus"></i> Join Ministry
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Members List -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Members</h5>
+                </div>
+                <div class="card-body">
+                    {% for member in ministry.members.all %}
+                    <div class="d-flex align-items-center mb-2">
+                        {% if member.profile.avatar %}
+                        <img src="{{ member.profile.avatar.url }}"
+                             alt=""
+                             class="rounded-circle me-2"
+                             style="width: 32px; height: 32px; object-fit: cover;">
+                        {% endif %}
+                        <span>{{ member.profile.display_name }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted mb-0">No members yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+// Handle joining/leaving ministry
+$('.join-ministry').click(function() {
+    const ministryId = $(this).data('ministry-id');
+    $.post(`/services/womens-ministry/${ministryId}/toggle-membership/`, {
+        csrfmiddlewaretoken: '{{ csrf_token }}'
+    })
+    .done(function(response) {
+        location.reload();
+    });
+});
+
+// Handle event attendance
+$('.attend-event').click(function() {
+    const eventId = $(this).data('event-id');
+    $.post(`/services/ministry-event/${eventId}/toggle-attendance/`, {
+        csrfmiddlewaretoken: '{{ csrf_token }}'
+    })
+    .done(function(response) {
+        location.reload();
+    });
+});
+</script>
+{% endblock %}
+
+{% endblock %}

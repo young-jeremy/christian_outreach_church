@@ -1,0 +1,79 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Schedule Counseling Session</h4>
+                    <a href="{% url 'services:schedule_counseling' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> Back to Counseling
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5>Session Details</h5>
+                                <hr>
+                            </div>
+                            {{ form.counselor|as_crispy_field }}
+                            {{ form.session_type|as_crispy_field }}
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5>Additional Information</h5>
+                                <hr>
+                            </div>
+                            {{ form.notes|as_crispy_field }}
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-calendar-check"></i> Schedule Session
+                            </button>
+                            <a href="{% url 'services:schedule_counseling' %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ form.media }}
+<script>
+    // Initialize date picker for preferred_date
+    $(document).ready(function() {
+        $("#id_preferred_date").flatpickr({
+            minDate: "today",
+            dateFormat: "Y-m-d",
+            disable: [
+                function(date) {
+                    // Disable weekends
+                    return (date.getDay() === 0 || date.getDay() === 6);
+                }
+            ]
+        });
+
+        // Initialize time picker for preferred_time
+        $("#id_preferred_time").flatpickr({
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            minTime: "09:00",
+            maxTime: "17:00"
+        });
+    });
+</script>
+{% endblock %} 

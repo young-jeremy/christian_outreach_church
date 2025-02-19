@@ -1,0 +1,187 @@
+{% extends 'ministries/base_ministry.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+{% endblock %}
+
+{% block ministry_content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Create Children's Program</h5>
+                <a href="{% url 'services:children_ministry_list' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Programs
+                </a>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="programForm">
+                    {% csrf_token %}
+
+                    <div class="row g-3">
+                        <!-- Basic Information -->
+                        <div class="col-md-12">
+                            {{ form.title|as_crispy_field }}
+                        </div>
+
+                        <div class="col-md-6">
+                            {{ form.program_type|as_crispy_field }}
+                        </div>
+
+                        <div class="col-md-6">
+                            {{ form.age_group|as_crispy_field }}
+                        </div>
+
+                        <!-- Date and Time -->
+                        <div class="col-md-6">
+                            {{ form.date|as_crispy_field }}
+                        </div>
+
+                        <div class="col-md-6">
+                            {{ form.time|as_crispy_field }}
+                        </div>
+
+                        <!-- Location and Capacity -->
+                        <div class="col-md-8">
+                            {{ form.location|as_crispy_field }}
+                        </div>
+
+                        <div class="col-md-4">
+                            {{ form.max_children|as_crispy_field }}
+                        </div>
+
+                        <!-- Program Details -->
+                        <div class="col-12">
+                            {{ form.description|as_crispy_field }}
+                        </div>
+
+                        <div class="col-12">
+                            {{ form.curriculum|as_crispy_field }}
+                        </div>
+
+                        <!-- Teachers -->
+                        <div class="col-12">
+                            {{ form.teachers|as_crispy_field }}
+                        </div>
+
+                        <!-- Materials and Instructions -->
+                        <div class="col-12">
+                            {{ form.materials_needed|as_crispy_field }}
+                        </div>
+
+                        <div class="col-12">
+                            {{ form.parent_instructions|as_crispy_field }}
+                        </div>
+
+                        <!-- Special Needs Support -->
+                        <div class="col-12">
+                            {{ form.special_needs_support|as_crispy_field }}
+                        </div>
+
+                        <!-- Image Upload -->
+                        <div class="col-12">
+                            {{ form.image|as_crispy_field }}
+                        </div>
+
+                        <!-- Program Settings -->
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Program Settings</h6>
+
+                                    <div class="form-check mb-2">
+                                        {{ form.is_recurring|as_crispy_field }}
+                                    </div>
+
+                                    <div id="recurringFields" style="display: none;">
+                                        {{ form.recurring_pattern|as_crispy_field }}
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            {{ form.registration_deadline|as_crispy_field }}
+                                        </div>
+                                    </div>
+
+                                    <div class="form-check">
+                                        {{ form.is_featured|as_crispy_field }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="col-12">
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                                <button type="button" class="btn btn-outline-secondary me-md-2"
+                                        onclick="history.back()">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    Create Program
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize date and time pickers
+        flatpickr("#id_date", {
+            dateFormat: "Y-m-d",
+            minDate: "today",
+        });
+
+        flatpickr("#id_time", {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: false,
+        });
+
+        // Initialize select2 for teachers field
+        $('#id_teachers').select2({
+            placeholder: 'Select teachers',
+            width: '100%'
+        });
+
+        // Toggle recurring fields
+        const recurringCheckbox = document.getElementById('id_is_recurring');
+        const recurringFields = document.getElementById('recurringFields');
+
+        function toggleRecurringFields() {
+            recurringFields.style.display = recurringCheckbox.checked ? 'block' : 'none';
+        }
+
+        recurringCheckbox.addEventListener('change', toggleRecurringFields);
+        toggleRecurringFields();
+
+        // Form validation
+        const form = document.getElementById('programForm');
+        form.addEventListener('submit', function(e) {
+            const date = document.getElementById('id_date').value;
+            const time = document.getElementById('id_time').value;
+
+            if (!date || !time) {
+                e.preventDefault();
+                alert('Please select both date and time for the program.');
+                return false;
+            }
+        });
+    });
+</script>
+{% endblock %}

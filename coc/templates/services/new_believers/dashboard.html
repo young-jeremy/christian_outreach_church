@@ -1,0 +1,203 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 mb-2">Welcome, {{ believer.user.get_full_name }}</h1>
+                            <p class="mb-0">Your journey in faith began {{ believer.salvation_date|timesince }} ago</p>
+                        </div>
+                        {% if not believer.baptism_status %}
+                        <a class="btn btn-light" data-bs-toggle="modal" href="#baptismModal">
+                            <i class="bi bi-water"></i> Update Baptism Status
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-book display-4 text-primary"></i>
+                    <h5 class="mt-3">Discipleship Progress</h5>
+                    <h2 class="mb-0">{{ track_progress }}/{{ total_modules }}</h2>
+                    <small class="text-muted">Modules Completed</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-journal-text display-4 text-success"></i>
+                    <h5 class="mt-3">Bible Reading</h5>
+                    <h2 class="mb-0">{{ reading_progress }}</h2>
+                    <small class="text-muted">Days Completed</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-people display-4 text-info"></i>
+                    <h5 class="mt-3">Mentorship</h5>
+                    <h2 class="mb-0">{{ upcoming_sessions.count }}</h2>
+                    <small class="text-muted">Upcoming Sessions</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-pray display-4 text-warning"></i>
+                    <h5 class="mt-3">Prayer Journal</h5>
+                    <h2 class="mb-0">{{ recent_prayers.count }}</h2>
+                    <small class="text-muted">Active Prayers</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a class="btn btn-outline-primary w-100" href="{% url 'services:discipleship_tracks' %}">
+                                <i class="bi bi-book"></i> Start New Module
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a class="btn btn-outline-info w-100" href="{% url 'services:schedule_session' %}">
+                                <i class="bi bi-calendar-plus"></i> Schedule Mentoring
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a class="btn btn-outline-success w-100" href="{% url 'services:add_prayer_entry' %}">
+                                <i class="bi bi-journal-plus"></i> Add Prayer
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a class="btn btn-outline-warning w-100" href="{% url 'services:bible_reading_plans' %}">
+                                <i class="bi bi-book"></i> Start Reading Plan
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Upcoming Mentorship Sessions</h5>
+                    <a class="btn btn-sm btn-outline-primary" href="{% url 'services:mentorship_sessions' %}">
+                        View All
+                    </a>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for session in upcoming_sessions %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Session with {{ session.mentor.get_full_name }}</h6>
+                            <small>{{ session.scheduled_time|date:"M d, h:i A" }}</small>
+                        </div>
+                        <p class="mb-1">{{ session.get_session_type_display }}</p>
+                        {% if session.meeting_link %}
+                        <a class="btn btn-sm btn-outline-primary" href="{{ session.meeting_link }}">
+                            Join Meeting
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="list-group-item text-center py-4">
+                        <i class="bi bi-calendar-x display-4 text-muted"></i>
+                        <p class="mt-3 mb-0">No upcoming sessions</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Prayers</h5>
+                    <a class="btn btn-sm btn-outline-primary" href="{% url 'services:prayer_journal' %}">
+                        View All
+                    </a>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for prayer in recent_prayers %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ prayer.title }}</h6>
+                            <small class="text-{% if prayer.answered %}success{% else %}warning{% endif %}">
+                                {% if prayer.answered %}Answered{% else %}Active{% endif %}
+                            </small>
+                        </div>
+                        <p class="mb-1">{{ prayer.content|truncatewords:20 }}</p>
+                        <small class="text-muted">Added {{ prayer.created_at|timesince }} ago</small>
+                    </div>
+                    {% empty %}
+                    <div class="list-group-item text-center py-4">
+                        <i class="bi bi-journal-x display-4 text-muted"></i>
+                        <p class="mt-3 mb-0">No prayer entries yet</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Baptism Modal -->
+<div class="modal fade" id="baptismModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Baptism Status</h5>
+                <button class="btn-close" data-bs-dismiss="modal" type="button"></button>
+            </div>
+            <form action="{% url 'services:update_baptism' %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Baptism Date</label>
+                        <input class="form-control" name="baptism_date" required type="date">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+                    <button class="btn btn-primary" type="submit">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .display-4 {
+        font-size: 2.5rem;
+    }
+</style>
+{% endblock %} 

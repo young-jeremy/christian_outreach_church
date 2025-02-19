@@ -1,0 +1,111 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Profile Sidebar -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if member.profile_image %}
+                    <img alt="{{ member.user.get_full_name }}"
+                         class="rounded-circle img-thumbnail mb-3"
+                         src="{{ member.profile_image.url }}"
+                         style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                    <img alt="Default Profile"
+                         class="rounded-circle img-thumbnail mb-3"
+                         src="{% static 'images/default-profile.png' %}"
+                         style="width: 150px; height: 150px; object-fit: cover;">
+                    {% endif %}
+                    <h4>{{ member.user.get_full_name }}</h4>
+                    <p class="text-muted">Member since {{ member.membership_date|date:"F Y" }}</p>
+
+                    {% if is_owner %}
+                    <a class="btn btn-primary" href="{% url 'members:edit_profile' %}">
+                        <i class="bi bi-pencil-square"></i> Edit Profile
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Contact Information</h5>
+                </div>
+                <div class="card-body">
+                    {% if member.phone_number %}
+                    <p><i class="bi bi-telephone"></i> {{ member.phone_number }}</p>
+                    {% endif %}
+                    {% if member.user.email %}
+                    <p><i class="bi bi-envelope"></i> {{ member.user.email }}</p>
+                    {% endif %}
+                    {% if member.address %}
+                    <p><i class="bi bi-geo-alt"></i> {{ member.address }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Content -->
+        <div class="col-md-8">
+            <!-- About -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">About</h5>
+                </div>
+                <div class="card-body">
+                    {% if member.bio %}
+                    <p>{{ member.bio }}</p>
+                    {% else %}
+                    <p class="text-muted">No bio available</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Ministries -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Ministries</h5>
+                </div>
+                <div class="card-body">
+                    {% if member.ministries.all %}
+                    <div class="row">
+                        {% for ministry in member.ministries.all %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-people-fill me-2"></i>
+                                <span>{{ ministry.name }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No ministries listed</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Skills -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Skills</h5>
+                </div>
+                <div class="card-body">
+                    {% if member.skills.all %}
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for skill in member.skills.all %}
+                        <span class="badge bg-primary">{{ skill.name }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No skills listed</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

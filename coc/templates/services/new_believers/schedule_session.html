@@ -1,0 +1,159 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Schedule Mentorship Session</h5>
+                    <a class="btn btn-outline-secondary btn-sm" href="{% url 'services:mentorship_sessions' %}">
+                        <i class="bi bi-arrow-left"></i> Back to Sessions
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form class="needs-validation" method="post" novalidate>
+                        {% csrf_token %}
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.mentor|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.session_type|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.scheduled_time|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6" id="meeting_link_container">
+                                {{ form.meeting_link|as_crispy_field }}
+                                <small class="text-muted">Required for virtual meetings</small>
+                            </div>
+                        </div>
+
+                        {{ form.notes|as_crispy_field }}
+
+                        <div class="border-top pt-3">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-calendar-check"></i> Schedule Session
+                            </button>
+                            <a class="btn btn-outline-secondary" href="{% url 'services:mentorship_sessions' %}">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guidelines Card -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Session Guidelines</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6 class="text-primary">
+                            <i class="bi bi-people-fill"></i> Meeting Types
+                        </h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <strong>In-Person:</strong> Face-to-face meetings at church
+                            </li>
+                            <li class="mb-2">
+                                <strong>Virtual:</strong> Online video meetings
+                            </li>
+                            <li>
+                                <strong>Phone Call:</strong> Voice conversations
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="text-success">
+                            <i class="bi bi-clock-fill"></i> Best Practices
+                        </h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">Schedule at least 24 hours ahead</li>
+                            <li class="mb-2">Check mentor's availability</li>
+                            <li>Plan for 30-60 minute sessions</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h6 class="text-info">
+                            <i class="bi bi-journal-text"></i> Preparation
+                        </h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">Review your discipleship progress</li>
+                            <li class="mb-2">Prepare specific questions</li>
+                            <li>Note any spiritual challenges</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Show/hide meeting link based on session type
+    function toggleMeetingLink() {
+        const sessionType = document.getElementById('id_session_type');
+        const meetingLinkContainer = document.getElementById('meeting_link_container');
+
+        if (sessionType.value === 'virtual') {
+            meetingLinkContainer.style.display = 'block';
+            document.getElementById('id_meeting_link').required = true;
+        } else {
+            meetingLinkContainer.style.display = 'none';
+            document.getElementById('id_meeting_link').required = false;
+        }
+    }
+
+    // Add event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        const sessionType = document.getElementById('id_session_type');
+        sessionType.addEventListener('change', toggleMeetingLink);
+        toggleMeetingLink(); // Initial state
+    });
+
+    // Form validation
+    (function() {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms).forEach(function(form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .list-unstyled li {
+        position: relative;
+        padding-left: 1.5rem;
+    }
+    .list-unstyled li:before {
+        content: "•";
+        position: absolute;
+        left: 0;
+        color: var(--bs-primary);
+    }
+</style>
+{% endblock %}

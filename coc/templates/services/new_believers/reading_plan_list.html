@@ -1,0 +1,97 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h1 class="h3 mb-2">Bible Reading Plans</h1>
+                    <p class="mb-0">Choose a plan to start your daily Bible reading journey</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for plan in plans %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ plan.title }}</h5>
+                    <p class="card-text">{{ plan.description|truncatewords:30 }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info">{{ plan.duration_days }} days</span>
+                        <a class="btn btn-primary" href="{% url 'services:reading_plan_detail' plan.slug %}">
+                            Start Plan
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-book display-1 text-muted"></i>
+                    <h3 class="mt-3">No Reading Plans Available</h3>
+                    <p class="text-muted">Please check back later for new reading plans.</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Reading Tips -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Bible Reading Tips</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center mb-3">
+                                <i class="bi bi-clock display-4 text-primary"></i>
+                                <h6 class="mt-2">Set a Regular Time</h6>
+                                <p class="small text-muted">Make it a daily habit</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center mb-3">
+                                <i class="bi bi-journal-text display-4 text-success"></i>
+                                <h6 class="mt-2">Take Notes</h6>
+                                <p class="small text-muted">Record insights and questions</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center mb-3">
+                                <i class="bi bi-pray display-4 text-info"></i>
+                                <h6 class="mt-2">Pray First</h6>
+                                <p class="small text-muted">Ask for understanding</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center mb-3">
+                                <i class="bi bi-people display-4 text-warning"></i>
+                                <h6 class="mt-2">Share Insights</h6>
+                                <p class="small text-muted">Discuss with others</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .display-4 {
+        font-size: 2.5rem;
+    }
+</style>
+{% endblock %} 

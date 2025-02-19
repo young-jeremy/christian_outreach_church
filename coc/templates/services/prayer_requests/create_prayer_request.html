@@ -1,0 +1,179 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2">Submit Prayer Request</h1>
+            <p class="text-muted">Share your prayer needs with the community</p>
+        </div>
+        <a href="{% url 'services:prayer_requests' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Back to Prayer Requests
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        <!-- Title -->
+                        <div class="mb-4">
+                            {{ form.title|as_crispy_field }}
+                            <small class="text-muted">
+                                A brief title for your prayer request
+                            </small>
+                        </div>
+
+                        <!-- Category -->
+                        <div class="mb-4">
+                            {{ form.category|as_crispy_field }}
+                            <small class="text-muted">
+                                Select the category that best fits your request
+                            </small>
+                        </div>
+
+                        <!-- Prayer Request -->
+                        <div class="mb-4">
+                            {{ form.request|as_crispy_field }}
+                            <small class="text-muted">
+                                Share your prayer need in detail. Be specific about what you're asking God for.
+                            </small>
+                        </div>
+
+                        <!-- Privacy Settings -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                <h6 class="card-title">Privacy Settings</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            {{ form.is_anonymous|as_crispy_field }}
+                                            <small class="text-muted d-block">
+                                                Your name won't be shown with the request
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            {{ form.is_private|as_crispy_field }}
+                                            <small class="text-muted d-block">
+                                                Only church staff can see this request
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prayer Guidelines -->
+                        <div class="alert alert-info mb-4">
+                            <h6 class="alert-heading">Prayer Request Guidelines:</h6>
+                            <ul class="mb-0 small">
+                                <li>Be specific but concise</li>
+                                <li>Respect others' privacy - only share what you have permission to share</li>
+                                <li>Avoid sharing sensitive personal information</li>
+                                <li>Focus on prayer needs rather than criticism or complaints</li>
+                                <li>Update your request when prayers are answered</li>
+                            </ul>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="button" class="btn btn-outline-secondary"
+                                    onclick="window.location.href='{% url 'services:prayer_requests' %}'">
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-pray"></i> Submit Prayer Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Side Panel with Prayer Tips -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Prayer Tips</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6><i class="bi bi-lightbulb text-warning"></i> Be Specific</h6>
+                        <p class="small text-muted">
+                            Clear, specific requests help others pray more effectively for your needs.
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <h6><i class="bi bi-heart text-danger"></i> Share with Love</h6>
+                        <p class="small text-muted">
+                            Frame your request with love and respect for all involved.
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <h6><i class="bi bi-shield-check text-success"></i> Privacy Matters</h6>
+                        <p class="small text-muted">
+                            Consider using the anonymous option for sensitive requests.
+                        </p>
+                    </div>
+                    <div>
+                        <h6><i class="bi bi-arrow-repeat text-primary"></i> Keep Updated</h6>
+                        <p class="small text-muted mb-0">
+                            Remember to share updates and testimonies when prayers are answered.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scripture Encouragement -->
+            <div class="card">
+                <div class="card-body">
+                    <blockquote class="blockquote mb-0">
+                        <p class="small">
+                            "Do not be anxious about anything, but in every situation,
+                            by prayer and petition, with thanksgiving, present your requests to God."
+                        </p>
+                        <footer class="blockquote-footer">Philippians 4:6</footer>
+                    </blockquote>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+
+        // Toggle private checkbox when anonymous is checked
+        const anonymousCheck = document.getElementById('id_is_anonymous');
+        const privateCheck = document.getElementById('id_is_private');
+
+        anonymousCheck.addEventListener('change', function() {
+            if (this.checked) {
+                privateCheck.checked = true;
+                privateCheck.disabled = true;
+            } else {
+                privateCheck.disabled = false;
+            }
+        });
+    });
+</script>
+{% endblock %}

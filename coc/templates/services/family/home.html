@@ -1,0 +1,221 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h2 mb-2">Family Life Ministry</h1>
+                            <p class="mb-0">Building strong families through faith and fellowship</p>
+                        </div>
+                        {% if user.is_authenticated %}
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-light" href="{% url 'services:family_counseling_request' %}">
+                                <i class="bi bi-calendar-plus"></i> Request Counseling
+                            </a>
+                            <a class="btn btn-outline-light" href="{% url 'services:family_discussion_create' %}">
+                                <i class="bi bi-chat-dots"></i> Start Discussion
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links Section -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar-event display-4 text-primary"></i>
+                    <h5 class="mt-3">Family Events</h5>
+                    <p>Join workshops, retreats, and activities</p>
+                    <a class="btn btn-outline-primary" href="{% url 'services:family_events' %}">
+                        View Events
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-book display-4 text-primary"></i>
+                    <h5 class="mt-3">Parenting Resources</h5>
+                    <p>Access age-specific guidance and materials</p>
+                    <a class="btn btn-outline-primary" href="{% url 'services:family_resources' %}">
+                        Browse Resources
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-chat-heart display-4 text-primary"></i>
+                    <h5 class="mt-3">Family Discussions</h5>
+                    <p>Share experiences and get support</p>
+                    <a class="btn btn-outline-primary" href="{% url 'services:family_discussions' %}">
+                        Join Discussions
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-people display-4 text-primary"></i>
+                    <h5 class="mt-3">Counseling Services</h5>
+                    <p>Professional guidance for families</p>
+                    <a class="btn btn-outline-primary" href="{% url 'services:family_counseling_request' %}">
+                        Schedule Session
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Events Section -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Upcoming Family Events</h5>
+                    <a class="btn btn-sm btn-outline-primary" href="{% url 'services:family_events' %}">
+                        View All Events
+                    </a>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for event in events|slice:":3" %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ event.title }}</h6>
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar"></i> {{ event.date|date:"F j, Y" }} at {{
+                                    event.time|time:"g:i A" }}
+                                    <br>
+                                    <i class="bi bi-geo-alt"></i> {{ event.location }}
+                                    <span class="badge bg-primary ms-2">{{ event.get_event_type_display }}</span>
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <small class="d-block text-muted mb-2">
+                                    {{ event.participants.count }}/{{ event.max_participants }} participants
+                                </small>
+                                {% if user.is_authenticated %}
+                                <form action="{% url 'services:family_event_join' event.slug %}" method="post">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-primary" type="submit">Join Event</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="list-group-item text-center py-4">
+                        <i class="bi bi-calendar-x display-4 text-muted"></i>
+                        <p class="mt-3 mb-0">No upcoming events scheduled</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Featured Resources -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Featured Resources</h5>
+                    <a class="btn btn-sm btn-outline-primary" href="{% url 'services:family_resources' %}">
+                        View All
+                    </a>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for resource in resources %}
+                    <div class="list-group-item">
+                        <h6 class="mb-1">{{ resource.title }}</h6>
+                        <div class="mb-2">
+                            <span class="badge bg-primary">{{ resource.get_resource_type_display }}</span>
+                            <span class="badge bg-secondary">{{ resource.get_age_group_display }}</span>
+                        </div>
+                        <p class="mb-2 small">{{ resource.description|truncatewords:20 }}</p>
+                        <div class="btn-group btn-group-sm">
+                            {% if resource.file %}
+                            <a class="btn btn-outline-primary" download href="{{ resource.file.url }}">
+                                <i class="bi bi-download"></i> Download
+                            </a>
+                            {% endif %}
+                            {% if resource.external_link %}
+                            <a class="btn btn-outline-primary" href="{{ resource.external_link }}" target="_blank">
+                                <i class="bi bi-box-arrow-up-right"></i> Visit
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Discussions Section -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Recent Family Discussions</h5>
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'services:family_discussions' %}">
+                View All Discussions
+            </a>
+        </div>
+        <div class="list-group list-group-flush">
+            {% for discussion in recent_discussions %}
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1">
+                            <a class="text-decoration-none"
+                               href="{% url 'services:family_discussion_detail' discussion.slug %}">
+                                {{ discussion.title }}
+                            </a>
+                        </h6>
+                        <p class="mb-1 small">{{ discussion.content|safe|truncatewords:30 }}</p>
+                        <small class="text-muted">
+                            By {{ discussion.author.get_full_name }} |
+                            {{ discussion.created_at|timesince }} ago |
+                            <i class="bi bi-chat-dots"></i> {{ discussion.comments.count }} comments |
+                            <i class="bi bi-heart"></i> {{ discussion.likes.count }} likes
+                        </small>
+                    </div>
+                    <a class="btn btn-sm btn-outline-primary ms-3"
+                       href="{% url 'services:family_discussion_detail' discussion.slug %}">
+                        Join Discussion
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="list-group-item text-center py-4">
+                <i class="bi bi-chat-square-dots display-4 text-muted"></i>
+                <p class="mt-3 mb-0">No discussions yet. Start one!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card .bi {
+        vertical-align: -0.125em;
+    }
+    .display-4 {
+        font-size: 2.5rem;
+    }
+</style>
+{% endblock %}

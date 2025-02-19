@@ -1,0 +1,181 @@
+ {% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2">Couples Counseling</h1>
+                    <p class="text-muted">Schedule and manage your counseling sessions</p>
+                </div>
+                <a href="{% url 'services:schedule_counseling' %}" class="btn btn-primary">
+                    <i class="bi bi-calendar-plus"></i> Schedule Session
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Upcoming Sessions -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Upcoming Sessions</h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_sessions %}
+                    <div class="list-group list-group-flush">
+                        {% for session in upcoming_sessions %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">Session with {{ session.counselor.get_full_name }}</h6>
+                                    <p class="mb-1 text-muted">
+                                        <i class="bi bi-calendar"></i> {{ session.date|date:"l, F j, Y" }}
+                                        <i class="bi bi-clock ms-3"></i> {{ session.time|time:"g:i A" }}
+                                        {% if session.is_virtual %}
+                                        <i class="bi bi-camera-video ms-3"></i> Virtual Session
+                                        {% else %}
+                                        <i class="bi bi-geo-alt ms-3"></i> {{ session.location }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="btn-group">
+                                    {% if session.is_virtual and session.zoom_link %}
+                                    <a href="{{ session.zoom_link }}" class="btn btn-outline-primary btn-sm">
+                                        Join Meeting
+                                    </a>
+                                    {% endif %}
+                                    <button type="button"
+                                            class="btn btn-outline-danger btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#cancelModal{{ session.pk }}">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cancel Modal -->
+                        <div class="modal fade" id="cancelModal{{ session.pk }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Cancel Session</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Are you sure you want to cancel this counseling session?</p>
+                                        <p class="text-muted">
+                                            Session with {{ session.counselor.get_full_name }} on
+                                            {{ session.date|date:"F j, Y" }} at {{ session.time|time:"g:i A" }}
+                                        </p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <form method="post" action="{% url 'services:cancel_counseling' session.pk %}">
+                                            {% csrf_token %}
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                Keep Session
+                                            </button>
+                                            <button type="submit" class="btn btn-danger">
+                                                Cancel Session
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">No upcoming sessions scheduled.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Past Sessions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Past Sessions</h5>
+                </div>
+                <div class="card-body">
+                    {% if past_sessions %}
+                    <div class="list-group list-group-flush">
+                        {% for session in past_sessions %}
+                        <div class="list-group-item">
+                            <h6 class="mb-1">Session with {{ session.counselor.get_full_name }}</h6>
+                            <p class="mb-1 text-muted">
+                                {{ session.date|date:"F j, Y" }} at {{ session.time|time:"g:i A" }}
+                            </p>
+                            {% if session.notes %}
+                            <p class="mb-0">{{ session.notes }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">No past sessions.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Counselors -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Our Counselors</h5>
+                </div>
+                <div class="card-body">
+                    {% if counselors %}
+                    <div class="list-group list-group-flush">
+                        {% for counselor in counselors %}
+                        <div class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                {% if counselor.profile.avatar %}
+                                <img src="{{ counselor.profile.avatar.url }}"
+                                     class="rounded-circle me-3"
+                                     width="48" height="48"
+                                     alt="{{ counselor.get_full_name }}">
+                                {% endif %}
+                                <div>
+                                    <h6 class="mb-0">{{ counselor.get_full_name }}</h6>
+                                    <p class="mb-0 text-muted">{{ counselor.specialization }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">No counselors available.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Resources -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Counseling Resources</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <i class="bi bi-file-text"></i> Preparing for Your Session
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <i class="bi bi-file-text"></i> Common Questions
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <i class="bi bi-file-text"></i> Counseling Guidelines
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

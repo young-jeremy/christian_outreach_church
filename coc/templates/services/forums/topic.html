@@ -1,0 +1,139 @@
+ {% extends 'base_dashboard.html' %}
+{% load static %}
+ {% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'services:forum_list' %}">Forums</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'services:forum_category' topic.category.slug %}">
+                            {{ topic.category.name }}
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">{{ topic.title }}</li>
+                </ol>
+            </nav>
+
+            <!-- Topic Header -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h1 class="h3 mb-0">{{ topic.title }}</h1>
+                        {% if user.is_staff or user == topic.creator %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                                    type="button" data-bs-toggle="dropdown">
+                                Actions
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'services:edit_topic' topic.slug %}">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                </li>
+                                {% if user.is_staff %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'services:pin_topic' topic.slug %}">
+                                        <i class="bi bi-pin-angle"></i>
+                                        {% if topic.is_pinned %}Unpin{% else %}Pin{% endif %}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'services:lock_topic' topic.slug %}">
+                                        <i class="bi bi-lock"></i>
+                                        {% if topic.is_locked %}Unlock{% else %}Lock{% endif %}
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Posts -->
+            {% for post in posts %}
+            <div class="card mb-3" id="post-{{ post.id }}">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <img src="{{ post.author.profile.avatar.url|default:'/static/images/default-avatar.png' }}"
+                                 alt="{{ post.author.username }}"
+                                 class="rounded-circle me-2"
+                                 style="width: 40px; height: 40px;">
+                            <div>
+                                <h6 class="mb-0">{{ post.author.username }}</h6>
+                                <small class="text-muted">
+                                    Posted {{ post.created_at|timesince }} ago
+                                </small>
+                            </div>
+                        </div>
+                        {% if user == post.author or user.is_staff %}
+                        <div class="dropdown">
+                            <button class="btn btn-link btn-sm dropdown-toggle"
+                                    type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'services:edit_post' post.id %}">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-danger"
+                                       href="{% url 'services:delete_post' post.id %}">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {{ post.content|safe }}
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Reply Form -->
+            {% if user.is_authenticated and not topic.is_locked %}
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Post Reply</h5>
+                    <form method="post" action="{% url 'services:reply_topic' topic.slug %}">
+                        {% csrf_token %}
+                        {{ reply_form|crispy }}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-reply"></i> Post Reply
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% elif topic.is_locked %}
+            <div class="alert alert-warning">
+                <i class="bi bi-lock-fill"></i> This topic is locked. New replies are not allowed.
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                Please <a href="{% url 'login' %}">login</a> to post a reply.
+            </div>
+            {% endif %}
+
+            <!-- Pagination -->
+            {% if posts.has_other_pages %}
+            {% include 'includes/pagination.html' with page_obj=posts %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,169 @@
+{% extends 'events/base_events.html' %}
+{% load static %}
+
+{% block event_content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Event Header -->
+        {% if event.banner %}
+        <img alt="{{ event.title }}" class="img-fluid rounded mb-4" src="{{ event.banner.url }}">
+        {% endif %}
+
+        <h1 class="mb-4">{{ event.title }}</h1>
+
+        <!-- Event Status -->
+        <div class="mb-4">
+            <span class="badge bg-{{ event.status_color }}">{{ event.get_status_display }}</span>
+            {% if event.is_featured %}
+            <span class="badge bg-warning">Featured</span>
+            {% endif %}
+        </div>
+
+        <!-- Event Details -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Event Details</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><i class="bi bi-calendar"></i> {{ event.start_date|date:"F j, Y" }}</p>
+                        <p><i class="bi bi-clock"></i> {{ event.start_date|date:"g:i A" }} - {{ event.end_date|date:"g:i
+                            A" }}</p>
+                        <p><i class="bi bi-geo-alt"></i> {{ event.location }}</p>
+                        {% if event.address %}
+                        <p><i class="bi bi-map"></i> {{ event.address }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <p><i class="bi bi-person"></i> Organized by: {{ event.organizer.get_full_name }}</p>
+                        {% if event.ministry %}
+                        <p><i class="bi bi-people"></i> Ministry: {{ event.ministry.name }}</p>
+                        {% endif %}
+                        {% if event.registration_deadline %}
+                        <p><i class="bi bi-clock-history"></i> Registration Deadline: {{
+                            event.registration_deadline|date:"F j, Y" }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Description -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">About This Event</h5>
+                {{ event.description|linebreaks }}
+            </div>
+        </div>
+
+        <!-- Schedule -->
+        {% if event.schedule %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Event Schedule</h5>
+                {{ event.schedule|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Speakers -->
+        {% if event.speakers.exists %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Speakers</h5>
+                <div class="row">
+                    {% for speaker in event.speakers.all %}
+                    <div class="col-md-4 text-center mb-3">
+                        <img class="rounded-circle mb-2" height="100" src="{{ speaker.profile.avatar.url }}"
+                             width="100">
+                        <h6>{{ speaker.get_full_name }}</h6>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Registration Card -->
+        <div class="card mb-4">
+            <div class="card-body">
+                {% if event.registration_required %}
+                {% if event.is_full %}
+                <div class="alert alert-warning">
+                    This event is full. No more registrations accepted.
+                </div>
+                {% elif event.registration_open %}
+                <h5 class="card-title">Register for this Event</h5>
+                {% if event.registration_fee > 0 %}
+                <p class="text-muted mb-3">Registration Fee: ${{ event.registration_fee }}</p>
+                {% endif %}
+                <form action="{% url 'events:register_event' event.slug %}" method="post">
+                    {% csrf_token %}
+                    <button class="btn btn-primary w-100" type="submit">Register Now</button>
+                </form>
+                {% else %}
+                <div class="alert alert-info">
+                    Registration is closed for this event.
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="alert alert-info">
+                    No registration required for this event.
+                </div>
+                {% endif %}
+
+                {% if event.spots_available %}
+                <p class="text-muted mt-3">
+                    {{ event.spots_available }} spots remaining
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Resources -->
+        {% if event.resources %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Event Resources</h5>
+                <a class="btn btn-outline-primary w-100" href="{{ event.resources.url }}">
+                    <i class="bi bi-download"></i> Download Resources
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Online Meeting Link -->
+        {% if event.is_online and event.meeting_link %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Online Meeting</h5>
+                <a class="btn btn-success w-100" href="{{ event.meeting_link }}" target="_blank">
+                    <i class="bi bi-camera-video"></i> Join Meeting
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Feedback Section -->
+{% if event.is_past %}
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">Event Feedback</h5>
+        {% if user_feedback %}
+        <div class="alert alert-info">
+            You've already provided feedback for this event.
+        </div>
+        {% else %}
+        <form action="{% url 'events:submit_feedback' event.slug %}" method="post">
+            {% csrf_token %}
+            {{ feedback_form|crispy }}
+            <button class="btn btn-primary" type="submit">Submit Feedback</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

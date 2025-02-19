@@ -1,0 +1,216 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Main Form Card -->
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                    <h5 class="mb-0">Create Bible Reading Plan</h5>
+                    <a href="{% url 'services:couple_reading_plans' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> Back to Plans
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    <div class="messages mb-4">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        <!-- Title and Plan Type -->
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="id_title" class="form-label">Plan Title</label>
+                                    <input type="text" name="title" maxlength="200" class="form-control {% if form.title.errors %}is-invalid{% endif %}"
+                                           id="id_title" placeholder="e.g., Gospel of John Study" required>
+                                    {% if form.title.errors %}
+                                    <div class="invalid-feedback">{{ form.title.errors|join:", " }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="id_plan_type" class="form-label">Plan Type</label>
+                                    <select name="plan_type" id="id_plan_type"
+                                            class="form-select {% if form.plan_type.errors %}is-invalid{% endif %}" required>
+                                        <option value="">Select a plan type</option>
+                                        <option value="DAILY" {% if form.plan_type.value == 'DAILY' %}selected{% endif %}>Daily Reading</option>
+                                        <option value="WEEKLY" {% if form.plan_type.value == 'WEEKLY' %}selected{% endif %}>Weekly Study</option>
+                                        <option value="TOPICAL" {% if form.plan_type.value == 'TOPICAL' %}selected{% endif %}>Topical Study</option>
+                                    </select>
+                                    {% if form.plan_type.errors %}
+                                    <div class="invalid-feedback">{{ form.plan_type.errors|join:", " }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="form-group mb-3">
+                            <label for="id_description" class="form-label">Description</label>
+                            <textarea name="description" id="id_description" rows="3"
+                                      class="form-control {% if form.description.errors %}is-invalid{% endif %}"
+                                      placeholder="Describe your reading plan..."></textarea>
+                            {% if form.description.errors %}
+                            <div class="invalid-feedback">{{ form.description.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Dates -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_start_date" class="form-label">Start Date</label>
+                                    <input type="date" name="start_date"
+                                           class="form-control {% if form.start_date.errors %}is-invalid{% endif %}"
+                                           id="id_start_date" required
+                                           value="{{ form.start_date.value|date:'Y-m-d' }}">
+                                    {% if form.start_date.errors %}
+                                    <div class="invalid-feedback">{{ form.start_date.errors|join:", " }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_end_date" class="form-label">End Date</label>
+                                    <input type="date" name="end_date"
+                                           class="form-control {% if form.end_date.errors %}is-invalid{% endif %}"
+                                           id="id_end_date"
+                                           value="{{ form.end_date.value|date:'Y-m-d' }}">
+                                    {% if form.end_date.errors %}
+                                    <div class="invalid-feedback">{{ form.end_date.errors|join:", " }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chapters -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_total_chapters" class="form-label">Total Chapters</label>
+                                    <input type="number" name="total_chapters"
+                                           class="form-control {% if form.total_chapters.errors %}is-invalid{% endif %}"
+                                           id="id_total_chapters" min="1" required>
+                                    {% if form.total_chapters.errors %}
+                                    <div class="invalid-feedback">{{ form.total_chapters.errors|join:", " }}</div>
+                                    {% endif %}
+                                    <div class="form-text">Enter the total number of chapters to read</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Create Reading Plan
+                            </button>
+                            <a href="{% url 'services:couple_reading_plans' %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Help Section -->
+            <div class="card mt-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">Reading Plan Types</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <h6 class="text-primary">
+                                    <i class="bi bi-calendar-check me-2"></i>Daily Reading
+                                </h6>
+                                <p class="small text-muted">
+                                    Read a portion of the Bible each day. Great for building consistent habits.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <h6 class="text-primary">
+                                    <i class="bi bi-book me-2"></i>Weekly Study
+                                </h6>
+                                <p class="small text-muted">
+                                    Deeper study of specific books or passages over a week.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <h6 class="text-primary">
+                                    <i class="bi bi-collection me-2"></i>Topical Study
+                                </h6>
+                                <p class="small text-muted">
+                                    Focus on specific themes or topics across the Bible.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-control, .form-select {
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
+    }
+
+    .form-label {
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .card {
+        border: none;
+        margin-bottom: 1.5rem;
+    }
+
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,.125);
+    }
+
+    .shadow-sm {
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important;
+    }
+
+    .bi {
+        vertical-align: -.125em;
+    }
+</style>
+{% endblock %}

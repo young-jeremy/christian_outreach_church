@@ -1,0 +1,140 @@
+ {% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Share Your Testimony{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Share Your Testimony</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            {{ form.title|as_crispy_field }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.content|as_crispy_field }}
+                        </div>
+
+                        {% if form.prayer_request %}
+                        <div class="mb-3">
+                            {{ form.prayer_request|as_crispy_field }}
+                            <small class="text-muted">Optional: Link this testimony to a prayer request that was answered</small>
+                        </div>
+                        {% endif %}
+
+
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-share-fill me-2"></i>Share Testimony
+                            </button>
+                            <a href="{% url 'services:testimony_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Back to Testimonies
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Guidelines Card -->
+            <div class="card mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Guidelines for Sharing Your Testimony</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Be honest and authentic in sharing your experience
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Focus on how God worked in your situation
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Keep it clear and concise
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Avoid sharing sensitive personal information
+                        </li>
+                        <li>
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Your testimony will be reviewed before being published
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scripture Encouragement Sidebar -->
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Scripture Encouragement</h5>
+                </div>
+                <div class="card-body">
+                    <blockquote class="blockquote mb-0">
+                        <p class="mb-3 font-italic">
+                            "And they overcame him by the blood of the Lamb and by the word of their testimony..."
+                        </p>
+                        <footer class="blockquote-footer">Revelation 12:11</footer>
+                    </blockquote>
+                    <hr>
+                    <p class="text-muted">
+                        Your testimony is powerful and can encourage others in their faith journey.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Tips for Writing -->
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Tips for Writing</h5>
+                </div>
+                <div class="card-body">
+                    <ol class="ps-3">
+                        <li class="mb-2">Start with a brief background</li>
+                        <li class="mb-2">Describe the challenge you faced</li>
+                        <li class="mb-2">Share how God intervened</li>
+                        <li class="mb-2">Explain what you learned</li>
+                        <li>End with encouragement for others</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Preview functionality if needed
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add any JavaScript for preview functionality here
+    });
+
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const title = document.querySelector('#id_title').value.trim();
+        const content = document.querySelector('#id_content').value.trim();
+
+        if (!title || !content) {
+            e.preventDefault();
+            alert('Please fill in both title and content fields.');
+        }
+    });
+</script>
+{% endblock %}

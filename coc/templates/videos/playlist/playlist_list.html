@@ -1,0 +1,102 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2">Your Playlists</h1>
+                    <p class="text-muted">{{ total_playlists }} playlists</p>
+                </div>
+                <a href="{% url 'videos:create_playlist' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-lg"></i> Create Playlist
+                </a>
+            </div>
+
+            <!-- Search -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <form class="d-flex gap-2">
+                        <input type="search" name="search" class="form-control"
+                               placeholder="Search playlists..." value="{{ search_query }}">
+                        <button type="submit" class="btn btn-primary">Search</button>
+                        {% if search_query %}
+                        <a href="{% url 'videos:playlist_list' %}" class="btn btn-outline-secondary">Clear</a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+
+            <!-- Playlists Grid -->
+            <div class="row g-4">
+                {% for playlist in playlists %}
+                <div class="col-md-4 col-lg-3">
+                    <div class="card h-100">
+                        <img src="{{ playlist.thumbnail.url }}" class="card-img-top"
+                             alt="{{ playlist.title }}" style="height: 180px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ playlist.title }}</h5>
+                            <p class="card-text text-muted">
+                                {{ playlist.video_count }} videos
+                            </p>
+                            <a href="{% url 'videos:playlist_detail' playlist.slug %}"
+                               class="btn btn-primary btn-sm">
+                                View Playlist
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <div class="empty-state">
+                        <i class="bi bi-collection-play display-1 text-muted"></i>
+                        <h3 class="mt-3">No Playlists Yet</h3>
+                        <p class="text-muted">Create your first playlist to organize your videos</p>
+                        <a href="{% url 'videos:create_playlist' %}" class="btn btn-primary">
+                            Create Playlist
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if playlists.has_other_pages %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if playlists.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?page={{ playlists.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            Previous
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in playlists.paginator.page_range %}
+                    <li class="page-item {% if playlists.number == num %}active{% endif %}">
+                        <a class="page-link"
+                           href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endfor %}
+
+                    {% if playlists.has_next %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?page={{ playlists.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            Next
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

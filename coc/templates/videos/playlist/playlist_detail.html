@@ -1,0 +1,373 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Playlist Info -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="position-relative">
+                    {% if playlist.thumbnail %}
+                    <img alt="{{ playlist.title }}" class="card-img-top" src="{{ playlist.thumbnail.url }}">
+                    {% else %}
+                    <div class="bg-light text-center py-5">
+                        <i class="bi bi-collection-play display-4"></i>
+                    </div>
+                    {% endif %}
+                    <span class="badge bg-dark position-absolute bottom-0 end-0 m-2">
+                        {{ videos|length }} videos
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h3 class="card-title mb-0">{{ playlist.title }}</h3>
+                        {% if playlist.is_public %}
+                        <span class="badge bg-success">Public</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Private</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-muted mb-3">{{ playlist.description }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">Created {{ playlist.created_at|timesince }} ago</small>
+                        <small class="text-muted">
+                            Total duration:
+                            {% with total_duration=0 %}
+                            {% for playlist_video in videos %}
+                            {% with total_duration=total_duration|add:playlist_video.video.duration.seconds %}
+                            {% endwith %}
+                            {% endfor %}
+                            {{ total_duration|default:0|time:"H:i:s" }}
+                            {% endwith %}
+                        </small>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid gap-2">
+                        {% if user == playlist.creator %}
+                        <button class="btn btn-danger" data-bs-target="#deletePlaylistModal" data-bs-toggle="modal">
+                            <i class="bi bi-trash"></i> Delete Playlist
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Videos List -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Videos</h4>
+                    {% if user == playlist.creator %}
+                    <button class="btn btn-primary btn-sm" data-bs-target="#addVideoModal" data-bs-toggle="modal">
+                        <i class="bi bi-plus-lg"></i> Add Video
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="list-group list-group-flush" id="playlist-videos">
+                    {% for playlist_video in videos %}
+                    <div class="list-group-item" data-video-id="{{ playlist_video.video.id }}">
+                        <div class="d-flex align-items-center">
+                            {% if user == playlist.creator %}
+                            <div class="me-3">
+                                <i class="bi bi-grip-vertical text-muted handle"></i>
+                            </div>
+                            {% endif %}
+                            <div class="flex-shrink-0">
+                                <img alt="{{ playlist_video.video.title }}"
+                                     class="rounded"
+                                     src="{{ playlist_video.video.thumbnail.url }}"
+                                     style="width: 120px; height: 68px; object-fit: cover;">
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="mb-1">{{ playlist_video.video.title }}</h5>
+                                <p class="text-muted mb-0">{{ playlist_video.video.duration }}</p>
+                            </div>
+                            <div class="ms-auto">
+                                {% if user == playlist.creator %}
+                                <button class="btn btn-outline-danger btn-sm remove-video"
+                                        data-video-id="{{ playlist_video.video.id }}">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="list-group-item text-center py-5">
+                        <i class="bi bi-collection-play display-4 text-muted"></i>
+                        <h5 class="mt-3">No Videos in Playlist</h5>
+                        {% if user == playlist.creator %}
+                        <p class="text-muted">Start adding videos to your playlist!</p>
+                        <button class="btn btn-primary" data-bs-target="#addVideoModal" data-bs-toggle="modal">
+                            <i class="bi bi-plus-lg"></i> Add Video
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Playlist Modal -->
+<div class="modal fade" id="deletePlaylistModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Playlist</h5>
+                <button class="btn-close" data-bs-dismiss="modal" type="button"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete "{{ playlist.title }}"?</p>
+                <p class="text-danger">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+                <form method="POST" action="{% url 'videos:delete_playlist' playlist.slug %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Video Modal -->
+<div class="modal fade" id="addVideoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Video to Playlist</h5>
+                <button class="btn-close" data-bs-dismiss="modal" type="button"></button>
+            </div>
+            <div class="modal-body">
+                <form method="GET" action="#" id="searchForm">
+                    <div class="input-group mb-3">
+                        <input class="form-control" 
+                               name="q" 
+                               id="videoSearch" 
+                               placeholder="Search by title, uploader, or description..." 
+                               type="text"
+                               value="{{ request.GET.q }}"
+                               autocomplete="off">
+                        <button class="btn btn-outline-secondary" type="submit">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                </form>
+                <div id="searchResults">
+                    {% include 'videos/search_results.html' %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .handle {
+        cursor: move;
+        font-size: 1.2rem;
+    }
+
+    .list-group-item.dragging {
+        opacity: 0.5;
+        background: #f8f9fa;
+    }
+
+    .video-search-item {
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .video-search-item:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize drag and drop for playlist videos
+        const playlistVideos = document.getElementById('playlist-videos');
+        if (playlistVideos) {
+            new Sortable(playlistVideos, {
+                handle: '.handle',
+                animation: 150,
+                onEnd: function(evt) {
+                    const videoIds = Array.from(evt.to.children)
+                        .filter(item => item.dataset.videoId)
+                        .map(item => item.dataset.videoId);
+                    updatePlaylistOrder(videoIds);
+                }
+            });
+        }
+
+        // Handle video removal
+        document.querySelectorAll('.remove-video').forEach(button => {
+            button.addEventListener('click', function() {
+                const videoId = this.dataset.videoId;
+                removeVideoFromPlaylist(videoId);
+            });
+        });
+
+        // Handle playlist deletion
+        document.querySelector('#deletePlaylistModal form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = "{% url 'videos:playlist_list' %}";
+                } else {
+                    alert('Error deleting playlist: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting playlist. Please try again.');
+            });
+        });
+
+        // Handle search form submission
+        const searchForm = document.getElementById('searchForm');
+        const videosList = document.getElementById('videosList');
+
+        searchForm?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const searchQuery = document.getElementById('videoSearch').value;
+            
+            // Show loading spinner
+            videosList.innerHTML = '<div class="col-12 text-center"><div class="spinner-border" role="status"></div></div>';
+
+            // Make the search request
+            fetch(`${this.action}?q=${encodeURIComponent(searchQuery)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.videos || data.videos.length === 0) {
+                        videosList.innerHTML = `
+                            <div class="col-12 text-center">
+                                <p class="text-muted">No videos found</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    videosList.innerHTML = data.videos.map(video => `
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 video-search-item" onclick="addVideoToPlaylist(${video.id})">
+                                <img src="${video.thumbnail}" class="card-img-top" alt="${video.title}" 
+                                     style="height: 140px; object-fit: cover;">
+                                <div class="card-body">
+                                    <h6 class="card-title text-truncate">${video.title}</h6>
+                                    <div class="text-muted small">
+                                        <div><i class="bi bi-person"></i> ${video.uploader}</div>
+                                        <div><i class="bi bi-clock"></i> ${video.duration}</div>
+                                        <div><i class="bi bi-eye"></i> ${video.views} views</div>
+                                        <div><i class="bi bi-calendar"></i> ${video.created_at}</div>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <button class="btn btn-sm btn-primary w-100">
+                                        <i class="bi bi-plus-lg"></i> Add to Playlist
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                })
+                .catch(error => {
+                    videosList.innerHTML = `
+                        <div class="col-12 text-center">
+                            <p class="text-danger">Error loading videos. Please try again.</p>
+                        </div>
+                    `;
+                    console.error('Error:', error);
+                });
+        });
+
+        // Load initial videos when modal opens
+        document.getElementById('addVideoModal')?.addEventListener('show.bs.modal', function() {
+            const searchForm = document.getElementById('searchForm');
+            document.getElementById('videoSearch').value = '';
+            searchForm.dispatchEvent(new Event('submit'));
+        });
+    });
+
+    function updatePlaylistOrder(videoIds) {
+        fetch(`{% url 'videos:reorder_playlist' playlist.slug %}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({ video_ids: videoIds })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Optional: Show success message
+            }
+        });
+    }
+
+    function removeVideoFromPlaylist(videoId) {
+        fetch(`{% url 'videos:remove_from_playlist' playlist.slug video_id=0 %}`.replace('0', videoId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+
+    function addVideoToPlaylist(videoId) {
+        fetch(`{% url 'videos:add_to_playlist' playlist.slug video_id=0 %}`.replace('0', videoId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

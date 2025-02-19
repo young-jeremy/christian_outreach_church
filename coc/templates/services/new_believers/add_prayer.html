@@ -1,0 +1,75 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Add Prayer Request</h5>
+                    <a class="btn btn-outline-secondary btn-sm" href="{% url 'services:prayer_journal' %}">
+                        <i class="bi bi-arrow-left"></i> Back to Journal
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form class="needs-validation" method="post" novalidate>
+                        {% csrf_token %}
+
+                        {{ form.title|as_crispy_field }}
+                        {{ form.content|as_crispy_field }}
+
+                        <div class="border-top pt-3">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-pray"></i> Add Prayer
+                            </button>
+                            <a class="btn btn-outline-secondary" href="{% url 'services:prayer_journal' %}">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prayer Guidelines -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Prayer Guidelines</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6 class="text-primary">ACTS Prayer Model</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <strong>A</strong>doration - Praise God for who He is
+                            </li>
+                            <li class="mb-2">
+                                <strong>C</strong>onfession - Admit your sins
+                            </li>
+                            <li class="mb-2">
+                                <strong>T</strong>hanksgiving - Express gratitude
+                            </li>
+                            <li>
+                                <strong>S</strong>upplication - Make your requests
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h6 class="text-success">Writing Tips</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">Be specific in your requests</li>
+                            <li class="mb-2">Include Scripture references</li>
+                            <li class="mb-2">Note related circumstances</li>
+                            <li>Date your entries</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

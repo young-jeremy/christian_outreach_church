@@ -1,0 +1,242 @@
+<!-- watch_later.html -->
+{% extends "base_dashboard.html" %}
+{% load static %}
+{% load video_filters %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2">Watch Later</h1>
+                    <p class="text-muted">Videos saved for later: {{ watch_later_count }}</p>
+                </div>
+                <div class="btn-group">
+                    <a href="{% url 'videos:category_list' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-collection-play"></i> Browse Videos
+                    </a>
+                    {% if watch_later_videos %}
+                    <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#clearAllModal">
+                        <i class="bi bi-trash"></i> Clear All
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <form class="d-flex gap-2">
+                        <input type="search" name="search" class="form-control"
+                               placeholder="Search saved videos..." value="{{ search_query }}">
+
+                        <select name="sort" class="form-select" style="width: auto;">
+                            <option value="-added_at" {% if sort == '-added_at' %}selected{% endif %}>
+                                Recently Added
+                            </option>
+                            <option value="added_at" {% if sort == 'added_at' %}selected{% endif %}>
+                                Oldest First
+                            </option>
+                            <option value="video__title" {% if sort == 'video__title' %}selected{% endif %}>
+                                Title A-Z
+                            </option>
+                            <option value="video__duration" {% if sort == 'video__duration' %}selected{% endif %}>
+                                Duration
+                            </option>
+                        </select>
+
+                        <button type="submit" class="btn btn-primary">Apply</button>
+                        {% if search_query or sort != '-added_at' %}
+                        <a href="{% url 'videos:watch_later' %}" class="btn btn-outline-secondary">Clear</a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+
+            <!-- Videos Grid -->
+            <div class="row g-4">
+                {% for item in watch_later_videos %}
+                <div class="col-md-4 col-lg-3">
+                    <div class="card h-100">
+                        <div class="position-relative">
+                            <img src="{{ item.video.thumbnail.url }}" 
+                                 class="card-img-top" 
+                                 alt="{{ item.video.title }}">
+                            
+                            <span class="badge bg-dark position-absolute bottom-0 end-0 m-2">
+                                {{ item.video.duration }}
+                            </span>
+
+                            <button class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 remove-video"
+                                    data-video-id="{{ item.video.id }}"
+                                    title="Remove from Watch Later">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+
+                        <div class="card-body">
+                            <h5 class="card-title">{{ item.video.title }}</h5>
+                            <p class="card-text text-muted">{{ item.video.description|truncatechars:100 }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">Added {{ item.added_at|timesince }} ago</small>
+                                <div class="btn-group">
+                                    <a href="{% url 'videos:video_details' item.id %}"
+                                       class="btn btn-primary btn-sm">
+                                        <i class="bi bi-play-fill"></i> Watch Now
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <div class="empty-state">
+                        <i class="bi bi-bookmark-plus display-1 text-muted"></i>
+                        <h3 class="mt-3">No Saved Videos</h3>
+                        {% if search_query %}
+                        <p>No videos match your search criteria</p>
+                        <a href="{% url 'videos:watch_later' %}" class="btn btn-outline-primary">
+                            Clear Search
+                        </a>
+                        {% else %}
+                        <p>Start saving videos to watch later!</p>
+                        <a href="{% url 'videos:category_list' %}" class="btn btn-primary">
+                            Browse Videos
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if watch_later_videos.has_other_pages %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if watch_later_videos.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ watch_later_videos.previous_page_number }}
+                           {% if search_query %}&search={{ search_query }}{% endif %}
+                           {% if sort %}&sort={{ sort }}{% endif %}">
+                            Previous
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in watch_later_videos.paginator.page_range %}
+                    <li class="page-item {% if watch_later_videos.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}
+                           {% if search_query %}&search={{ search_query }}{% endif %}
+                           {% if sort %}&sort={{ sort }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endfor %}
+
+                    {% if watch_later_videos.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ watch_later_videos.next_page_number }}
+                           {% if search_query %}&search={{ search_query }}{% endif %}
+                           {% if sort %}&sort={{ sort }}{% endif %}">
+                            Next
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Clear All Modal -->
+<div class="modal fade" id="clearAllModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Clear Watch Later List</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to remove all videos from your Watch Later list?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmClearAll">Clear All</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Remove single video
+    document.querySelectorAll('.remove-video').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const videoId = this.dataset.videoId;
+            removeFromWatchLater(videoId);
+        });
+    });
+
+    // Clear all videos
+    document.getElementById('confirmClearAll')?.addEventListener('click', function() {
+        clearWatchLater();
+    });
+
+    function removeFromWatchLater(videoId) {
+        fetch(`{% url 'videos:toggle_watch_later' %}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                video_id: videoId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+
+    function clearWatchLater() {
+        fetch(`{% url 'videos:clear_watch_later' %}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+{% endblock %}

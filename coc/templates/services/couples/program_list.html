@@ -1,0 +1,224 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h2 mb-2">Marriage Ministry</h1>
+                            <p class="mb-0">Strengthening marriages through faith, love, and commitment</p>
+                        </div>
+                        {% if user.is_authenticated %}
+                        <div class="d-flex gap-2">
+                            {% if user.is_staff %}
+                            <a href="{% url 'services:marriage_create' %}" class="btn btn-light">
+                                <i class="bi bi-plus-lg"></i> New Program
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'services:couple_profile_create' %}" class="btn btn-outline-light">
+                                <i class="bi bi-people"></i> Create Couple Profile
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links Section -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-book display-4 text-primary mb-3"></i>
+                    <h5>Resources</h5>
+                    <p>Access marriage enrichment materials</p>
+                    <a href="{% url 'services:marriage_resources' %}" class="btn btn-outline-primary">
+                        Browse Resources
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar-heart display-4 text-primary mb-3"></i>
+                    <h5>Events</h5>
+                    <p>Join upcoming marriage events</p>
+                    <a href="{% url 'services:marriage_events' %}" class="btn btn-outline-primary">
+                        View Events
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-chat-heart display-4 text-primary mb-3"></i>
+                    <h5>Counseling</h5>
+                    <p>Schedule a counseling session</p>
+                    <a href="{% url 'services:counseling_request' %}" class="btn btn-outline-primary">
+                        Request Session
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" name="search" class="form-control"
+                               placeholder="Search programs..." value="{{ request.GET.search }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <select name="meeting_type" class="form-select">
+                        <option value="">All Meeting Types</option>
+                        <option value="in_person" {% if request.GET.meeting_type==
+                        'in_person' %}selected{% endif %}>
+                        In Person
+                        </option>
+                        <option value="virtual" {% if request.GET.meeting_type==
+                        'virtual' %}selected{% endif %}>
+                        Virtual
+                        </option>
+                        <option value="hybrid" {% if request.GET.meeting_type==
+                        'hybrid' %}selected{% endif %}>
+                        Hybrid
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Programs Grid -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+        {% for program in programs %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="badge bg-{{ program.status }}">{{ program.get_status_display }}</span>
+                    <span class="badge bg-secondary">
+                        <i class="bi bi-people"></i> {{ program.max_couples }} couples max
+                    </span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ program.title }}</h5>
+                    <p class="card-text">{{ program.description|safe|truncatewords:30 }}</p>
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            <i class="bi bi-calendar"></i> {{ program.start_date|date:"M d, Y" }} -
+                            {{ program.end_date|date:"M d, Y" }}
+                        </small><br>
+                        <small class="text-muted">
+                            <i class="bi bi-clock"></i> {{ program.meeting_time|time:"g:i A" }}
+                        </small><br>
+                        <small class="text-muted">
+                            <i class="bi bi-geo-alt"></i> {{ program.get_meeting_type_display }}
+                        </small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ program.get_absolute_url }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-info-circle"></i> Details
+                        </a>
+                        {% if user.is_authenticated and program.status == 'upcoming' %}
+                        <form method="post" action="{% url 'services:marriage_enroll' program.slug %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="bi bi-check-circle"></i> Enroll
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <small class="text-muted">
+                        Facilitators:
+                        {% for facilitator in program.facilitators.all %}
+                        {% if not forloop.first %}, {% endif %}
+                        {{ facilitator.get_full_name }}
+                        {% endfor %}
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="bi bi-heart display-1 text-muted"></i>
+                <h3 class="mt-3">No Programs Available</h3>
+                <p class="text-muted">Check back later for new marriage ministry programs</p>
+                {% if user.is_staff %}
+                <a href="{% url 'services:marriage_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-lg"></i> Create New Program
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.meeting_type %}&meeting_type={{ request.GET.meeting_type }}{% endif %}">
+                    <i class="bi bi-chevron-left"></i> Previous
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link"
+                   href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.meeting_type %}&meeting_type={{ request.GET.meeting_type }}{% endif %}">
+                    {{ num }}
+                </a>
+            </li>
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.meeting_type %}&meeting_type={{ request.GET.meeting_type }}{% endif %}">
+                    Next <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card .bi {
+        vertical-align: -0.125em;
+    }
+    .bg-upcoming { background-color: #28a745; }
+    .bg-ongoing { background-color: #007bff; }
+    .bg-completed { background-color: #6c757d; }
+    .bg-cancelled { background-color: #dc3545; }
+</style>
+{% endblock %}

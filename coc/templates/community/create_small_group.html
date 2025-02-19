@@ -1,0 +1,165 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Create Small Group</h5>
+                    <a href="{% url 'community:small_groups' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> Back to Groups
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="groupForm">
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <!-- Basic Information -->
+                            <div class="col-md-12">
+                                {{ form.name|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {{ form.group_type|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {{ form.target_audience|as_crispy_field }}
+                            </div>
+
+                            <!-- Meeting Details -->
+                            <div class="col-md-6">
+                                {{ form.meeting_day|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {{ form.meeting_time|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-12">
+                                {{ form.location|as_crispy_field }}
+                            </div>
+
+                            <!-- Group Details -->
+                            <div class="col-12">
+                                {{ form.description|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {{ form.leaders|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {{ form.max_members|as_crispy_field }}
+                            </div>
+
+                            <!-- Additional Settings -->
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Group Settings</h6>
+                                        
+                                        <div class="form-check mb-2">
+                                            {{ form.is_public|as_crispy_field }}
+                                        </div>
+                                        
+                                        <div class="form-check mb-2">
+                                            {{ form.requires_approval|as_crispy_field }}
+                                        </div>
+                                        
+                                        <div class="form-check">
+                                            {{ form.allow_children|as_crispy_field }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Resources -->
+                            <div class="col-md-12">
+                                {{ form.materials|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-12">
+                                {{ form.image|as_crispy_field }}
+                            </div>
+
+                            <!-- Submit Buttons -->
+                            <div class="col-12">
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                                    <button type="button" class="btn btn-outline-secondary me-md-2" onclick="history.back()">
+                                        Cancel
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        Create Group
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize time picker
+    flatpickr("#id_meeting_time", {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+        time_24hr: false
+    });
+
+    // Initialize select2 for multiple select fields
+    $('#id_leaders').select2({
+        placeholder: 'Select group leaders',
+        width: '100%',
+        tags: true,
+        tokenSeparators: [',', ' ']
+    });
+
+    // Form validation
+    const form = document.getElementById('groupForm');
+    form.addEventListener('submit', function(e) {
+        const name = document.getElementById('id_name').value;
+        const description = document.getElementById('id_description').value;
+        const meetingDay = document.getElementById('id_meeting_day').value;
+        const meetingTime = document.getElementById('id_meeting_time').value;
+        
+        if (!name || !description || !meetingDay || !meetingTime) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+            return false;
+        }
+    });
+
+    // Handle max members field visibility
+    const isPublic = document.getElementById('id_is_public');
+    const maxMembersDiv = document.getElementById('div_id_max_members');
+    
+    function toggleMaxMembers() {
+        maxMembersDiv.style.display = isPublic.checked ? 'block' : 'none';
+    }
+    
+    isPublic.addEventListener('change', toggleMaxMembers);
+    toggleMaxMembers(); // Initial state
+});
+</script>
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    {% if messages %}
+    <div class="messages mb-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Profile Status Banner -->
+    {% if not profile.is_approved %}
+    <div class="alert alert-{% if profile.status == 'rejected' %}danger{% else %}warning{% endif %} mb-4">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <div>
+                <h6 class="alert-heading mb-1">Profile Status: {{ profile_status.status }}</h6>
+                {% if profile.status == 'rejected' %}
+                    <p class="mb-0">Reason: {{ profile_status.rejection_reason }}</p>
+                {% else %}
+                    <p class="mb-0">Your profile is awaiting admin approval.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Profile Information -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    {% if profile.profile_image %}
+                    <img src="{{ profile.profile_image.url }}"
+                         class="rounded-circle mb-3"
+                         style="width: 150px; height: 150px; object-fit: cover;"
+                         alt="Profile Image">
+                    {% else %}
+                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3"
+                         style="width: 150px; height: 150px;">
+                        <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                    </div>
+                    {% endif %}
+                    <h5 class="mb-1">{{ profile.get_couple_name }}</h5>
+                    <p class="text-muted mb-3">
+                        {{ marriage_info.duration_years }} years, {{ marriage_info.duration_months }} months together
+                    </p>
+                    <div class="mb-3">
+                        <span class="badge bg-primary">{{ marriage_info.stage }}</span>
+                    </div>
+                    <a href="{% url 'services:edit_couple_profile' %}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-pencil"></i> Edit Profile
+                    </a>
+                </div>
+            </div>
+
+            <!-- Statistics Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Statistics</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <h3 class="mb-1">{{ statistics.reading_streak }}</h3>
+                            <small class="text-muted">Day Streak</small>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h3 class="mb-1">{{ statistics.total_events }}</h3>
+                            <small class="text-muted">Events</small>
+                        </div>
+                        <div class="col-6">
+                            <h3 class="mb-1">{{ statistics.prayer_requests }}</h3>
+                            <small class="text-muted">Prayers</small>
+                        </div>
+                        <div class="col-6">
+                            <h3 class="mb-1">{{ statistics.answered_prayers }}</h3>
+                            <small class="text-muted">Answered</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activities Section -->
+        <div class="col-md-8">
+            <!-- About Us -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">About Us</h6>
+                </div>
+                <div class="card-body">
+                    {% if profile.about_us %}
+                        {{ profile.about_us|linebreaks }}
+                    {% else %}
+                        <p class="text-muted mb-0">No information provided yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Reading Plans -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Reading Plans</h6>
+                    <a href="{% url 'services:couple_reading_plans' %}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if reading_plans %}
+                        {% for plan in reading_plans %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="mb-0">{{ plan.title }}</h6>
+                                <small class="text-muted">{{ plan.completion_percentage|floatformat:0 }}%</small>
+                            </div>
+                            <div class="progress" style="height: 5px;">
+                                <div class="progress-bar" role="progressbar"
+                                     style="width: {{ plan.completion_percentage }}%"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted mb-0">No reading plans started yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Prayer Requests -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Recent Prayers</h6>
+                    <a href="{% url 'services:couple_prayers' %}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_prayers %}
+                        <div class="list-group list-group-flush">
+                            {% for prayer in recent_prayers %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ prayer.title }}</h6>
+                                        <small class="text-muted">{{ prayer.created_at|timesince }} ago</small>
+                                    </div>
+                                    <span class="badge bg-{{ prayer.status }}">
+                                        {{ prayer.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No prayer requests yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .progress {
+        background-color: #e9ecef;
+        border-radius: 0.25rem;
+    }
+    .badge.bg-pending { background-color: #ffc107; }
+    .badge.bg-in_progress { background-color: #17a2b8; }
+    .badge.bg-answered { background-color: #28a745; }
+</style>
+{% endblock %}

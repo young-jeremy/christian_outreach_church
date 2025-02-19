@@ -1,0 +1,95 @@
+/* Add to your CSS */
+.search-container {
+    max-width: 800px;
+    width: 100%;
+}
+
+.form-control:focus {
+    box-shadow: none;
+    border-color: #0d6efd;
+}
+
+#voiceSearchBtn.recording {
+    background-color: #dc3545;
+    color: white;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Search Bar Styles */
+.search-form {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.search-input {
+    border-radius: 20px 0 0 20px;
+    border: 1px solid #dfe1e5;
+    height: 40px;
+    padding: 0 16px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+    border-color: rgba(223,225,229,0);
+}
+
+.search-button {
+    border-radius: 0 20px 20px 0;
+    border: 1px solid #dfe1e5;
+    border-left: none;
+    height: 40px;
+    background-color: #f8f9fa;
+}
+
+#voiceSearchBtn {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+#voiceSearchBtn:hover {
+    background-color: #f8f9fa;
+}
+
+/* Dark mode styles */
+.dark-mode .search-input {
+    background-color: #2d2d2d;
+    border-color: #404040;
+    color: #fff;
+}
+
+.dark-mode .search-button,
+.dark-mode #voiceSearchBtn {
+    background-color: #404040;
+    border-color: #404040;
+    color: #fff;
+}
+
+.dark-mode .search-input:focus {
+    box-shadow: 0 1px 6px rgba(255,255,255,0.2);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .search-form {
+        width: 100%;
+        margin: 10px 0;
+    }
+    
+    .search-input {
+        font-size: 14px;
+    }
+}

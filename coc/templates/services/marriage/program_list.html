@@ -1,0 +1,146 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header Section -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2">Marriage Ministry Programs</h1>
+                    <p class="text-muted">Strengthening marriages through Christ-centered programs</p>
+                </div>
+                {% if user.is_staff %}
+                <a href="{% url 'services:marriage_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-lg"></i> Create Program
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Programs Grid -->
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for program in programs %}
+                <div class="col">
+                    <div class="card h-100">
+                        {% if program.image %}
+                        <img src="{{ program.image.url }}" class="card-img-top" alt="{{ program.title }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ program.title }}</h5>
+                            <p class="card-text">{{ program.description|truncatewords:30 }}</p>
+                            
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar"></i> {{ program.start_date|date:"F j, Y" }}
+                                    {% if program.end_date %}
+                                    - {{ program.end_date|date:"F j, Y" }}
+                                    {% endif %}
+                                </small>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-{{ program.get_status_color }}">
+                                    {{ program.get_status_display }}
+                                </span>
+                                <small class="text-muted">
+                                    {{ program.registered_couples.count }}/{{ program.max_couples }} couples
+                                </small>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <a href="{% url 'services:marriage_detail' program.slug %}" 
+                               class="btn btn-outline-primary w-100">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <i class="bi bi-heart display-1 text-muted"></i>
+                    <h3 class="mt-3">No Programs Available</h3>
+                    <p class="text-muted">Check back later for upcoming marriage ministry programs.</p>
+                    {% if user.is_staff %}
+                    <a href="{% url 'services:marriage_create' %}" class="btn btn-primary mt-3">
+                        <i class="bi bi-plus-lg"></i> Create First Program
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if programs.has_other_pages %}
+            {% include 'includes/pagination.html' with page_obj=programs %}
+            {% endif %}
+
+            <!-- Resources Section -->
+            <div class="mt-5">
+                <h2 class="h3 mb-4">Marriage Resources</h2>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="bi bi-book"></i> Marriage Counseling
+                                </h5>
+                                <p class="card-text">
+                                    Schedule a confidential counseling session with our marriage counselors.
+                                </p>
+                                <a href="{% url 'services:counseling_request' %}" 
+                                   class="btn btn-outline-primary">
+                                    Request Counseling
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="bi bi-collection"></i> Resources Library
+                                </h5>
+                                <p class="card-text">
+                                    Access our collection of marriage enrichment materials and guides.
+                                </p>
+                                <a href="{% url 'services:marriage_resources' %}" 
+                                   class="btn btn-outline-primary">
+                                    Browse Resources
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="bi bi-calendar-event"></i> Upcoming Events
+                                </h5>
+                                <p class="card-text">
+                                    View all upcoming marriage ministry events and workshops.
+                                </p>
+                                <a href="{% url 'services:marriage_events' %}" 
+                                   class="btn btn-outline-primary">
+                                    See Events
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %} 

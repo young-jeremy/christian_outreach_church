@@ -1,0 +1,66 @@
+{% extends "base_dashboard.html" %}
+{% load static %}
+
+{% block title %}Volunteer Opportunities{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Volunteer Opportunities</h1>
+        {% if user.is_authenticated %}
+        <a href="{% url 'volunteers:opportunity_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Opportunity
+        </a>
+        {% endif %}
+    </div>
+
+    {% if opportunities %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for opportunity in opportunities %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ opportunity.title }}</h5>
+                            <p class="card-text">{{ opportunity.description|truncatewords:30 }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-{{ opportunity.status|yesno:'success,warning,danger' }}">
+                                    {{ opportunity.get_status_display }}
+                                </span>
+                                <small class="text-muted">
+                                    {{ opportunity.slots }} slots available
+                                </small>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{% url 'volunteers:opportunity_detail' opportunity.pk %}" 
+                                   class="btn btn-outline-primary">
+                                    View Details
+                                </a>
+                                <small class="text-muted">
+                                    {{ opportunity.date|date:"M d, Y" }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <h3>No opportunities available at the moment</h3>
+            <p class="text-muted">Please check back later for new opportunities.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %} 

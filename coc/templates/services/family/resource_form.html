@@ -1,0 +1,189 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Create Parenting Resource</h5>
+                    <a class="btn btn-outline-secondary btn-sm" href="{% url 'services:family_resources' %}">
+                        <i class="bi bi-arrow-left"></i> Back to Resources
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form class="needs-validation" enctype="multipart/form-data" method="post" novalidate>
+                        {% csrf_token %}
+
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                {{ form.title|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.resource_type|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.age_group|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        {{ form.description|as_crispy_field }}
+                        {{ form.content|as_crispy_field }}
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.file|as_crispy_field }}
+                                <small class="text-muted">
+                                    Upload PDFs, documents, or other resources
+                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.external_link|as_crispy_field }}
+                                <small class="text-muted">
+                                    Optional: Link to external resources
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="border-top pt-3">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-plus-lg"></i> Create Resource
+                            </button>
+                            <a class="btn btn-outline-secondary" href="{% url 'services:family_resources' %}">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Resource Type Guide -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Resource Type Guide</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for type_code, type_label in resource_types %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="badge bg-primary me-2">{{ type_label }}</div>
+                                <small class="text-muted">
+                                    {% if type_code == 'article' %}
+                                    Written content and blog posts
+                                    {% elif type_code == 'video' %}
+                                    Video tutorials and presentations
+                                    {% elif type_code == 'podcast' %}
+                                    Audio content and discussions
+                                    {% elif type_code == 'guide' %}
+                                    Comprehensive parenting guides
+                                    {% elif type_code == 'activity' %}
+                                    Interactive family activities
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips Sidebar -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Resource Creation Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-3">
+                            <i class="bi bi-lightbulb text-warning"></i>
+                            <strong>Title:</strong> Clear and searchable
+                        </li>
+                        <li class="mb-3">
+                            <i class="bi bi-people text-info"></i>
+                            <strong>Age Group:</strong> Target specific needs
+                        </li>
+                        <li class="mb-3">
+                            <i class="bi bi-card-text text-success"></i>
+                            <strong>Description:</strong> Highlight key benefits
+                        </li>
+                        <li class="mb-3">
+                            <i class="bi bi-file-earmark text-primary"></i>
+                            <strong>Content:</strong> Engaging and practical
+                        </li>
+                        <li>
+                            <i class="bi bi-link-45deg text-danger"></i>
+                            <strong>Links:</strong> Ensure they're working
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Age Groups Guide -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Age Groups Guide</h6>
+                </div>
+                <div class="card-body">
+                    {% for group_code, group_label in age_groups %}
+                    <div class="mb-2">
+                        <span class="badge bg-secondary">{{ group_label }}</span>
+                        <small class="text-muted d-block mt-1">
+                            {% if group_code == 'infant' %}
+                            Early development and care
+                            {% elif group_code == 'toddler' %}
+                            Active exploration phase
+                            {% elif group_code == 'preschool' %}
+                            Early learning and social skills
+                            {% elif group_code == 'school' %}
+                            Academic and emotional growth
+                            {% elif group_code == 'teen' %}
+                            Independence and identity
+                            {% elif group_code == 'all' %}
+                            General family resources
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ form.media.css }}
+<style>
+    .badge {
+        min-width: 120px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ form.media.js }}
+<script>
+    // Form validation
+    (function() {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms).forEach(function(form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
+</script>
+{% endblock %} 

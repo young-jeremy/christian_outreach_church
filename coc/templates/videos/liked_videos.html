@@ -1,0 +1,285 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .video-card {
+        transition: transform 0.2s;
+    }
+
+    .video-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .video-thumbnail {
+        position: relative;
+        padding-top: 56.25%; /* 16:9 Aspect Ratio */
+        overflow: hidden;
+    }
+
+    .video-thumbnail img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .play-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .play-overlay i {
+        color: white;
+        font-size: 3rem;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    }
+
+    .video-thumbnail:hover .play-overlay {
+        opacity: 1;
+    }
+
+    .like-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        background: rgba(255,255,255,0.9);
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .like-button:hover {
+        transform: scale(1.1);
+    }
+
+    .like-button.liked i {
+        color: #dc3545;
+    }
+
+    .empty-state {
+        padding: 3rem;
+        text-align: center;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2">Liked Videos</h1>
+                    <p class="text-muted">Total liked videos: {{ total_likes }}</p>
+                </div>
+                <div class="btn-group">
+                    <a href="{% url 'videos:category_list' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-collection-play"></i> Browse Videos
+                    </a>
+                </div>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <form class="d-flex gap-2">
+                        <input type="search" name="search" class="form-control"
+                               placeholder="Search liked videos..." value="{{ search_query }}">
+                        <select name="category" class="form-select" style="max-width: 200px;">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}"
+                                    {% if current_category == category.id|stringformat:"s" %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button class="btn btn-outline-primary" type="submit">Filter</button>
+                        {% if search_query or current_category %}
+                        <a href="{% url 'videos:liked_videos' %}" class="btn btn-outline-secondary">Clear</a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+
+            <!-- Videos Grid -->
+            <div class="row g-4">
+                {% for video in videos %}
+                <div class="col-md-4 col-lg-3">
+                    <div class="card h-100 video-card">
+                        <div class="video-thumbnail">
+                            <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}">
+                            <span class="badge bg-dark position-absolute bottom-0 end-0 m-2">
+                                {{ video.duration }}
+                            </span>
+                            <button class="like-button liked" data-video-id="{{ video.id }}">
+                                <i class="bi bi-heart-fill"></i>
+                            </button>
+                            <div class="play-overlay">
+                                <i class="bi bi-play-circle-fill"></i>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ video.title }}</h5>
+                            <p class="card-text text-muted">{{ video.description|truncatechars:100 }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ video.uploader.profile.avatar.url }}"
+                                         class="rounded-circle me-2"
+                                         width="24" height="24"
+                                         alt="{{ video.uploader.username }}">
+                                    <small class="text-muted">{{ video.uploader.username }}</small>
+                                </div>
+                                <small class="text-muted">{{ video.created_at|timesince }} ago</small>
+                            </div>
+                        </div>
+                        <a href="{% url 'videos:video_details' video.id %}"
+                           class="stretched-link"></a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="bi bi-heart display-1"></i>
+                        <h3>No Liked Videos</h3>
+                        {% if search_query or current_category %}
+                        <p>Try adjusting your search or filter criteria</p>
+                        <a href="{% url 'videos:liked_videos' %}" class="btn btn-outline-primary">
+                            Clear Filters
+                        </a>
+                        {% else %}
+                        <p>Start exploring and liking videos that interest you!</p>
+                        <a href="{% url 'videos:category_list' %}" class="btn btn-primary">
+                            Browse Videos
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if videos.has_other_pages %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if videos.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ videos.previous_page_number }}
+                           {% if search_query %}&search={{ search_query }}{% endif %}
+                           {% if current_category %}&category={{ current_category }}{% endif %}">
+                            Previous
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in videos.paginator.page_range %}
+                    <li class="page-item {% if videos.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}
+                           {% if search_query %}&search={{ search_query }}{% endif %}
+                           {% if current_category %}&category={{ current_category }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endfor %}
+
+                    {% if videos.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ videos.next_page_number }}
+                           {% if search_query %}&search={{ search_query }}{% endif %}
+                           {% if current_category %}&category={{ current_category }}{% endif %}">
+                            Next
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle like/unlike functionality
+    document.querySelectorAll('.like-button').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const videoId = this.dataset.videoId;
+            fetch(`/videos/${videoId}/like/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove the video card with animation
+                    const videoCard = this.closest('.col-md-4');
+                    videoCard.style.transition = 'opacity 0.3s';
+                    videoCard.style.opacity = '0';
+                    setTimeout(() => {
+                        videoCard.remove();
+                        // Update total count
+                        const totalElement = document.querySelector('p.text-muted');
+                        const currentTotal = parseInt(totalElement.textContent.match(/\d+/)[0]);
+                        totalElement.textContent = `Total liked videos: ${currentTotal - 1}`;
+
+                        // Check if no videos left
+                        const videosGrid = document.querySelector('.row.g-4');
+                        if (!videosGrid.querySelector('.video-card')) {
+                            location.reload(); // Reload to show empty state
+                        }
+                    }, 300);
+                }
+            });
+        });
+    });
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

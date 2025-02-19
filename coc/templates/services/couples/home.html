@@ -1,0 +1,187 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h2 mb-2">Welcome, {{ profile.get_couple_name }}</h1>
+                            <p class="mb-0">Together since {{ profile.anniversary|date:"F Y" }}</p>
+                        </div>
+                        <a href="{% url 'services:couple_profile' %}" class="btn btn-light">
+                            <i class="bi bi-person-circle"></i> View Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Reading Streak</h6>
+                            <h2 class="mb-0">{{ reading_streak }} days</h2>
+                        </div>
+                        <i class="bi bi-book display-4 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Events Attended</h6>
+                            <h2 class="mb-0">{{ total_events_attended }}</h2>
+                        </div>
+                        <i class="bi bi-calendar-check display-4 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Prayers Answered</h6>
+                            <h2 class="mb-0">{{ total_prayers_answered }}</h2>
+                        </div>
+                        <i class="bi bi-pray display-4 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-purple text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Marriage Stage</h6>
+                            <h2 class="mb-0">{{ profile.get_marriage_stage_display }}</h2>
+                        </div>
+                        <i class="bi bi-heart display-4 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievements Section -->
+    {% if achievements %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Your Achievements</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for achievement in achievements %}
+                <div class="col-md-4 mb-3">
+                    <div class="achievement-card text-center p-3 border rounded">
+                        <i class="bi {{ achievement.icon }} display-4 text-primary mb-2"></i>
+                        <h6>{{ achievement.title }}</h6>
+                        <small class="text-muted">{{ achievement.description }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Reading Plans Progress -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Reading Plans Progress</h5>
+                    <a href="{% url 'services:couple_reading_plans' %}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if reading_plans %}
+                    <div class="list-group list-group-flush">
+                        {% for plan in reading_plans %}
+                        <div class="list-group-item">
+                            <h6 class="mb-1">{{ plan.title }}</h6>
+                            <div class="progress mb-2" style="height: 5px;">
+                                <div class="progress-bar" role="progressbar"
+                                     style="width: {{ plan.completion_percentage }}%"></div>
+                            </div>
+                            <small class="text-muted">{{ plan.completion_percentage|floatformat:1 }}% Complete</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">No reading plans started yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Prayer Requests -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Prayer Requests</h5>
+                    <a href="{% url 'services:couple_prayers' %}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_prayers %}
+                    <div class="list-group list-group-flush">
+                        {% for prayer in recent_prayers %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ prayer.title }}</h6>
+                                    <small class="text-muted">{{ prayer.created_at|timesince }} ago</small>
+                                </div>
+                                <span class="badge bg-{{ prayer.status }}">{{ prayer.get_status_display }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">No prayer requests yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    .achievement-card {
+        transition: all 0.3s ease;
+    }
+    .achievement-card:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-5px);
+    }
+    .bg-purple {
+        background-color: #6f42c1;
+    }
+</style>
+{% endblock %}

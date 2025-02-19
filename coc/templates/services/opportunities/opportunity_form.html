@@ -1,0 +1,180 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .required-field label::after {
+        content: " *";
+        color: red;
+    }
+    
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        {% if form.instance.pk %}
+                        Edit Volunteer Opportunity
+                        {% else %}
+                        Create Volunteer Opportunity
+                        {% endif %}
+                    </h5>
+                    <a href="{% url 'services:opportunity_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> Back to List
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="opportunityForm">
+                        {% csrf_token %}
+
+                        <div class="row g-3">
+                            <!-- Title -->
+                            <div class="col-12 required-field">
+                                {{ form.title|as_crispy_field }}
+                            </div>
+
+                            <!-- Ministry and Status -->
+                            <div class="col-md-6">
+                                {{ form.ministry|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.status|as_crispy_field }}
+                            </div>
+
+                            <!-- Description -->
+                            <div class="col-12">
+                                {{ form.description|as_crispy_field }}
+                                <div class="help-text">
+                                    Provide a detailed description of the volunteer opportunity
+                                </div>
+                            </div>
+
+                            <!-- Requirements -->
+                            <div class="col-12">
+                                {{ form.requirements|as_crispy_field }}
+                                <div class="help-text">
+                                    List any specific requirements or qualifications needed
+                                </div>
+                            </div>
+
+                            <!-- Coordinator -->
+                            <div class="col-12">
+                                {{ form.coordinator|as_crispy_field }}
+                            </div>
+
+                            <!-- Frequency and Time Commitment -->
+                            <div class="col-md-6">
+                                {{ form.frequency|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.time_commitment|as_crispy_field }}
+                            </div>
+
+                            <!-- Location -->
+                            <div class="col-12">
+                                {{ form.location|as_crispy_field }}
+                            </div>
+
+                            <!-- Dates -->
+                            <div class="col-md-6">
+                                {{ form.start_date|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.end_date|as_crispy_field }}
+                                <div class="help-text">
+                                    Leave blank for ongoing opportunities
+                                </div>
+                            </div>
+
+                            <!-- Max Volunteers -->
+                            <div class="col-md-6">
+                                {{ form.max_volunteers|as_crispy_field }}
+                                <div class="help-text">
+                                    Leave blank for unlimited spots
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                {% if form.instance.pk %}
+                                Update Opportunity
+                                {% else %}
+                                Create Opportunity
+                                {% endif %}
+                            </button>
+                            <a href="{% url 'services:opportunity_list' %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize date pickers
+        flatpickr("#id_start_date", {
+            dateFormat: "Y-m-d",
+            minDate: "today",
+        });
+
+        flatpickr("#id_end_date", {
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            allowInput: true,
+        });
+
+        // Form validation
+        const form = document.getElementById('opportunityForm');
+        form.addEventListener('submit', function(e) {
+            const startDate = document.getElementById('id_start_date').value;
+            const endDate = document.getElementById('id_end_date').value;
+
+            if (endDate && startDate > endDate) {
+                e.preventDefault();
+                alert('End date must be after start date');
+                return;
+            }
+
+            const maxVolunteers = document.getElementById('id_max_volunteers').value;
+            if (maxVolunteers && parseInt(maxVolunteers) < 1) {
+                e.preventDefault();
+                alert('Maximum volunteers must be at least 1');
+                return;
+            }
+        });
+
+        // Dynamic status update based on max volunteers
+        const maxVolunteersInput = document.getElementById('id_max_volunteers');
+        const statusSelect = document.getElementById('id_status');
+
+        maxVolunteersInput.addEventListener('change', function() {
+            if (this.value && parseInt(this.value) <= 0) {
+                statusSelect.value = 'closed';
+            }
+        });
+    });
+</script>
+{% endblock %}

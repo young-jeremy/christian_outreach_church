@@ -1,0 +1,72 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Back Button -->
+            <div class="mb-4">
+                <a class="btn btn-outline-secondary" href="{% url 'coc:offline_videos' %}">
+                    <i class="bi bi-arrow-left"></i> Back to Downloads
+                </a>
+            </div>
+
+            <!-- Video Player -->
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="video-container" style="position: relative; padding-bottom: 56.25%;">
+                        <video class="position-absolute top-0 start-0 w-100 h-100"
+                               controls
+                               id="offlinePlayer"
+                               poster="{{ downloaded.video.thumbnail.url }}"
+                               preload="auto">
+                            <source src="file://{{ downloaded.local_path }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Info -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h1 class="h3">{{ downloaded.video.title }}</h1>
+                    <div class="d-flex align-items-center text-muted mb-3">
+                        <span><i class="bi bi-clock"></i> {{ downloaded.video.duration }}</span>
+                        <span class="mx-3">•</span>
+                        <span><i class="bi bi-download"></i> {{ downloaded.file_size|filesizeformat }}</span>
+                        <span class="mx-3">•</span>
+                        <span>Downloaded {{ downloaded.downloaded_at|timesince }} ago</span>
+                    </div>
+                    <p>{{ downloaded.video.description }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const video = document.getElementById('offlinePlayer');
+
+        // Restore playback position
+        const savedPosition = localStorage.getItem(`offline_video_${downloaded.video.id}_position`);
+        if (savedPosition) {
+            video.currentTime = parseFloat(savedPosition);
+        }
+
+        // Save playback position periodically
+        video.addEventListener('timeupdate', function() {
+            localStorage.setItem(`offline_video_${downloaded.video.id}_position`, video.currentTime);
+        });
+
+        // Clear position when video ends
+        video.addEventListener('ended', function() {
+            localStorage.removeItem(`offline_video_${downloaded.video.id}_position`);
+        });
+    });
+</script>
+{% endblock %} 

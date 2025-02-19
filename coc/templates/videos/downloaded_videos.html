@@ -1,0 +1,39 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/downloaded_videos.css' %}">
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Downloaded Videos</h2>
+    {% if videos %}
+    <div class="row">
+        {% for video in videos %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                {% if video.thumbnail %}
+                <img src="{{ video.thumbnail.url }}" class="card-img-top" alt="{{ video.title }}">
+                {% else %}
+                <div class="card-img-top bg-secondary text-white d-flex justify-content-center align-items-center"
+                     style="height: 200px;">
+                    <i class="fas fa-video fa-3x"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ video.title }}</h5>
+                    <p class="card-text">
+                        <small class="text-muted">Downloaded: {{ video.download_date|date:"F d, Y" }}</small>
+                    </p>
+                    <p class="card-text">
+                        <small class="text-muted">Size: {{ video.video_size|filesizeformat }}</small>
+                    </p>
+                    <a href="{{ video.file_path.url }}" class="btn btn-primary" download>Download Again</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>You haven't downloaded any videos yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
+

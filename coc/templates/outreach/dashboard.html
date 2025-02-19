@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar included from base template -->
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Prayer Requests</h1>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newPrayerRequestModal">
+                    <i class="fas fa-plus"></i> New Prayer Request
+                </button>
+            </div>
+
+            <!-- Prayer Requests List -->
+            <div class="row">
+                {% for prayer in prayer_requests %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ prayer.subject }}</h5>
+                            <p class="card-text">{{ prayer.request|truncatewords:30 }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    {% if not prayer.is_anonymous %}
+                                    By {{ prayer.requester.get_full_name }}
+                                    {% else %}
+                                    Anonymous
+                                    {% endif %}
+                                </small>
+                                <small class="text-muted">{{ prayer.created_at|timesince }} ago</small>
+                            </div>
+                            {% if prayer.is_answered %}
+                            <div class="mt-2">
+                                <span class="badge bg-success">Answered</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <p class="text-center">No prayer requests yet. Be the first to share!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- New Prayer Request Modal -->
+<div class="modal fade" id="newPrayerRequestModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Prayer Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {{ form.as_p }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

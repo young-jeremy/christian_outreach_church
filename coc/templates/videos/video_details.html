@@ -1,0 +1,868 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+
+    <style>
+    .hover-bg-light:hover {
+        background-color: rgba(0,0,0,0.03);
+        transition: background-color 0.2s ease;
+    }
+
+    .video-stats {
+        font-size: 0.8rem;
+        line-height: 1.2;
+    }
+
+    .recommended-video {
+        transition: all 0.2s ease;
+    }
+
+    .recommended-video:hover {
+        transform: translateX(5px);
+    }
+    </style>
+
+
+{% block content %}
+
+<!-- Page content-->
+<div class="container">
+    <div class="row">
+        <!-- Blog entries-->
+        <div class="col-lg-8">
+            <!-- Featured blog post-->
+            <div class="card mb-4">
+                <div class="video-player">
+                    <video autoplay controls height="100%" id="video-player" width="100%">
+                        <source src="{{ video.path.url }}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+                <h2 class="card-title">{{ video.title }}</h2>
+
+                <div class="card-body">
+                    <!-- Video stats and actions row -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="video-stats">
+                            <span>{{ video.views }} Views</span>
+                            <span class="mx-2">•</span>
+                            <span>{{ video.created_at|timesince }} ago</span>
+                        </div>
+
+                        <!-- Action buttons -->
+                        <div class="video-actions d-flex align-items-center gap-3">
+                            <!-- Like/Dislike Buttons -->
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-secondary" id="likeBtn" data-video-id="{{ video.id }}">
+                                    <i class="bi {% if user_like %}bi-hand-thumbs-up-fill{% else %}bi-hand-thumbs-up{% endif %}"></i>
+                                    <span class="like-count">{{ video.likes.count }}</span>
+                                </button>
+                                <button class="btn btn-outline-secondary" id="dislikeBtn" data-video-id="{{ video.id }}">
+                                    <i class="bi {% if user_dislike %}bi-hand-thumbs-down-fill{% else %}bi-hand-thumbs-down{% endif %}"></i>
+                                    <span class="dislike-count">{{ video.dislikes.count }}</span>
+                                </button>
+                            </div>
+
+                            <!-- Share Button -->
+                            <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#shareModal">
+                                <i class="bi bi-share"></i> Share
+                            </button>
+
+                            <!-- Download Button -->
+                            {% if video.allow_downloads %}
+                            <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#downloadModal">
+                                <i class="bi bi-download"></i> Download
+                            </button>
+                            {% endif %}
+
+                            <!-- More Options Dropdown -->
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="addToPlaylist('{{ video.id }}')">
+                                            <i class="bi bi-plus-circle"></i> Add to playlist
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="saveToWatchLater('{{ video.id }}')">
+                                            <i class="bi bi-clock"></i> Save to Watch Later
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#reportModal">
+                                            <i class="bi bi-flag"></i> Report
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Video description -->
+                    <div class="container content-container">
+                        <div class="content-preview" id="description-{{ video.id }}">
+                            <p class="card-text">{{ video.description|truncatechars:30 }}</p>
+                            {% if video.description|length > 35 %}
+                                <a href="javascript:void(0);" onclick="toggleDescription('{{ video.id }}')">Show more</a>
+                            {% endif %}
+                        </div>
+                        <div class="content-full" id="full-description-{{ video.id }}" style="display: none;">
+                            {{ video.description }}
+                            <a href="javascript:void(0);" onclick="toggleDescription('{{ video.id }}')">Show less</a>
+                        </div>
+                    </div>
+
+
+
+                        {% if video.uploader and video.uploader.channel %}
+                            {% if is_subscribed %}
+                                <div class="d-flex align-items-center gap-2">
+                                    <button class="btn btn-outline-danger" id="subscribeBtn"
+                                            data-channel-id="{{ video.uploader.channel.id }}"
+                                            data-action="unsubscribe">
+                                        <i class="bi bi-bell-fill me-1"></i>
+                                        Unsubscribe
+                                    </button>
+                                    <div class="dropdown">
+                                        <button class="btn btn-outline-secondary dropdown-toggle"
+                                                type="button" data-bs-toggle="dropdown">
+                                            <i class="bi bi-gear"></i>
+                                        </button>
+                                        <ul class="dropdown-menu notification-settings">
+                                            <li class="px-3 py-2">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox"
+                                                           id="allNotifications"
+                                                           {% if notification_settings.all_notifications %}checked{% endif %}
+                                                           data-channel="{{ video.uploader.channel.id }}"
+                                                           data-type="all">
+                                                    <label class="form-check-label" for="allNotifications">
+                                                        All notifications
+                                                    </label>
+                                                </div>
+                                            </li>
+                                            <li class="px-3 py-2">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox"
+                                                           id="newVideos"
+                                                           {% if notification_settings.new_videos %}checked{% endif %}
+                                                           data-channel="{{ video.uploader.channel.id }}"
+                                                           data-type="videos">
+                                                    <label class="form-check-label" for="newVideos">
+                                                        New videos only
+                                                    </label>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <button class="btn btn-primary" id="subscribeBtn"
+                                        data-channel-id="{{ video.uploader.channel.id }}"
+                                        data-action="subscribe">
+                                    <i class="bi bi-bell me-1"></i>
+                                    Subscribe
+                                </button>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Comments section -->
+                    <div class="comments-section mt-4">
+                        <h4>Comments</h4>
+                        {% if user.is_authenticated %}
+                            <form method="post" action="{% url 'videos:add_video_comment' video_id=video.id %}">
+                                {% csrf_token %}
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" name="text" placeholder="Add a comment...">
+                                    <button class="btn btn-primary" type="submit">Comment</button>
+                                </div>
+                            </form>
+                        {% endif %}
+
+                        {% for comment in comments %}
+                            <div class="comment mb-3">
+                                <div class="d-flex">
+                                    {% if comment.user.profile.avatar %}
+                                        <img src="{{ comment.user.profile.avatar.url }}" alt=""
+                                             class="rounded-circle me-2" style="width: 32px; height: 32px;">
+                                    {% else %}
+                                        <div class="rounded-circle bg-secondary me-2" style="width: 32px; height: 32px;"></div>
+                                    {% endif %}
+                                    <div>
+                                        <h6 class="mb-0">{{ comment.user.username }}</h6>
+                                        <p class="mb-1">{{ comment.text }}</p>
+                                        <small class="text-muted">{{ comment.created_at|timesince }} ago</small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- Pagination-->
+
+        </div>
+        <!-- Side widgets-->
+
+        <!-- queue container-->
+
+        <div class="col-lg-4 queue-container">
+            <!-- Queue widget-->
+            <div class="card mb-4 queue-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Queue</span>
+                    {% if queue_items %}
+                    <button class="btn btn-sm btn-danger" onclick="clearQueue()">Clear Queue</button>
+                    {% endif %}
+                </div>
+
+                <div class="card-body" id="queue-items">
+                    {% for item in queue_items %}
+                    <div class="video-item d-flex align-items-center mb-2" data-video-id="{{ item.video.id }}">
+                        <div class="me-2">
+                            <i class="bi bi-grip-vertical text-muted handle"></i>
+                        </div>
+                        <div class="position-relative" style="width: 120px;">
+                            <img src="{{ item.video.thumbnail.url }}"
+                                 alt="{{ item.video.title }}"
+                                 class="rounded"
+                                 style="width: 120px; height: 67px; object-fit: cover;">
+                            <span class="badge bg-dark position-absolute bottom-0 end-0 m-1">
+                        {{ item.video.duration }}
+                    </span>
+                        </div>
+                        <div class="flex-grow-1 ms-2">
+                            <h6 class="mb-0">{{ item.video.title|truncatechars:40 }}</h6>
+                            <small class="text-muted">Added {{ item.added_at|timesince }} ago</small>
+                </div>
+                        <button class="btn btn-sm btn-outline-danger ms-2 remove-video"
+                                data-video-id="{{ item.video.id }}">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                    {% empty %}
+                    <p class="text-center text-muted my-3">No videos in queue.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- end of queue container -->
+
+
+        <div class="card mb-4">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Recommended Videos</h5>
+                                    {% if recommended_videos %}
+                                    <span class="badge bg-secondary">{{ recommended_videos.count }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="card-body p-0">
+                                    {% for rec_video in recommended_videos %}
+                                    <a href="{{ rec_video.get_absolute_url }}" class="text-decoration-none">
+                                        <div class="recommended-video p-2 border-bottom hover-bg-light">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 position-relative">
+                                                    <img src="{{ rec_video.thumbnail.url }}"
+                                                         alt="{{ rec_video.title }}"
+                                                         class="rounded"
+                                                         style="width: 160px; height: 90px; object-fit: cover;">
+                                                    {% if rec_video.duration %}
+                                                    <span class="badge bg-dark position-absolute bottom-0 end-0 m-1">
+                                                    </span>
+                                                    {% endif %}
+                                                    {% if rec_video.privacy != 'PUBLIC' %}
+                                                    <span class="badge bg-secondary position-absolute top-0 start-0 m-1">
+                                                        {{ rec_video.get_privacy_display }}
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex-grow-1 ms-3">
+                                                    <h6 class="mb-1 text-dark">{{ rec_video.title|truncatechars:60 }}</h6>
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        {% if rec_video.uploader.profile.avatar %}
+                                                            <img src="{{ rec_video.uploader.profile.avatar.url }}"
+                                                                 alt=""
+                                                                 class="rounded-circle me-2"
+                                                                 style="width: 24px; height: 24px; object-fit: cover;">
+                                                        {% endif %}
+                                                        <small class="text-muted">{{ rec_video.uploader.profile.display_name }}</small>
+                                                    </div>
+                                                    <div class="video-stats">
+                                                        <small class="text-muted">
+                                                            {{ rec_video.views }} views
+                                                            {% if rec_video.likes_count %}
+                                                            • {{ rec_video.likes_count }} likes
+                                                            {% endif %}
+                                                        </small>
+                                                        <br>
+                                                        <small class="text-muted">{{ rec_video.created_at|timesince }} ago</small>
+                                                    </div>
+                                                    {% if rec_video.promoted %}
+                                                    <span class="badge bg-primary mt-1">Promoted</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    {% empty %}
+                                    <div class="text-center py-4">
+                                        <i class="bi bi-collection-play fs-1 text-muted"></i>
+                                        <p class="text-muted mt-2">No recommendations available</p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Categories widget -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Categories</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% for category, _ in video.CATEGORY_CHOICES %}
+                                        <a href="{% url 'videos:category_list' %}?category={{ category }}"
+                                           class="text-decoration-none">
+                                            <span class="badge {% if video.category == category %}bg-primary{% else %}bg-secondary{% endif %}">
+                                                {{ category }}
+                                            </span>
+                                        </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+            </div>
+
+
+
+
+
+
+
+<script>
+    function toggleDescription(contentId) {
+        var shortDesc = document.getElementById("description-" + contentId);
+        var fullDesc = document.getElementById("full-description-" + contentId);
+        if (shortDesc.style.display === "none") {
+            shortDesc.style.display = "block";
+            fullDesc.style.display = "none";
+        } else {
+            shortDesc.style.display = "none";
+            fullDesc.style.display = "block";
+        }
+    }
+</script>
+
+<script>
+    $(document).ready(function() {
+        var video = document.getElementById('video-player');
+        var hasViewed = false;
+        var viewThreshold = 30; // 30 seconds to count a view
+        var viewTimer;
+
+        video.onplay = function() {
+            viewTimer = setTimeout(function() {
+                if (!hasViewed) {
+                    sendViewUpdate();
+                }
+            }, viewThreshold * 1000); // 30 seconds
+        };
+
+        video.onpause = function() {
+            clearTimeout(viewTimer); // Cancel the timer if video is paused before 30 seconds
+        };
+
+        function sendViewUpdate() {
+            // Only send the view count request if not already counted
+            if (!hasViewed) {
+                hasViewed = true;
+                $.ajax({
+                    url: "{% url 'videos:video_details' video_id=video.id %}",
+                    type: "POST",
+                    data: {
+                        'csrfmiddlewaretoken': '{{ csrf_token }}',
+                    },
+                    success: function(response) {
+                        // Update view count display on the page
+                        $('.card-footer small').text('Uploaded {{ video.uploaded_at|timesince }} ago | Views: ' + response.views);
+                    },
+                    error: function() {
+                        alert('Error updating view count');
+                    }
+                });
+            }
+        }
+    });
+</script>
+<script>
+    $(document).ready(function() {
+        var video = document.getElementById('video-player');
+        var playButton = $('#play-video');
+
+        // Play the video on button click if it's not already playing
+        playButton.click(function() {
+            video.play();
+            playButton.hide(); // Hide the play button after video starts
+        });
+
+        // Video Play Event
+        video.onplay = function() {
+            console.log('Video is playing');
+        };
+
+        // Check for video file availability
+        video.onerror = function() {
+            alert('Video failed to load. Please check the video URL and format.');
+        };
+
+        // Video Pause Event
+        video.onpause = function() {
+            console.log('Video is paused');
+        };
+
+        // Check if video is loaded and ready to play
+        video.onloadeddata = function() {
+            console.log('Video is ready to play');
+        };
+    });
+</script>
+<script>
+    function toggleContent() {
+        const contentPreview = document.getElementById('contentPreview');
+        const contentFull = document.getElementById('contentFull');
+        const toggleButton = document.getElementById('toggleButton');
+
+        if (contentFull.style.display === "none") {
+            contentFull.style.display = "block";
+            contentPreview.style.display = "none";
+            toggleButton.textContent = "Show Less";
+        } else {
+            contentFull.style.display = "none";
+            contentPreview.style.display = "block";
+            toggleButton.textContent = "Read More";
+        }
+    }
+</script>
+
+<!-- script for the queue -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize drag and drop for queue
+        const queueList = document.getElementById('queue-items');
+        if (queueList) {
+            new Sortable(queueList, {
+                handle: '.handle',
+                animation: 150,
+                onEnd: function(evt) {
+                    const videoIds = Array.from(evt.to.children)
+                        .filter(item => item.dataset.videoId)
+                        .map(item => item.dataset.videoId);
+                    updateQueueOrder(videoIds);
+                }
+            });
+        }
+
+        // Handle video removal
+        document.querySelectorAll('.remove-video').forEach(button => {
+            button.addEventListener('click', function() {
+                removeFromQueue(this.dataset.videoId);
+            });
+        });
+     // Handle adding to queue
+        document.querySelector('.add-to-queue')?.addEventListener('click', function() {
+            const videoId = this.dataset.videoId;
+            addToQueue(videoId);
+        });
+    });
+
+    function addToQueue(videoId) {
+        fetch(`{% url 'videos:add_to_queue' 0 %}`.replace('0', videoId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+    function removeFromQueue(videoId) {
+        fetch(`{% url 'videos:remove_from_queue' 0 %}`.replace('0', videoId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+    function updateQueueOrder(videoIds) {
+        fetch('{% url "videos:reorder_queue" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({ video_ids: videoIds })
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+        }
+</script>
+
+<!-- end of script to the queue -->
+
+
+</body>
+{% endblock content %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// Like/Dislike functionality
+document.getElementById('likeBtn').addEventListener('click', function() {
+    const videoId = this.dataset.videoId;
+    fetch(`/videos/${videoId}/like/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            this.querySelector('i').classList.toggle('bi-hand-thumbs-up');
+            this.querySelector('i').classList.toggle('bi-hand-thumbs-up-fill');
+            this.querySelector('.like-count').textContent = data.likes_count;
+
+            // Update dislike button if needed
+            const dislikeBtn = document.getElementById('dislikeBtn');
+            if (data.removed_dislike) {
+                dislikeBtn.querySelector('i').classList.replace('bi-hand-thumbs-down-fill', 'bi-hand-thumbs-down');
+                dislikeBtn.querySelector('.dislike-count').textContent = data.dislikes_count;
+            }
+        }
+    });
+});
+
+// Share functionality
+function copyVideoUrl() {
+    const urlInput = document.getElementById('videoUrl');
+    urlInput.select();
+    document.execCommand('copy');
+
+    // Show copied notification
+    const tooltip = new bootstrap.Tooltip(urlInput, {
+        title: 'Copied!',
+        trigger: 'manual'
+    });
+    tooltip.show();
+    setTimeout(() => tooltip.dispose(), 1000);
+}
+
+function shareOnFacebook() {
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+}
+
+function shareOnTwitter() {
+    const url = encodeURIComponent(window.location.href);
+    const text = encodeURIComponent('Check out this video!');
+    window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
+}
+
+function shareOnWhatsApp() {
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://wa.me/?text=${url}`, '_blank');
+}
+
+function shareOnEmail() {
+    const url = window.location.href;
+    const subject = encodeURIComponent('Check out this video');
+    const body = encodeURIComponent(`I thought you might like this video: ${url}`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+// Download functionality
+function downloadVideo(quality, videoId) {
+    fetch(`/videos/${videoId}/download/${quality}/`, {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+        }
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `video_${quality}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+    });
+}
+
+// Report functionality
+document.getElementById('reportForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+
+    fetch(`/videos/${videoId}/report/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('reportModal'));
+            modal.hide();
+            // Show success message
+            showToast('Report submitted successfully');
+        }
+    });
+});
+
+// Playlist functionality
+function addToPlaylist(videoId) {
+    const modal = new bootstrap.Modal(document.getElementById('playlistModal'));
+    modal.show();
+}
+
+function togglePlaylist(playlistId, videoId) {
+    fetch(`/playlists/${playlistId}/toggle/${videoId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message);
+        }
+    });
+}
+
+// Watch Later functionality
+function saveToWatchLater(videoId) {
+    fetch(`/videos/${videoId}/watch-later/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Added to Watch Later');
+        }
+    });
+}
+
+// Utility functions
+function showToast(message) {
+    const toast = new bootstrap.Toast(document.getElementById('notificationToast'));
+    document.querySelector('#notificationToast .toast-body').textContent = message;
+    toast.show();
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}
+
+<!-- Add this toast for notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="settingsToast" class="toast" role="alert">
+        <div class="toast-header">
+            <strong class="me-auto">Notification</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body"></div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Share Video</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="share-link mb-3">
+                    <label>Video Link</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="videoUrl"
+                               value="{{ request.build_absolute_uri }}" readonly>
+                        <button class="btn btn-outline-secondary" onclick="copyVideoUrl()">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="share-options">
+                    <div class="d-flex justify-content-around">
+                        <button class="btn btn-outline-primary" onclick="shareOnFacebook()">
+                            <i class="bi bi-facebook"></i>
+                        </button>
+                        <button class="btn btn-outline-info" onclick="shareOnTwitter()">
+                            <i class="bi bi-twitter"></i>
+                        </button>
+                        <button class="btn btn-outline-success" onclick="shareOnWhatsApp()">
+                            <i class="bi bi-whatsapp"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="shareOnEmail()">
+                            <i class="bi bi-envelope"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Download Modal -->
+<div class="modal fade" id="downloadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Download Video</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="download-options">
+                    {% if video.download_options %}
+                        {% for option in video.download_options %}
+                        <button class="btn btn-outline-primary mb-2 w-100"
+                                onclick="downloadVideo('{{ option.quality }}', '{{ video.id }}')">
+                            {{ option.quality }} ({{ option.size }})
+                        </button>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-center">No download options available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Modal -->
+<div class="modal fade" id="reportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Report Video</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reportForm">
+                    <div class="mb-3">
+                        <label class="form-label">Reason for reporting</label>
+                        <select class="form-select" name="reason" required>
+                            <option value="">Select a reason</option>
+                            <option value="inappropriate">Inappropriate content</option>
+                            <option value="copyright">Copyright violation</option>
+                            <option value="spam">Spam or misleading</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Additional details</label>
+                        <textarea class="form-control" name="details" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Submit Report</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add to Playlist Modal -->
+<div class="modal fade" id="playlistModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Save to Playlist</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="playlists-list">
+                    {% for playlist in user_playlists %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox"
+                               id="playlist{{ playlist.id }}"
+                               {% if video in playlist.videos.all %}checked{% endif %}
+                               onchange="togglePlaylist('{{ playlist.id }}', '{{ video.id }}')">
+                        <label class="form-check-label" for="playlist{{ playlist.id }}">
+                            {{ playlist.name }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                <hr>
+                <form id="newPlaylistForm" class="mt-3">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="New playlist name">
+                        <button class="btn btn-primary" type="submit">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

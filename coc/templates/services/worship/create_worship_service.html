@@ -1,0 +1,209 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Create Worship Service</h5>
+                    <a href="{% url 'services:worship_service_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> Back to Services
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="serviceForm">
+                        {% csrf_token %}
+
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            Please correct the errors below.
+                        </div>
+                        {% endif %}
+
+                        <div class="row g-3">
+                            <!-- Basic Information -->
+                            <div class="col-md-12">
+                                {{ form.title|as_crispy_field }}
+                            </div>
+
+                            <div class="col-md-4">
+                                {{ form.service_type|as_crispy_field }}
+                            </div>
+
+                            <div class="col-md-4">
+                                {{ form.status|as_crispy_field }}
+                            </div>
+
+                            <div class="col-md-4">
+                                {{ form.date|as_crispy_field }}
+                            </div>
+
+                            <!-- Theme and Description -->
+                            <div class="col-md-12">
+                                {{ form.theme|as_crispy_field }}
+                            </div>
+
+                            <div class="col-12">
+                                {{ form.description|as_crispy_field }}
+                            </div>
+
+                            <!-- Location -->
+                            <div class="col-md-12">
+                                {{ form.location|as_crispy_field }}
+                            </div>
+
+                            <div class="col-12">
+                                {{ form.is_online|as_crispy_field }}
+                            </div>
+
+                            <div id="onlineFields" style="display: none;">
+                                <div class="col-md-6">
+                                    {{ form.live_stream_url|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.meeting_link|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- Service Leaders -->
+                            <div class="col-md-6">
+                                {{ form.worship_leader|as_crispy_field }}
+                            </div>
+
+                            <div class="col-md-6">
+                                {{ form.preacher|as_crispy_field }}
+                            </div>
+
+                            <div class="col-12">
+                                {{ form.team_members|as_crispy_field }}
+                            </div>
+
+                            <!-- Service Content -->
+                            <div class="col-12">
+                                {{ form.song_list|as_crispy_field }}
+                            </div>
+
+                            <div class="col-12">
+                                {{ form.service_order|as_crispy_field }}
+                            </div>
+
+                            <!-- Notes -->
+                            <div class="col-12">
+                                {{ form.notes|as_crispy_field }}
+                            </div>
+
+                            <div class="col-12">
+                                {{ form.special_notes|as_crispy_field }}
+                            </div>
+
+                            <!-- Media -->
+                            <div class="col-md-6">
+                                {{ form.image|as_crispy_field }}
+                            </div>
+
+                            <div class="col-md-6">
+                                {{ form.banner|as_crispy_field }}
+                            </div>
+
+                            <!-- Settings -->
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Service Settings</h6>
+                                        {{ form.registration_required|as_crispy_field }}
+
+                                        <div id="registrationFields" style="display: none;">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    {{ form.max_attendees|as_crispy_field }}
+                                                </div>
+                                                <div class="col-md-6">
+                                                    {{ form.registration_deadline|as_crispy_field }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{ form.is_featured|as_crispy_field }}
+                                        {{ form.is_special_event|as_crispy_field }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Buttons -->
+                            <div class="col-12">
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                                    <button type="button" class="btn btn-outline-secondary me-md-2" onclick="history.back()">
+                                        Cancel
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        Create Service
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Select2
+        $('.select2').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+
+        // Initialize date pickers
+        flatpickr("#id_date", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            minDate: "today",
+        });
+
+        flatpickr("#id_registration_deadline", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            minDate: "today",
+        });
+
+        // Toggle online service fields
+        const onlineCheckbox = document.getElementById('id_is_online');
+        const onlineFields = document.getElementById('onlineFields');
+
+        function toggleOnlineFields() {
+            onlineFields.style.display = onlineCheckbox.checked ? 'block' : 'none';
+        }
+
+        onlineCheckbox.addEventListener('change', toggleOnlineFields);
+        toggleOnlineFields();
+
+        // Toggle registration fields
+        const registrationCheckbox = document.getElementById('id_registration_required');
+        const registrationFields = document.getElementById('registrationFields');
+
+        function toggleRegistrationFields() {
+            registrationFields.style.display = registrationCheckbox.checked ? 'block' : 'none';
+        }
+
+        registrationCheckbox.addEventListener('change', toggleRegistrationFields);
+        toggleRegistrationFields();
+    });
+</script>
+{% endblock %}

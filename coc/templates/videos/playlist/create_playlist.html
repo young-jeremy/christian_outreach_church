@@ -1,0 +1,136 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Create New Playlist</h3>
+                    <a class="btn btn-outline-secondary btn-sm" href="{% url 'videos:playlist_list' %}">
+                        <i class="bi bi-arrow-left"></i> Back to Playlists
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form enctype="multipart/form-data" method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ form.title.id_for_label }}">Title</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.title.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.description.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Describe what this playlist is about</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ form.thumbnail.id_for_label }}">Thumbnail</label>
+                            <div class="input-group">
+                                {{ form.thumbnail }}
+                            </div>
+                            {% if form.thumbnail.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.thumbnail.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Optional: Upload a cover image for your playlist</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                {{ form.is_public }}
+                                <label class="form-check-label" for="{{ form.is_public.id_for_label }}">
+                                    Make this playlist public
+                                </label>
+                            </div>
+                            <div class="form-text">Public playlists can be seen by everyone</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-plus-circle"></i> Create Playlist
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Custom styling for form elements */
+    .form-control:focus, .form-select:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .input-group .form-control:focus {
+        z-index: 3;
+    }
+
+    /* Thumbnail preview */
+    #thumbnail-preview {
+        max-width: 200px;
+        max-height: 200px;
+        object-fit: cover;
+        margin-top: 10px;
+    }
+
+    /* Form validation styles */
+    .invalid-feedback {
+        display: block;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add Bootstrap classes to form elements
+        document.querySelectorAll('input[type="text"], textarea').forEach(input => {
+            input.classList.add('form-control');
+        });
+
+        document.querySelector('input[type="file"]').classList.add('form-control');
+        document.querySelector('input[type="checkbox"]').classList.add('form-check-input');
+
+        // Thumbnail preview
+        const thumbnailInput = document.querySelector('input[type="file"]');
+        thumbnailInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    let preview = document.getElementById('thumbnail-preview');
+                    if (!preview) {
+                        preview = document.createElement('img');
+                        preview.id = 'thumbnail-preview';
+                        preview.className = 'img-thumbnail';
+                        thumbnailInput.parentNode.appendChild(preview);
+                    }
+                    preview.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    });
+</script>
+{% endblock %}

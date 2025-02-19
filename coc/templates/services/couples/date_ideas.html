@@ -1,0 +1,147 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2">Date Ideas</h1>
+                    <p class="text-muted">Discover fun and meaningful ways to spend time together</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            {{ current_category|default:"All Categories" }}
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="?category=all">All Categories</a></li>
+                            <li><a class="dropdown-item" href="?category=romantic">Romantic</a></li>
+                            <li><a class="dropdown-item" href="?category=adventure">Adventure</a></li>
+                            <li><a class="dropdown-item" href="?category=budget">Budget-Friendly</a></li>
+                            <li><a class="dropdown-item" href="?category=athome">At Home</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Ideas Grid -->
+    <div class="row">
+        {% if date_ideas %}
+            {% for idea in date_ideas %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    {% if idea.image %}
+                    <img src="{{ idea.image.url }}" class="card-img-top" alt="{{ idea.title }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">{{ idea.title }}</h5>
+                            <span class="badge bg-{{ idea.get_category_class }}">
+                                {{ idea.get_category_display }}
+                            </span>
+                        </div>
+                        <p class="card-text">{{ idea.description }}</p>
+                        {% if idea.estimated_cost %}
+                        <p class="text-muted">
+                            <i class="bi bi-currency-dollar"></i> Estimated Cost: {{ idea.estimated_cost }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-clock"></i> {{ idea.duration }}
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm"
+                                    onclick="saveDateIdea({{ idea.id }})">
+                                <i class="bi bi-bookmark"></i> Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-heart display-1 text-muted"></i>
+            <h3 class="mt-3">No Date Ideas Found</h3>
+            <p class="text-muted">Check back later for new ideas!</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Saved Ideas Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Saved Ideas</h5>
+                </div>
+                <div class="card-body">
+                    {% if saved_ideas %}
+                    <div class="row">
+                        {% for idea in saved_ideas %}
+                        <div class="col-md-6 col-lg-3 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ idea.title }}</h6>
+                                    <p class="card-text small">{{ idea.description|truncatewords:20 }}</p>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <button class="btn btn-outline-danger btn-sm"
+                                            onclick="removeSavedIdea({{ idea.id }})">
+                                        <i class="bi bi-trash"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">No saved date ideas yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function saveDateIdea(ideaId) {
+    fetch(`/services/couples/date-ideas/${ideaId}/save/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            location.reload();
+        }
+    });
+}
+
+function removeSavedIdea(ideaId) {
+    fetch(`/services/couples/date-ideas/${ideaId}/remove/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            location.reload();
+        }
+    });
+}
+</script>
+{% endblock %} 

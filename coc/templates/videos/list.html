@@ -1,0 +1,89 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Videos</h1>
+                <a href="{% url 'videos:video_upload' %}" class="btn btn-primary">
+                    <i class="bi bi-cloud-upload"></i> Upload Video
+                </a>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <form class="d-flex">
+                        <input type="search" name="search" class="form-control me-2" 
+                               placeholder="Search videos..." value="{{ request.GET.search }}">
+                        <button class="btn btn-outline-primary" type="submit">Search</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Videos Grid -->
+            <div class="row g-4">
+                {% for video in videos %}
+                <div class="col-md-4 col-lg-3">
+                    <div class="card h-100">
+                        <div class="video-thumbnail position-relative">
+                            <img src="{{ video.thumbnail.url }}" class="card-img-top" alt="{{ video.title }}">
+                            <span class="badge bg-dark position-absolute bottom-0 end-0 m-2">
+                                {{ video.duration }}
+                            </span>
+                            <div class="play-overlay">
+                                <i class="bi bi-play-circle-fill"></i>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ video.title }}</h5>
+                            <p class="card-text text-muted">{{ video.description|truncatechars:100 }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="bi bi-eye"></i> {{ video.views }}
+                                    <i class="bi bi-heart ms-2"></i> {{ video.likes_count }}
+                                </small>
+                                <small class="text-muted">{{ video.created_at|timesince }} ago</small>
+                            </div>
+                        </div>
+                        <a href="{% url 'videos:video_detail' video.slug %}" 
+                           class="stretched-link"></a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <p class="text-center">No videos found.</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if videos.has_other_pages %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if videos.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ videos.previous_page_number }}">Previous</a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in videos.paginator.page_range %}
+                    <li class="page-item {% if videos.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if videos.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ videos.next_page_number }}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

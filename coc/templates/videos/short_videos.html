@@ -1,0 +1,99 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="shorts-container">
+    <!-- Category Tabs -->
+    <div class="category-tabs">
+        <a href="{% url 'videos:short_videos' %}"
+           class="btn {% if not current_category_id %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            All
+        </a>
+        {% for item in categories %}
+        <a href="?category={{ item.category.id }}"
+           class="btn {% if item.is_active %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            {{ item.category.name }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Videos by Category -->
+    {% for item in categories %}
+    <div class="category-section {% if item.is_active %}active{% endif %}">
+        <h3>{{ item.category.name }}</h3>
+
+        <div class="videos-grid">
+            {% for video in item.videos %}
+            <div class="video-card">
+                <div class="video-thumbnail">
+                    <video src="{{ video.video_file.url }}" controls autoplay></video>
+                    <span class="duration">{{ video.duration }}</span>
+                </div>
+                <div class="video-info">
+                    <h5>{{ video.title }}</h5>
+                    <p>{{ video.description|truncatechars:60 }}</p>
+                    <div class="video-meta">
+                        <span><i class="bi bi-eye"></i> {{ video.views }}</span>
+                        <span><i class="bi bi-heart"></i> {{ video.likes_count }}</span>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p>No videos in this category</p>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if item.videos.has_other_pages and item.is_active %}
+        <nav class="pagination-container">
+            <ul class="pagination">
+                {% if item.videos.has_previous %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="?category={{ item.category.id }}&page={{ item.videos.previous_page_number }}">
+                        Previous
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in item.videos.paginator.page_range %}
+                <li class="page-item {% if item.videos.number == num %}active{% endif %}">
+                    <a class="page-link" href="?category={{ item.category.id }}&page={{ num }}">
+                        {{ num }}
+                    </a>
+                </li>
+                {% endfor %}
+
+                {% if item.videos.has_next %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="?category={{ item.category.id }}&page={{ item.videos.next_page_number }}">
+                        Next
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+    const videos = document.querySelectorAll('video');
+
+    videos.forEach(video => {
+        video.addEventListener('play', function () {
+            const videoId = this.getAttribute('data-video-id');
+            fetch(`/videos/increment_view/${videoId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+        }, { once: true });
+    });
+});
+</script>
+{% endblock %}

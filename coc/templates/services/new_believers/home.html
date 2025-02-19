@@ -1,0 +1,141 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if not user.is_authenticated %}
+        <!-- Content for non-authenticated users -->
+        <div class="text-center py-5">
+            <h1 class="display-4">Welcome to New Believer Journey</h1>
+            <p class="lead">Start your spiritual journey by creating an account</p>
+            <div class="mt-4">
+                <a href="{% url 'signup' %}" class="btn btn-primary btn-lg mx-2">Create Account</a>
+                <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg mx-2">Login</a>
+            </div>
+        </div>
+    {% else %}
+        {% if not request.user.new_believer_profile %}
+        <!-- User is authenticated but hasn't created a New Believer profile -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center py-5">
+                <i class="bi bi-person-plus display-1 text-muted mb-4"></i>
+                <h2>Welcome to New Believers Ministry</h2>
+                <p class="lead text-muted mb-4">
+                    Join our community of new believers and start your faith journey today.
+                    Get access to personalized mentorship, Bible reading plans, and more.
+                </p>
+                <a href="{% url 'services:create_believer_profile' %}" class="btn btn-primary btn-lg">
+                    Create Your Profile
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <!-- User has a New Believer profile - show navigation cards -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h1 class="h3 mb-2">Welcome, {{ request.user.username }}</h1>
+                        <p class="mb-0">Continue your faith journey</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            <!-- Dashboard Card -->
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                        </h5>
+                        <p class="card-text">View your complete new believer journey</p>
+                        <a href="{% url 'services:new_believers_dashboard' %}" class="btn btn-primary">Go to Dashboard</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reading Plans Card -->
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-book me-2"></i>Bible Reading
+                        </h5>
+                        <p class="card-text">Access your daily reading plans</p>
+                        <a href="{% url 'services:bible_reading_plans' %}" class="btn btn-primary">View Plans</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mentorship Card -->
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-people me-2"></i>Mentorship
+                        </h5>
+                        <p class="card-text">Schedule and manage mentorship sessions</p>
+                        <a href="{% url 'services:mentorship_sessions' %}" class="btn btn-primary">View Sessions</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prayer Journal Card -->
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-journal-text me-2"></i>Prayer Journal
+                        </h5>
+                        <p class="card-text">Record and track your prayers</p>
+                        <a href="{% url 'services:prayer_journal' %}" class="btn btn-primary">Open Journal</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Discipleship Card -->
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-signpost-2 me-2"></i>Discipleship
+                        </h5>
+                        <p class="card-text">Follow your discipleship journey</p>
+                        <a href="{% url 'services:discipleship_tracks' %}" class="btn btn-primary">View Tracks</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-person-circle me-2"></i>My Profile
+                        </h5>
+                        <p class="card-text">View and update your profile</p>
+                        <a href="{% url 'services:believer_profile' %}" class="btn btn-primary">View Profile</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    .bi {
+        font-size: 1.2rem;
+    }
+</style>
+{% endblock %}

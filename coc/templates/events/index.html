@@ -1,0 +1,207 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2">Church Events</h1>
+            <p class="text-muted">Join us in our upcoming events</p>
+        </div>
+        {% if user.is_staff %}
+        <a href="{% url 'events:create_event' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Create Event
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="search" name="search" class="form-control"
+                               placeholder="Search events..." value="{{ search_query }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="type" class="form-select">
+                        <option value="">All Types</option>
+                        {% for code, name in event_types %}
+                        <option value="{{ code }}" {% if code== current_type %}selected{% endif %}>
+                            {{ name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="date" class="form-select">
+                        <option value="upcoming" {% if current_filter==
+                        'upcoming' %}selected{% endif %}>
+                        Upcoming Events
+                        </option>
+                        <option value="past" {% if current_filter==
+                        'past' %}selected{% endif %}>
+                        Past Events
+                        </option>
+                        <option value="all" {% if current_filter==
+                        'all' %}selected{% endif %}>
+                        All Events
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Events Grid -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for event in events %}
+        <div class="col">
+            <div class="card h-100">
+                {% if event.image %}
+                <img src="{{ event.image.url }}" class="card-img-top" alt="{{ event.title }}"
+                     style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center"
+                     style="height: 200px;">
+                    <i class="bi bi-calendar-event text-secondary" style="font-size: 4rem;"></i>
+                </div>
+                {% endif %}
+
+                <div class="card-body">
+                    <h5 class="card-title">{{ event.title }}</h5>
+                    <p class="card-text text-muted small">
+                        <i class="bi bi-tag"></i> {{ event.get_event_type_display }}
+                    </p>
+                    <p class="card-text">{{ event.description|truncatewords:30 }}</p>
+
+                    <!-- Event Details -->
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-calendar me-2"></i>
+                            <span>{{ event.start_date|date:"F j, Y" }}</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-clock me-2"></i>
+                            <span>{{ event.start_time|time:"g:i A" }} - {{ event.end_time|time:"g:i A" }}</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-geo-alt me-2"></i>
+                            <span>
+                                {% if event.is_online %}
+                                Online Event
+                                {% else %}
+                                {{ event.location }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    {% if event.registration_required %}
+                    <!-- Registration Status -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small text-muted mb-1">
+                            <span>Registration</span>
+                            <span>
+                                {% if event.max_participants %}
+                                {{ event.participants.count }}/{{ event.max_participants }}
+                                {% else %}
+                                {{ event.participants.count }} registered
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if event.max_participants %}
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar" role="progressbar"
+                                 style="width: {% widthratio event.participants.count event.max_participants 100 %}%">
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            {% if event.is_cancelled %}
+                            <span class="badge bg-danger">Cancelled</span>
+                            {% elif event.is_past %}
+                            <span class="badge bg-secondary">Past Event</span>
+                            {% elif event.is_full %}
+                            <span class="badge bg-warning">Full</span>
+                            {% elif event.registration_required %}
+                            <span class="badge bg-success">Registration Open</span>
+                            {% else %}
+                            <span class="badge bg-info">No Registration Required</span>
+                            {% endif %}
+                        </div>
+                        <a href="{% url 'events:event_detail' event.id %}"
+                           class="btn btn-outline-primary btn-sm">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                No events found matching your criteria.
+                {% if search_query or current_type %}
+                <a href="{% url 'events:events_list' %}" class="alert-link">Clear filters</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if events.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if events.has_previous %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?page={{ events.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in events.paginator.page_range %}
+            {% if num > events.number|add:'-3' and num < events.number|add:'3' %}
+            <li class="page-item {% if events.number == num %}active{% endif %}">
+                <a class="page-link"
+                   href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}">
+                    {{ num }}
+                </a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if events.has_next %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?page={{ events.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

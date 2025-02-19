@@ -1,0 +1,109 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h1 class="h3 mb-2">{{ plan.title }}</h1>
+                            <p class="mb-0">{{ plan.description }}</p>
+                        </div>
+                        <span class="badge bg-info">{{ plan.duration_days }} Days</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Daily Readings -->
+            {% for reading in readings %}
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Day {{ reading.day_number }}: {{ reading.scripture_reference }}</h5>
+                    {% with reading_progress=progress|dictsort:"reading" %}
+                    {% if reading_progress.completed %}
+                    <span class="badge bg-success">Completed</span>
+                    {% else %}
+                    <form method="post" action="{% url 'services:complete_reading' plan.slug reading.day_number %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary btn-sm">Mark Complete</button>
+                    </form>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6>Today's Reading</h6>
+                        <p>{{ reading.scripture_reference }}</p>
+                    </div>
+                    <div class="mb-4">
+                        <h6>Devotional</h6>
+                        {{ reading.devotional|linebreaks }}
+                    </div>
+                    <div>
+                        <h6>Reflection Questions</h6>
+                        {{ reading.reflection_questions|linebreaks }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Progress Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Your Progress</h5>
+                </div>
+                <div class="card-body">
+                    <div class="progress mb-3">
+                        {% with completed=progress|length total=readings|length %}
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: {% widthratio completed total 100 %}%">
+                            {{ completed }}/{{ total }} Days
+                        </div>
+                        {% endwith %}
+                    </div>
+                    <div class="text-center mt-3">
+                        <h3 class="mb-0">{{ progress|length }}</h3>
+                        <small class="text-muted">Days Completed</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reading Tips -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Reading Tips</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-3">
+                            <i class="bi bi-clock text-primary"></i>
+                            Read at the same time each day
+                        </li>
+                        <li class="mb-3">
+                            <i class="bi bi-journal-text text-success"></i>
+                            Take notes on key verses
+                        </li>
+                        <li class="mb-3">
+                            <i class="bi bi-chat-dots text-info"></i>
+                            Discuss with your mentor
+                        </li>
+                        <li>
+                            <i class="bi bi-heart text-danger"></i>
+                            Apply the lessons learned
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

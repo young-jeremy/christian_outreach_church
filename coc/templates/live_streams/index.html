@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <!-- Header Section -->
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Live Streams</h1>
+                {% if user.is_authenticated %}
+                <button class="btn btn-primary" data-bs-target="#newStreamModal" data-bs-toggle="modal">
+                    <i class="fas fa-video"></i> Schedule Stream
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- Live Now Section -->
+            {% if live_streams %}
+            <h3 class="mb-3">Live Now</h3>
+            <div class="row">
+                {% for stream in live_streams %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-img-top position-relative">
+                            <img alt="{{ stream.title }}" class="w-100" src="{{ stream.thumbnail.url }}">
+                            <span class="badge bg-danger position-absolute top-0 start-0 m-2">LIVE</span>
+                            <span class="badge bg-dark position-absolute bottom-0 end-0 m-2">
+                                <i class="fas fa-eye"></i> {{ stream.viewers_count }}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ stream.title }}</h5>
+                            <p class="card-text">{{ stream.description|truncatechars:100 }}</p>
+                            <div class="d-flex align-items-center">
+                                <img class="rounded-circle me-2" height="30"
+                                     src="{{ stream.streamer.profile.avatar.url }}" width="30">
+                                <span>{{ stream.streamer.get_full_name }}</span>
+                            </div>
+                            <a class="btn btn-primary mt-2" href="{% url 'coc:stream_detail' stream.id %}">Watch Now</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Upcoming Streams Section -->
+            {% if upcoming_streams %}
+            <h3 class="mb-3 mt-4">Upcoming Streams</h3>
+            <div class="row">
+                {% for stream in upcoming_streams %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-img-top position-relative">
+                            <img alt="{{ stream.title }}" class="w-100" src="{{ stream.thumbnail.url }}">
+                            <span class="badge bg-info position-absolute top-0 start-0 m-2">Upcoming</span>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ stream.title }}</h5>
+                            <p class="card-text">{{ stream.description|truncatechars:100 }}</p>
+                            <p class="text-muted">
+                                <i class="far fa-clock"></i>
+                                Starts {{ stream.scheduled_time|date:"F j, Y, g:i a" }}
+                            </p>
+                            <div class="d-flex align-items-center">
+                                <img class="rounded-circle me-2" height="30"
+                                     src="{{ stream.streamer.profile.avatar.url }}" width="30">
+                                <span>{{ stream.streamer.get_full_name }}</span>
+                            </div>
+                            {% if user == stream.streamer %}
+                            <button class="btn btn-success mt-2 start-stream" data-stream-id="{{ stream.id }}">
+                                Start Stream
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Past Streams Section -->
+            {% if past_streams %}
+            <h3 class="mb-3 mt-4">Past Streams</h3>
+            <div class="row">
+                {% for stream in past_streams %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-img-top">
+                            <img alt="{{ stream.title }}" class="w-100" src="{{ stream.thumbnail.url }}">
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ stream.title }}</h5>
+                            <p class="card-text">{{ stream.description|truncatechars:100 }}</p>
+                            <p class="text-muted">
+                                <i class="far fa-clock"></i>
+                                Streamed on {{ stream.scheduled_time|date:"F j, Y" }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+
+<!-- New Stream Modal -->
+<div class="modal fade" id="newStreamModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Schedule New Stream</h5>
+                <button class="btn-close" data-bs-dismiss="modal" type="button"></button>
+            </div>
+            <form enctype="multipart/form-data" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {{ form.as_p }}
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Close</button>
+                    <button class="btn btn-primary" type="submit">Schedule Stream</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle start stream buttons
+        document.querySelectorAll('.start-stream').forEach(button => {
+            button.addEventListener('click', function() {
+                const streamId = this.dataset.streamId;
+                fetch(`/live-streams/${streamId}/start/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        window.location.href = `/live-streams/${streamId}/`;
+                    }
+                });
+            });
+        });
+    });
+
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %} 

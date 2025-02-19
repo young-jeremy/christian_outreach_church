@@ -1,0 +1,289 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Back Button -->
+    <div class="mb-4">
+        <a href="{% url 'services:prayer_requests' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Back to Prayer Requests
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Main Prayer Request -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h2 class="card-title h4">{{ prayer.title }}</h2>
+                            <div class="text-muted small">
+                                Requested by:
+                                {% if prayer.is_anonymous %}
+                                Anonymous
+                                {% else %}
+                                {{ prayer.requester.get_full_name|default:prayer.requester.username }}
+                                {% endif %}
+                                • {{ prayer.created_at|timesince }} ago
+                            </div>
+                        </div>
+                        <span class="badge bg-{{ prayer.get_status_color }}">
+                            {{ prayer.get_status_display }}
+                        </span>
+                    </div>
+
+                    <div class="mb-4">
+                        <span class="badge bg-secondary">{{ prayer.get_category_display }}</span>
+                        {% if prayer.is_private %}
+                        <span class="badge bg-warning">Private</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="prayer-content mb-4">
+                        {{ prayer.request|linebreaks }}
+                    </div>
+
+                    {% if prayer.testimony %}
+                    <div class="alert alert-success">
+                        <h6 class="alert-heading">Testimony</h6>
+                        {{ prayer.testimony|linebreaks }}
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button class="btn {% if user in prayer.prayer_warriors.all %}btn-primary{% else %}btn-outline-primary{% endif %} pray-btn"
+                                data-prayer-id="{{ prayer.id }}">
+                            <i class="bi bi-pray"></i>
+                            Praying ({{ prayer.prayer_count }})
+                        </button>
+
+                        {% if user == prayer.requester or user.is_staff %}
+                        <div class="btn-group">
+                            <button class="btn btn-outline-secondary dropdown-toggle"
+                                    data-bs-toggle="dropdown">
+                                Actions
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="#" data-bs-toggle="modal"
+                                       data-bs-target="#updateStatusModal">
+                                        <i class="bi bi-arrow-repeat"></i> Update Status
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" data-bs-toggle="modal"
+                                       data-bs-target="#addTestimonyModal">
+                                        <i class="bi bi-star"></i> Add Testimony
+                                    </a>
+                                </li>
+                                {% if user.is_staff %}
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="#"
+                                       onclick="confirmDelete()">
+                                        <i class="bi bi-trash"></i> Delete Request
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prayer Updates -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Updates & Responses</h5>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#addUpdateModal">
+                        <i class="bi bi-plus-lg"></i> Add Update
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% for update in prayer.updates.all %}
+                    <div class="d-flex mb-3">
+                        <img src="{{ update.created_by.profile.avatar.url|default:'path/to/default-avatar.png' }}"
+                             class="rounded-circle me-2" width="40" height="40">
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong>
+                                    {{ update.created_by.get_full_name|default:update.created_by.username }}
+                                </strong>
+                                <small class="text-muted">
+                                    {{ update.created_at|timesince }} ago
+                                </small>
+                            </div>
+                            {{ update.update_text|linebreaks }}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center my-4">
+                        No updates yet. Be the first to share an update or response.
+                    </p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Prayer Warriors -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Prayer Warriors</h5>
+                </div>
+                <div class="card-body">
+                    {% if prayer.prayer_warriors.exists %}
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for warrior in prayer.prayer_warriors.all %}
+                        <div class="d-flex align-items-center">
+                            <img src="{{ warrior.profile.avatar.url|default:'path/to/default-avatar.png' }}"
+                                 class="rounded-circle me-1" width="32" height="32"
+                                 title="{{ warrior.get_full_name|default:warrior.username }}">
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center mb-0">
+                        Be the first to pray for this request
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Similar Requests -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Similar Requests</h5>
+                </div>
+                <div class="card-body">
+                    {% for similar in similar_requests %}
+                    <a href="{% url 'services:prayer_request_detail' similar.id %}"
+                       class="text-decoration-none">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ similar.title }}</h6>
+                                <small class="text-muted">
+                                    {{ similar.created_at|timesince }} ago
+                                </small>
+                            </div>
+                            <span class="badge bg-{{ similar.get_status_color }}">
+                                {{ similar.get_status_display }}
+                            </span>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <p class="text-muted text-center mb-0">
+                        No similar prayer requests found
+                    </p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Update Modal -->
+<div class="modal fade" id="addUpdateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Prayer Update</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'services:add_prayer_update' prayer.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {{ update_form|crispy }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Add Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Update Status Modal -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Prayer Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'services:add_prayer_update' prayer.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {{ status_form|crispy }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Testimony Modal -->
+<div class="modal fade" id="addTestimonyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Share Your Testimony</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'services:add_testimony' user.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {{ testimony_form|crispy }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Share Testimony</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Prayer button functionality
+        const prayButton = document.querySelector('.pray-btn');
+        prayButton.addEventListener('click', function() {
+            const prayerId = this.dataset.prayerId;
+
+            fetch(`/prayer-requests/${prayerId}/pray/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        });
+    });
+
+    function confirmDelete() {
+        if (confirm('Are you sure you want to delete this prayer request?')) {
+            window.location.href = "{% url 'community:delete_prayer_request' prayer.id %}";
+        }
+    }
+</script>
+{% endblock %}

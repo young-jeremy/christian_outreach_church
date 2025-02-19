@@ -1,0 +1,33 @@
+{% extends 'events/base_events.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block event_content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Register for {{ event.title }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+
+                    {% if event.registration_fee > 0 %}
+                    <div class="alert alert-info">
+                        <h6>Registration Fee: ${{ event.registration_fee }}</h6>
+                        <small>You will be redirected to payment after registration.</small>
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-4">
+                        <button class="btn btn-primary" type="submit">Complete Registration</button>
+                        <a class="btn btn-secondary" href="{% url 'events:event_detail' event.slug %}">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

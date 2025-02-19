@@ -1,0 +1,16 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ministries.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            {% block ministry_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

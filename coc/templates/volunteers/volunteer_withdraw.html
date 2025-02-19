@@ -1,0 +1,31 @@
+{% extends "base_dashboard.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Withdraw from Opportunity</h4>
+                </div>
+                <div class="card-body">
+                    <p>Are you sure you want to withdraw from "{{ opportunity.title }}"?</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-x-circle"></i> Confirm Withdrawal
+                            </button>
+                            <a href="{% url 'volunteers:opportunity_detail' opportunity.pk %}" 
+                               class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

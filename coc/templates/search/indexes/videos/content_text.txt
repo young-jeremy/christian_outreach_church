@@ -1,0 +1,8 @@
+{{ object.title }}
+{{ object.description }}
+{{ object.uploader.username }}
+{{ object.category }}
+{{ object.keywords }}
+
+
+

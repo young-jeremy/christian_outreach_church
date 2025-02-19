@@ -1,0 +1,95 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="mb-4">
+                <a href="{% url 'services:forum_category' topic.category.slug %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to {{ topic.category.name }}
+                </a>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0">{{ topic.title }}</h4>
+                    <small class="text-muted">
+                        Started by {{ topic.creator.username }} • {{ topic.created_at|timesince }} ago
+                    </small>
+                </div>
+                <div class="card-body">
+                    {{ topic.formatted_content }}
+                </div>
+            </div>
+
+            {% for post in posts %}
+            <div class="card mb-3" id="post-{{ post.id }}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <div>
+                            <strong>{{ post.author.username }}</strong>
+                            <small class="text-muted">• {{ post.created_at|timesince }} ago</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary like-button"
+                                    data-post-id="{{ post.id }}"
+                                    data-liked="{% if request.user in post.likes.all %}true{% else %}false{% endif %}">
+                                <i class="bi bi-heart{% if request.user in post.likes.all %}-fill{% endif %}"></i>
+                                <span class="likes-count">{{ post.likes.count }}</span>
+                            </button>
+                        </div>
+                    </div>
+                    {{ post.formatted_content }}
+                </div>
+            </div>
+            {% endfor %}
+
+            {% if user.is_authenticated and not topic.is_locked %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Reply to Topic</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'services:create_post' topic.slug %}">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <button type="submit" class="btn btn-primary mt-3">
+                            <i class="bi bi-reply"></i> Post Reply
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('.like-button').click(function() {
+            var button = $(this);
+            var postId = button.data('post-id');
+
+            $.ajax({
+                url: '/services/post/' + postId + '/like/',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    button.find('.likes-count').text(response.likes_count);
+                    if (response.liked) {
+                        button.find('i').removeClass('bi-heart').addClass('bi-heart-fill');
+                    } else {
+                        button.find('i').removeClass('bi-heart-fill').addClass('bi-heart');
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

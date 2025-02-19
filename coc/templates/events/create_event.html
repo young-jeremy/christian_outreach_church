@@ -1,0 +1,164 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block extra_css %}
+{{ block.super }}
+<link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+<style>
+    .select2-container .select2-selection--multiple {
+        min-height: 38px;
+    }
+    .image-preview {
+        max-width: 200px;
+        margin-top: 10px;
+    }
+    .required-field label::after {
+        content: " *";
+        color: red;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Create New Event</h5>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                Create Event
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize date pickers
+        flatpickr("#id_start_date, #id_end_date", {
+            dateFormat: "Y-m-d",
+            minDate: "today",
+        });
+
+        // Initialize time pickers
+        flatpickr("#id_start_time, #id_end_time", {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: false,
+        });
+
+        // Initialize datetime picker for registration deadline
+        flatpickr("#id_registration_deadline", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            minDate: "today",
+        });
+
+        // Initialize select2 for speakers
+        $('#id_speakers').select2({
+            placeholder: 'Select speakers',
+            width: '100%',
+        });
+
+        // Handle online/offline event toggle
+        const isOnlineCheckbox = document.getElementById('id_is_online');
+        const locationField = document.getElementById('locationField');
+        const onlineLinkField = document.getElementById('onlineLinkField');
+
+        isOnlineCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                locationField.style.display = 'none';
+                onlineLinkField.style.display = 'block';
+            } else {
+                locationField.style.display = 'block';
+                onlineLinkField.style.display = 'none';
+            }
+        });
+
+        // Handle registration fields visibility
+        const registrationCheckbox = document.getElementById('id_registration_required');
+        const registrationFields = document.querySelectorAll('.registration-field');
+
+        registrationCheckbox.addEventListener('change', function() {
+            registrationFields.forEach(field => {
+                field.style.display = this.checked ? 'block' : 'none';
+            });
+        });
+
+        // Image preview
+        const imageInput = document.getElementById('id_image');
+        const imagePreview = document.getElementById('imagePreview');
+
+        imageInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.innerHTML = `
+                        <img src="${e.target.result}" class="image-preview rounded mt-2" alt="Event image preview">
+                    `;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Form validation
+        const form = document.getElementById('eventForm');
+        form.addEventListener('submit', function(e) {
+            const startDate = document.getElementById('id_start_date').value;
+            const endDate = document.getElementById('id_end_date').value;
+            const startTime = document.getElementById('id_start_time').value;
+            const endTime = document.getElementById('id_end_time').value;
+
+            if (endDate && startDate > endDate) {
+                e.preventDefault();
+                alert('End date must be after start date');
+                return;
+            }
+
+            if (startDate === endDate && startTime >= endTime) {
+                e.preventDefault();
+                alert('End time must be after start time');
+                return;
+            }
+        });
+    });
+</script>
+{% endblock %}

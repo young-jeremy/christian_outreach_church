@@ -1,0 +1,1348 @@
+<!doctype html>
+{% load static %}
+{% load crispy_forms_tags %}
+
+<html lang="en">
+
+<head>
+    <!-- Required Meta Tags -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Font Awesome (for additional icons) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta charset="utf-8">
+    <meta content="ca-pub-7500012205346003" name="google-adsense-account">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+
+    <!-- Document Title, Description, and Author -->
+    <title>Christian Outreach Church</title>
+    <meta content="Console is a Free Bootstrap Admin Template." name="description">
+    <meta content="BootstrapBrain" name="author">
+
+    <!-- Favicon and Touch Icons -->
+    <link href="{% static 'img/coc.png' %}" rel="icon" sizes="712x712" style="height:50" type="image/png">
+
+    <!-- Google Fonts Files -->
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap"
+          rel="stylesheet">
+    <link href="{% static 'css/home_icon.css' %}" rel="stylesheet">
+    <link href="{% static 'css/dark_mode.css' %}" rel="stylesheet">
+    <link href="{% static 'css/icons.css' %}" rel="stylesheet">
+    <link href="{% static 'css/tab_navigation.css' %}" rel="stylesheet">
+    <link href="{% static 'css/short_videos.css' %}" rel="stylesheet">
+    <link href="{% static 'css/video_categories.css' %}" rel="stylesheet">
+    <link href="{% static 'css/search_bar.css' %}" rel="stylesheet">
+
+
+    <!-- CSS Files -->
+    <link href="{% static 'assets/css/console-bsb.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/css/settings_privacy.css' %}" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/jsvectormap/dist/css/jsvectormap.min.css" rel="stylesheet">
+
+    <!-- ads-->
+    <script async crossorigin="anonymous"
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7500012205346003">
+
+    </script>
+    <script async crossorigin="anonymous"
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7500012205346003"></script>
+    <!-- end f adds -->
+
+    <!-- BSB Head -->
+</head>
+{% if messages %}
+<div>
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+
+<body>
+
+<!-- Header -->
+<header class="bg-white border-bottom border-light-subtle sticky-top bsb-tpl-header-sticky" id="header">
+    <nav class="navbar navbar-expand-md bsb-navbar-3 bsb-tpl-navbar-sticky" data-bsb-sticky-target="#header">
+        <div class="container">
+            <ul class="navbar-nav">
+                <li class="nav-item me-3">
+                    <a aria-controls="bsbSidebar1" class="nav-link" data-bs-target="#bsbSidebar1"
+                       data-bs-toggle="offcanvas"
+                       href="#!">
+                        <i class="bi-filter-left fs-3 lh-1"></i>
+                    </a>
+                </li>
+            </ul>
+            <a class="navbar-brand" href="{% url 'videos:category_list' %}">
+                <img alt="Christian Outreach Logo" class="bsb-tpl-logo" height="100" src="{% static 'img/coc.png' %}"
+                     width="50"><span>C.O.C</span>
+            </a>
+            <button aria-controls="bsbNavbar" aria-label="Toggle Navigation" class="navbar-toggler border-0"
+                    data-bs-target="#bsbNavbar"
+                    data-bs-toggle="collapse" type="button">
+                <i class="bi bi-three-dots"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="bsbNavbar">
+                <ul class="navbar-nav bsb-dropdown-menu-responsive ms-auto align-items-center">
+                    <li class="nav-item dropdown">
+
+                        <!-- Replace the existing search dropdown with this -->
+                    <div class="d-flex align-items-center flex-grow-1 mx-lg-5">
+                        <form action="#" method="get" class="d-flex w-100">
+                            <div class="input-group">
+                                <input type="text"
+                                       class="form-control border-end-0"
+                                       name="q"
+                                       id="searchInput"
+                                       placeholder="Search videos..."
+                                       value="{{ request.GET.q }}"
+                                       autocomplete="off">
+                                <button class="btn btn-outline-secondary border-start-0" type="submit">
+                  <i class="bi bi-search"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary ms-2"
+                                        type="button"
+                                        id="voiceSearchBtn"
+                                        title="Search with voice">
+                                    <i class="bi bi-mic-fill"></i>
+                                </button>
+                                </div>
+                            </form>
+                        </div>
+
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a aria-expanded="false" class="nav-link dropdown-toggle bsb-dropdown-toggle-caret-disable"
+                           data-bs-toggle="dropdown"
+                           href="#" role="button">
+                <span class="position-relative">
+                  <i class="bi bi-globe"></i>
+                </span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-md-end bsb-dropdown-sm bsb-dropdown-animation bsb-fadeIn">
+                            <div>
+                                <h6 class="dropdown-header fs-7 text-center">Multilingual</h6>
+                            </div>
+                            <div>
+                                <hr class="dropdown-divider mb-0">
+                            </div>
+                            <div class="list-group list-group-flush">
+                                <a aria-current="true" class="list-group-item list-group-item-action" href="#!">
+                                    <div class="row g-0 align-items-center">
+                                        <div class="col-2">
+                                            <img alt="Arabic"
+                                                 class="img-fluid rounded-pill"
+                                                 src="{% static 'assets/img/translation/flag-img-1.svg' %}">
+                                        </div>
+                                        <div class="col-10">
+                                            <div class="ps-3">
+                                                <div class="fs-7">Arabic</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                                <a aria-current="true" class="list-group-item list-group-item-action" href="#!">
+                                    <div class="row g-0 align-items-center">
+                                        <div class="col-2">
+                                            <img alt="Chinese"
+                                                 class="img-fluid rounded-pill"
+                                                 src="{% static 'assets/img/translation/flag-img-2.svg' %}">
+                                        </div>
+                                        <div class="col-10">
+                                            <div class="ps-3">
+                                                <div class="fs-7">Chinese</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                                <a aria-current="true" class="list-group-item list-group-item-action active" href="#!">
+                                    <div class="row g-0 align-items-center">
+                                        <div class="col-2">
+                                            <img alt="English"
+                                                 class="img-fluid rounded-pill"
+                                                 src="{% static 'assets/img/translation/flag-img-3.svg' %}">
+                                        </div>
+                                        <div class="col-10">
+                                            <div class="ps-3">
+                                                <div class="fs-7">English</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                                <a aria-current="true" class="list-group-item list-group-item-action" href="#!">
+                                    <div class="row g-0 align-items-center">
+                                        <div class="col-2">
+                                            <img alt="French"
+                                                 class="img-fluid rounded-pill"
+                                                 src="{% static 'assets/img/translation/flag-img-4.svg' %}">
+                                        </div>
+                                        <div class="col-10">
+                                            <div class="ps-3">
+                                                <div class="fs-7">French</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div>
+                                <hr class="dropdown-divider mt-0">
+                            </div>
+                            <div>
+                                <a class="dropdown-item fs-7 text-center" href="#!">See All Languages</a>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a aria-expanded="false" class="nav-link dropdown-toggle bsb-dropdown-toggle-caret-disable"
+                           data-bs-toggle="dropdown"
+                           href="#" role="button">
+                <span class="position-relative pt-1">
+                  <i class="bi bi-camera-video"></i>
+
+                </span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-md-end bsb-dropdown-animation bsb-fadeIn">
+                            <div>
+                                <h6 class="dropdown-header fs-7 text-center">Create Content</h6>
+                            </div>
+                            <div>
+                                <hr class="dropdown-divider mb-0">
+                            </div>
+                            <div class="list-group list-group-flush">
+                                <a aria-current="true"
+                                   class="list-group-item list-group-item-action"
+                                   href="{% url 'videos:create_content' %}">
+                                    <div class="row g-0 align-items-center">
+                                        <div class="col-2">
+                                            <i class="bi-camera-video mb-3"></i>
+                                        </div>
+                                        <div class="col-10">
+                                            <div class="ps-3">
+                                                <div class="text-dark">UPLOAD</div>
+                                                <div class="text-secondary mt-1 fs-7">Select select from your PC</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                                <a class="list-group-item list-group-item-action"
+                                   href="{% url 'videos:record_video' %}">
+                                    <div class="row g-0 align-items-center">
+                                        <div class="col-2">
+                                            <i class="bi-camera mb-3"></i>
+
+                                        </div>
+                                        <div class="col-10">
+                                            <div class="ps-3">
+                                                <div class="text-dark">Record</div>
+                                                <div class="text-secondary mt-1 fs-7">Record using your camera</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div>
+                                <hr class="dropdown-divider mt-0">
+                            </div>
+                            <div>
+                                <a class="dropdown-item fs-7 text-center" href="{% url 'events:start_stream' 0 %}">Go
+                                    Live</a>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a aria-expanded="false" class="nav-link dropdown-toggle bsb-dropdown-toggle-caret-disable"
+                           data-bs-toggle="dropdown"
+                           href="#" role="button">
+                <span class="position-relative pt-1">
+                  <i class="bi bi-bell"></i>
+                  <span class="p-1 bg-accent border border-light rounded-circle position-absolute top-0 start-100 translate-middle">
+                    <span class="visually-hidden">{{ notifications.count }}</span>
+                  </span>
+                </span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-md-end bsb-dropdown-animation bsb-fadeIn">
+                            <li>
+                                <h6 class="dropdown-header fs-7 text-center">{{ notifications.count }}<span>Notifications</span>
+                                </h6>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center"
+                                   href="{% url 'notifications:email_notifications' %}">
+                    <span>
+                      <i class="bi bi-envelope-fill me-2"></i>
+                      <span class="fs-7">Email Notifications</span>
+                    </span>
+                                    <span class="fs-7 ms-auto text-secondary">{{ email_notifications.timestamp }}| {{ email_count }}</span>
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center"
+                                   href="{% url 'notifications:notifications_settings' %}">
+                    <span>
+                      <i class="bi bi-person-fill me-2"></i>
+                      <span class="fs-7">Account Notifications</span>
+                    </span>
+                                    <span class="fs-7 ms-auto text-secondary">{{ notifications.timestamp }}</span>
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center"
+                                   href="{% url 'notifications:video_notifications_list' %}">
+                    <span>
+                      <i class="bi bi-file-earmark-fill me-2"></i>
+                      <span class="fs-7">Video Notifications</span>
+                    </span>
+                                    <span class="fs-7 ms-auto text-secondary">{{ notification.date_created }} {{ video_notifications_count }}</span>
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item fs-7 text-center"
+                                   href="{% url 'notifications:notifications' %}">See All Notifications</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a aria-expanded="false" class="nav-link dropdown-toggle bsb-dropdown-toggle-caret-disable"
+                           data-bs-toggle="dropdown"
+                           href="#" role="button">
+
+                            {% if user.socialaccount_set.count > 0 %}
+                            <!-- If the user is logged in via Google, use the Google profile picture -->
+                            <img alt="Google"
+                                 src="{{ user.google_picture }}"
+                                 style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover;">
+                            {% else %}
+                            <!-- Default image if no profile picture is available -->
+                            <img alt="Default "
+                                 src="/static/img/undraw_profile.svg"
+                                 style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover;">
+                            {% endif %}
+
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-md-end bsb-dropdown-animation bsb-fadeIn">
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a aria-current="true" class="dropdown-item" href="{% url 'account_email' %}">
+                                    <div class="row g-0 align-items-center">
+                                        <div class="col-3">
+                                            {% if user.socialaccount_set.count > 0 %}
+                                            <!-- If the user is logged in via Google, use the Google profile picture -->
+                                            <img alt="Google " src="{{ user.google_picture }}"
+                                                 style="width: 25px; height: 25px; border-radius: 50%;">
+
+                                            {% else %}
+                                            <!-- Default image if no profile picture is found -->
+                                            <img alt="Default" src="/static/img/undraw_profile.svg"
+                                                 style="width: 25px; height: 25px; border-radius: 50%;">
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-9">
+                                            <div class="ps-3">
+                                                <div class="text-secondary mt-1 fs-7">Premium Account</div>
+                                                <div class="text-secondary mt-1 fs-7">{{ user.username }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                    <span>
+                      <i class="bi bi-person-fill me-2"></i>
+                      <span class="fs-7">View Profile</span>
+                    </span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'notifications:notifications' %}">
+                    <span>
+                      <i class="bi bi-bell-fill me-2"></i>
+                      <span class="fs-7">{{ notifications_count }}Notifications</span>
+                    </span>
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'accounts:accounts_settings_and_privacy' %}">
+                    <span>
+                      <i class="bi bi-gear-fill me-2"></i>
+                      <span class="fs-7">Settings & Privacy</span>
+                    </span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'home:frequently_asked_questions' %}">
+                    <span>
+                      <i class="bi bi-question-circle-fill me-2"></i>
+                      <span class="fs-7">Help Center</span>
+                    </span>
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <span>
+                                     <i class="bi bi-moon-fill"></i>
+                                      <span class="fs-7"> <button class="rounded-corner" id="theme-toggle">Switch to Dark Mode</button></span>
+                                    </span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item text-center" href="{% url 'account_logout' %}">
+                    <span>
+                      <span class="fs-7">Log Out</span>
+                    </span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<!-- Main -->
+<main id="main">
+
+    <!-- Aside -->
+    <aside aria-labelledby="bsbSidebarLabel1" class="bsb-sidebar-1 offcanvas offcanvas-start" id="bsbSidebar1"
+           tabindex="-1">
+        <div class="offcanvas-header">
+            <a class="sidebar-brand" href="{% url 'videos:category_list' %}">
+                <img alt="Christian Outreach Church Logo" class="bsb-tpl-logo" height="100"
+                     id="bsbSidebarLabel1" src="{% static 'img/coc.png' %}" width="100"><span>C.O.C</span>
+            </a>
+            <button aria-label="Close" class="btn-close" data-bs-dismiss="offcanvas" type="button"></button>
+        </div>
+        <div class="offcanvas-body pt-0">
+            <hr class="sidebar-divider mb-3">
+            <ul class="navbar-nav">
+
+                <hr>
+                <li class="nav-item mt-3">
+                    <h6 class="py-1 text-secondary text-uppercase fs-7">CATEGORIES</h6>
+                </li>
+                <li class="nav-item">
+                    <a aria-controls="componentExamples" aria-expanded="false" class="nav-link p-3"
+                       data-bs-toggle="collapse"
+                       href="#componentExamples" role="button">
+                        <div class="nav-link-icon text-primary">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <span class="nav-link-text fw-bold">{{ video.uploader.username }}</span>
+                    </a>
+                    <div class="collapse" id="componentExamples">
+                        <ul class="nav flex-column ms-4">
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'videos:my_videos' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-play-btn-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">My Videos</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'videos:liked_videos' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-hand-thumbs-up-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">Liked videos</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'videos:playlist_list' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-music-note-list"></i>
+                                    </div>
+                                    <span class="nav-link-text">Playlist</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'videos:watched_videos' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-clock-history"></i>
+                                    </div>
+                                    <span class="nav-link-text">History</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'videos:watch_later' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-stopwatch-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">Watch Later</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'videos:queue' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                       <i class="bi bi-layers"></i>
+                                    </div>
+                                    <span class="nav-link-text">Queues</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'videos:offline_videos' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-download"></i>
+                                    </div>
+                                    <span class="nav-link-text">Downloaded Videos</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+
+                <li class="nav-item">
+                    <a aria-controls="formExamples" aria-expanded="false" class="nav-link p-3" data-bs-toggle="collapse"
+                       href="#formExamples" role="button">
+                        <div class="nav-link-icon text-primary">
+                            <i class="bi bi-person-arms-up"></i>
+                        </div>
+                        <span class="nav-link-text fw-bold">Ministry </span>
+                    </a>
+                    <div class="collapse" id="formExamples">
+                        <ul class="nav flex-column ms-4">
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'services:sermon_list' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-book"></i>
+                                    </div>
+                                    <span class="nav-link-text">Sermons</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'services:worship_service_list' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-music-note"></i>
+                                    </div>
+                                    <span class="nav-link-text">Worship Services</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'services:youth_ministry_list' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-people-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">Youth Ministry</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'services:children_ministry_list' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-stars"></i>
+                                    </div>
+                                    <span class="nav-link-text">Children Ministry</span>
+                                </a>
+                            </li>
+                        </ul>
+
+                        <ul class="nav flex-column ms-4">
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'services:bible_study_list' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-journal-text"></i>
+                                    </div>
+                                    <span class="nav-link-text">Bible Study</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'services:testimony_list' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-chat-quote-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">Testimonies</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a aria-controls="iconExamples" aria-expanded="false" class="nav-link p-3" data-bs-toggle="collapse"
+                       href="#iconExamples" role="button">
+                        <div class="nav-link-icon text-primary">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <span class="nav-link-text fw-bold">Communities</span>
+                    </a>
+                    <div class="collapse" id="iconExamples">
+                        <ul class="nav flex-column ms-4">
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'services:prayer_requests' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-envelope-paper-heart"></i>
+                                    </div>
+                                    <span class="nav-link-text">Prayer Requests</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'services:small_groups' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-people-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">Small Groups</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'services:events_view' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-calendar-event"></i>
+                                    </div>
+                                    <span class="nav-link-text">Church Events</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'accounts:member_list' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-person-lines-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">Member Directory</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'services:opportunity_list' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-hand-thumbs-up"></i>
+                                    </div>
+                                    <span class="nav-link-text">Volunteer Opportunities</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'services:fellowship_forums' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-chat-dots-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">Fellowship Forums</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'services:marriage_list' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-heart-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">Marriage Ministry</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'services:family_home' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-house-heart"></i>
+                                    </div>
+                                    <span class="nav-link-text">Family Life</span>
+                                </a>
+                            </li>
+
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a aria-controls="tableExamples" aria-expanded="false" class="nav-link p-3"
+                       data-bs-toggle="collapse"
+                       href="#tableExamples" role="button">
+                        <div class="nav-link-icon text-primary">
+                            <i class="bi bi-stars special-program-icon"></i>
+                        </div>
+                        <span class="nav-link-text fw-bold">Special Programs</span>
+                    </a>
+                    <div class="collapse" id="tableExamples">
+                        <ul class="nav flex-column ms-4">
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'services:believer_profile' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-person-plus"></i>
+                                    </div>
+                                    <span class="nav-link-text">New Believers</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'services:couples_home' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-people-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">Couples Ministry</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'services:womens_ministry_list' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-gender-female"></i> <!-- Women's Ministry -->
+                                    </div>
+                                    <span class="nav-link-text">Women's Ministry</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'services:mens_ministry_list' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-gender-male"></i> <!-- Men's Ministry -->
+                                    </div>
+                                    <span class="nav-link-text">Men's ministry</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:tables' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-emoji-smile"></i> <!-- Youth Programs -->
+                                    </div>
+                                    <span class="nav-link-text">Youth Programs</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:table_accented' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-stars"></i> <!-- Children's Programs -->
+                                    </div>
+                                    <span class="nav-link-text">Children's Program</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:tables' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-person-hearts"></i> <!-- Senior's Fellowship -->
+                                    </div>
+                                    <span class="nav-link-text">Seniors' Ministry</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:table_accented' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-person"></i> <!-- Singles Ministry -->
+                                    </div>
+                                    <span class="nav-link-text">Single's Ministry</span>
+                                </a>
+                            </li>
+
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-item mt-3">
+                    <h6 class="py-1 text-secondary text-uppercase fs-7">resources</h6>
+                </li>
+                <li class="nav-item">
+                    <a aria-controls="cardExamples" aria-expanded="false" class="nav-link p-3" data-bs-toggle="collapse"
+                       href="#cardExamples" role="button">
+                        <div class="nav-link-icon text-primary">
+                            <i class="bi bi-cloud-download"></i>
+                        </div>
+                        <span class="nav-link-text fw-bold">Resources</span>
+                    </a>
+                    <div class="collapse" id="cardExamples">
+                        <ul class="nav flex-column ms-4">
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:cards_stats' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                         <i class="bi bi-book-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">Bible Study Materials</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:cards_tables' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-book-half"></i>
+                                    </div>
+                                    <span class="nav-link-text">Daily Devotions</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:cards_stats' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-music-note-list"></i>
+                                    </div>
+                                    <span class="nav-link-text">Gospel Music Library</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:cards_tables' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-book"></i>
+                                    </div>
+                                    <span class="nav-link-text">Christian Books</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:cards_timelines' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-file-text"></i>
+                                    </div>
+                                    <span class="nav-link-text">Sermon Notes</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:cards_stats' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-mortarboard-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">Teaching Resources</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:cards_tables' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-mic-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">Podcasts</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:cards_timelines' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-cloud-download"></i>
+                                    </div>
+                                    <span class="nav-link-text">Downloadable Content</span>
+                                </a>
+                            </li>
+
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a aria-controls="calendarExamples" aria-expanded="false" class="nav-link p-3"
+                       data-bs-toggle="collapse"
+                       href="#calendarExamples" role="button">
+                        <div class="nav-link-icon text-primary">
+                            <i class="bi bi-megaphone-fill"></i>
+                        </div>
+                        <span class="nav-link-text fw-bold">Outreach</span>
+                    </a>
+                    <div class="collapse" id="calendarExamples">
+                        <ul class="nav flex-column ms-4">
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:calendars_basic' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-globe"></i>
+                                    </div>
+                                    <span class="nav-link-text">Missions and Projects</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:calendars_basic' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-megaphone"></i>
+                                    </div>
+                                    <span class="nav-link-text">Evangelism Tools</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:calendars_basic' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-heart-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">Community Services</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:calendars_basic' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-gift"></i>
+                                    </div>
+                                    <span class="nav-link-text">Charity Programs</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:calendars_basic' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-people"></i>
+                                    </div>
+                                    <span class="nav-link-text">Discipleship Training</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:calendars_basic' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-chat-heart"></i>
+                                    </div>
+                                    <span class="nav-link-text">Counseling Services</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:calendars_basic' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-building"></i>
+                                    </div>
+                                    <span class="nav-link-text">Prison Ministry</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:calendars_basic' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-hospital"></i>
+                                    </div>
+                                    <span class="nav-link-text">Hospital Ministry</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a aria-controls="chartExamples" aria-expanded="false" class="nav-link p-3"
+                       data-bs-toggle="collapse"
+                       href="#chartExamples" role="button">
+                        <div class="nav-link-icon text-primary">
+                            <i class="bi bi-mortarboard-fill"></i>
+                        </div>
+                        <span class="nav-link-text fw-bold">Education</span>
+                    </a>
+                    <div class="collapse" id="chartExamples">
+                        <ul class="nav flex-column ms-4">
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:apex_charts' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-book-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">Biblical Courses</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:apex_charts' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-person-workspace"></i>
+                                    </div>
+                                    <span class="nav-link-text">Leadership Training</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:apex_charts' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-easel"></i> <!-- Sunday School Materials -->
+
+                                    </div>
+                                    <span class="nav-link-text">Sunday School Materials</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:apex_charts' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-journal-bookmark"></i> <!-- Theological Resources -->
+                                    </div>
+                                    <span class="nav-link-text">Theological Resources</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:apex_charts' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-mortarboard"></i> <!-- Christian Education -->
+                                    </div>
+                                    <span class="nav-link-text">Christian Education</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:apex_charts' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-people-fill"></i> <!-- Mentorship Programs -->
+                                    </div>
+                                    <span class="nav-link-text">Mentorship Programs</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:apex_charts' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-building-fill"></i> <!-- Bible College -->
+                                    </div>
+                                    <span class="nav-link-text">Bible College</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a aria-controls="mapExamples" aria-expanded="false" class="nav-link p-3" data-bs-toggle="collapse"
+                       href="#mapExamples" role="button">
+                        <div class="nav-link-icon text-primary">
+                            <i class="bi bi-map"></i>
+                        </div>
+                        <span class="nav-link-text fw-bold">Media</span>
+                    </a>
+                    <div class="collapse" id="mapExamples">
+                        <ul class="nav flex-column ms-4">
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:js_vecto_rmap_maps' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-broadcast"></i>
+                                    </div>
+                                    <span class="nav-link-text">Live Streams</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:js_vecto_rmap_maps' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-collection-play"></i> <!-- Video Archives -->
+                                    </div>
+                                    <span class="nav-link-text">Video Archives</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:js_vecto_rmap_maps' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-images"></i> <!-- Photo Gallery -->
+                                    </div>
+                                    <span class="nav-link-text">Photo Gallery</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:js_vecto_rmap_maps' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-file-music"></i> <!-- Audio Messages -->
+                                    </div>
+                                    <span class="nav-link-text">Audio Messages</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:js_vecto_rmap_maps' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-newspaper"></i> <!-- Church News -->
+                                    </div>
+                                    <span class="nav-link-text">Church News</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:js_vecto_rmap_maps' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-envelope-paper"></i> <!-- Newsletters -->
+                                    </div>
+                                    <span class="nav-link-text">Newsletters</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:js_vecto_rmap_maps' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-megaphone-fill"></i> <!-- Announcements -->
+                                    </div>
+                                    <span class="nav-link-text">Announcements</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:js_vecto_rmap_maps' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-camera-reels"></i> <!-- Testimonial Videos -->
+                                    </div>
+                                    <span class="nav-link-text">Testimonial Videos</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-item mt-3">
+                    <h6 class="py-1 text-secondary text-uppercase fs-7">ACCOUNT SETTINGS</h6>
+                </li>
+                <li class="nav-item">
+                    <a aria-controls="pageExamples" aria-expanded="false" class="nav-link p-3" data-bs-toggle="collapse"
+                       href="#pageExamples" role="button">
+                        <div class="nav-link-icon text-primary">
+                            <i class="bi bi-folder"></i>
+                        </div>
+                        <span class="nav-link-text fw-bold">Pages</span>
+                    </a>
+                    <div class="collapse" id="pageExamples">
+                        <ul class="nav flex-column ms-4">
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'accounts:profile' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-person-circle"></i>
+                                    </div>
+                                    <span class="nav-link-text">Profile</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:pages_invoice' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-receipt"></i>
+                                    </div>
+                                    <span class="nav-link-text">Invoice</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:pages_pricing' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                       <i class="bi bi-tag-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">Pricing</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:pages_contact'%}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-envelope-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">Contact</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:pages_faqs' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-question-circle-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">FAQs</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:pages_blank' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-file"></i>
+                                    </div>
+                                    <span class="nav-link-text">Blank</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary" href="{% url 'dashboard:404' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                    </div>
+                                    <span class="nav-link-text">Error 404</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a aria-controls="authExamples" aria-expanded="false" class="nav-link p-3" data-bs-toggle="collapse"
+                       href="#authExamples" role="button">
+                        <div class="nav-link-icon text-primary">
+                            <i class="bi bi-gear"></i>
+                        </div>
+                        <span class="nav-link-text fw-bold">Authentication</span>
+                    </a>
+                    <div class="collapse" id="authExamples">
+                        <ul class="nav flex-column ms-4">
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'account_login' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-person-circle"></i>
+                                    </div>
+                                    <span class="nav-link-text">Log In</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:register' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-person-add"></i>
+                                    </div>
+                                    <span class="nav-link-text">Register</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a aria-current="page" class="nav-link link-secondary"
+                                   href="{% url 'dashboard:forgot_password' %}">
+                                    <div class="nav-link-icon text-primary-emphasis">
+                                        <i class="bi bi-envelope-fill reset-icon"></i>
+                                    </div>
+                                    <span class="nav-link-text">Reset Password</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+            <hr class="sidebar-divider my-4">
+            <div class="bg-light rounded-3 position-relative px-4 pt-5 pb-4 mt-7">
+                <div class="bsb-w-80 bsb-h-80 d-flex align-items-center justify-content-center text-bg-primary border border-5 border-white rounded-circle position-absolute top-0 start-50 translate-middle">
+                    <i class="bi bi-trophy-fill"></i>
+                </div>
+                <div class="text-center">
+                    <h3 class="h5">Premium Dashboard </h3>
+                    <p class="fs-7">Get enjoy exclusive content by upgrading to the premium account. However, you can
+                        try for one month, and disconnect later on
+                    </p>
+                    <div class="d-grid m-0">
+                        <a class="btn btn-primary rounded-pill" href="{% url 'payments:request_service' %}"
+                           role="button" target="_blank">Upgrade</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+    {% block content %}
+    {% endblock content %}
+
+
+    <!-- BSB Body End -->
+</main>
+</body>
+
+    <!-- Javascript Files: Vendors -->
+    <script src="https://unpkg.com/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsvectormap"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/world-merc.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/bootstrap5@6.1.9/index.global.min.js"></script>
+
+    <!-- Javascript Files: Controllers -->
+    <script src="{% static 'assets/controller/console-bsb.js' %}"></script>
+    <script src="{% static 'assets/controller/chart-1.js' %}"></script>
+    <script src="{% static 'assets/controller/chart-3.js' %}"></script>
+    <script src="{% static 'assets/controller/chart-4.js' %}"></script>
+    <script src="{% static 'assets/controller/map-2.js' %}"></script>
+    <script src="{% static 'assets/controller/calendar-1.js' %}"></script>
+    <script src="{% static 'js/tab_navigation.js' %}"></script>
+    <script src="{% static 'js/video_categories.js' %}"></script>
+
+
+    <script>
+        const recordBtn = document.getElementById('recordBtn');
+        let mediaRecorder;
+
+        recordBtn.addEventListener('click', async () => {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert("Your browser doesn't support audio recording!");
+                return;
+            }
+
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+
+            const audioChunks = [];
+            mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const formData = new FormData();
+                formData.append('audio_file', audioBlob);
+
+                // Send audio to backend
+                const response = await fetch('/voice-search/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                searchBar.value = data.query; // Set search query
+            };
+
+            mediaRecorder.start();
+            setTimeout(() => mediaRecorder.stop(), 5000); // Record for 5 seconds
+        });
+
+
+    </script>
+
+
+    <script>
+
+        // Get the theme toggle button
+const themeToggleButton = document.getElementById('theme-toggle');
+
+// Function to toggle the dark mode class on body
+function toggleTheme() {
+    document.body.classList.toggle('dark-mode');
+    // Update the button text based on the current theme
+    if (document.body.classList.contains('dark-mode')) {
+        themeToggleButton.textContent = 'Switch to Light Mode';
+        localStorage.setItem('theme', 'dark');  // Save the user's preference
+    } else {
+        themeToggleButton.textContent = 'Switch to Dark Mode';
+        localStorage.setItem('theme', 'light');  // Save the user's preference
+    }
+}
+
+// Check for saved theme preference in localStorage
+if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-mode');
+    themeToggleButton.textContent = 'Switch to Light Mode';
+}
+
+// Add event listener to toggle button
+themeToggleButton.addEventListener('click', toggleTheme);
+
+
+    </script>
+<script>
+
+
+</script>
+
+</html>

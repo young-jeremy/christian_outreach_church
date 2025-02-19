@@ -1,0 +1,62 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Edit Profile</h5>
+                    <a href="{% url 'members:profile' request.user.memberprofile.slug %}"
+                       class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> Back to Profile
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <h6 class="mb-3">Basic Information</h6>
+                        {{ user_form|crispy }}
+
+                        <hr class="my-4">
+
+                        <h6 class="mb-3">Profile Details</h6>
+                        {{ form|crispy }}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Image preview
+        const imageInput = document.getElementById('id_profile_image');
+        const imagePreview = document.createElement('img');
+        imagePreview.className = 'mt-2 rounded';
+        imagePreview.style.maxWidth = '200px';
+
+        if (imageInput) {
+            imageInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        if (!imageInput.nextElementSibling) {
+                            imageInput.parentNode.appendChild(imagePreview);
+                        }
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

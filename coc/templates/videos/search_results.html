@@ -1,0 +1,58 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Search Results</h4>
+                </div>
+                <div class="card-body">
+                    {% if videos %}
+                        <div class="row g-3">
+                            {% for video in videos %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100 video-search-item" onclick="addVideoToPlaylist({{ video.id }})">
+                                    <img src="{{ video.thumbnail.url }}" 
+                                         class="card-img-top" 
+                                         alt="{{ video.title }}"
+                                         style="height: 140px; object-fit: cover;">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-truncate">{{ video.title }}</h6>
+                                        <div class="text-muted small">
+                                            <div><i class="bi bi-person"></i> {{ video.uploader.username }}</div>
+                                            <div><i class="bi bi-clock"></i> {{ video.duration }}</div>
+                                            <div><i class="bi bi-eye"></i> {{ video.views }} views</div>
+                                            <div><i class="bi bi-calendar"></i> {{ video.created_at|date:"Y-m-d" }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-transparent">
+                                        <button class="btn btn-sm btn-primary w-100">
+                                            <i class="bi bi-plus-lg"></i> Add to Playlist
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-search display-1 text-muted"></i>
+                            <h4 class="mt-3">No Videos Found</h4>
+                            <p class="text-muted">
+                                {% if query %}
+                                    No videos match your search "{{ query }}"
+                                {% else %}
+                                    Try searching for videos by title, uploader, or description
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

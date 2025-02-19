@@ -1,0 +1,14 @@
+<div class="card-footer bg-transparent">
+    <div class="d-flex justify-content-between align-items-center">
+        <button class="btn btn-outline-primary btn-sm pray-btn" 
+                data-prayer-id="{{ prayer.id }}"
+                data-praying="{% if user in prayer.prayer_warriors.all %}true{% else %}false{% endif %}">
+            <i class="bi bi-pray"></i> 
+            Praying ({{ prayer.prayer_count }})
+        </button>
+        <a href="{% url 'community:prayer_request_detail' prayer.id %}" 
+           class="btn btn-link btn-sm">
+            View Details
+        </a>
+    </div>
+</div>

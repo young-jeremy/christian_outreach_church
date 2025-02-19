@@ -1,0 +1,86 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Your Faith Journey</h5>
+                </div>
+                <div class="card-body">
+                    <form class="needs-validation" method="post" novalidate>
+                        {% csrf_token %}
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.baptism_date|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.baptism_status|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        {{ form.testimony|as_crispy_field }}
+
+
+
+                        <div class="border-top pt-3">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-check-lg"></i> Save Profile
+                            </button>
+                            <a class="btn btn-outline-secondary" href="{% url 'services:new_believers_dashboard' %}">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips Sidebar -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Sharing Your Story</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-3">
+                            <i class="bi bi-calendar-event text-primary"></i>
+                            <strong>Salvation Date:</strong> When you accepted Christ
+                        </li>
+                        <li class="mb-3">
+                            <i class="bi bi-journal-text text-success"></i>
+                            <strong>Your Story:</strong> Share your journey to faith
+                        </li>
+                        <li class="mb-3">
+                            <i class="bi bi-water text-info"></i>
+                            <strong>Baptism:</strong> Your public declaration
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Show/hide baptism date based on status
+    document.getElementById('id_baptism_status').addEventListener('change', function() {
+        const baptismDateField = document.getElementById('div_id_baptism_date');
+        baptismDateField.style.display = this.checked ? 'block' : 'none';
+    });
+
+    // Trigger on load
+    document.addEventListener('DOMContentLoaded', function() {
+        const baptismStatus = document.getElementById('id_baptism_status');
+        const baptismDateField = document.getElementById('div_id_baptism_date');
+        baptismDateField.style.display = baptismStatus.checked ? 'block' : 'none';
+    });
+</script>
+{% endblock %} 

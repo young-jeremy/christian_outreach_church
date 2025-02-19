@@ -1,0 +1,88 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Program Details Card -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ program.title }}</h4>
+                    {% if user.is_staff %}
+                    <a class="btn btn-outline-primary btn-sm" href="{% url 'services:marriage_create' %}">
+                        <i class="bi bi-pencil"></i> Edit Program
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        {{ program.description|safe }}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Program Details</h5>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-calendar"></i> Start Date: {{ program.start_date }}</li>
+                                <li><i class="bi bi-calendar"></i> End Date: {{ program.end_date }}</li>
+                                <li><i class="bi bi-clock"></i> Time: {{ program.meeting_time }}</li>
+                                <li><i class="bi bi-geo-alt"></i> Type: {{ program.get_meeting_type_display }}</li>
+                                {% if program.location %}
+                                <li><i class="bi bi-pin-map"></i> Location: {{ program.location }}</li>
+                                {% endif %}
+                                {% if program.zoom_link %}
+                                <li><i class="bi bi-camera-video"></i> <a href="{{ program.zoom_link }}"
+                                                                          target="_blank">Zoom Link</a></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Facilitators</h5>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for facilitator in program.facilitators.all %}
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-person-circle me-1"></i>
+                                    {{ facilitator.get_full_name }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enrollment Section -->
+            {% if can_enroll %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Enroll in Program</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'services:marriage_enroll' program.slug %}" method="post">
+                        {% csrf_token %}
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-check-circle"></i> Enroll Now
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Program Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge bg-{{ program.status }}">{{ program.get_status_display }}</span>
+                        <span>{{ program.max_couples }} max couples</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

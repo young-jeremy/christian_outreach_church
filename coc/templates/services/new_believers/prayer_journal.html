@@ -1,0 +1,129 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load believer_filters %}
+
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3">Prayer Journal</h1>
+                <a class="btn btn-primary" href="{% url 'services:add_prayer_entry' %}">
+                    <i class="bi bi-plus-lg"></i> Add Prayer
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Active Prayers -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Active Prayers</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for prayer in prayers %}
+                    {% if not prayer.answered %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ prayer.title }}</h6>
+                                <p class="mb-1">{{ prayer.content }}</p>
+                                <small class="text-muted">Started {{ prayer.created_at|timesince }} ago</small>
+                            </div>
+                            <form action="{% url 'services:update_prayer_status' prayer.pk %}" method="post">
+                                {% csrf_token %}
+                                <button class="btn btn-success btn-sm" type="submit">
+                                    <i class="bi bi-check-lg"></i> Mark Answered
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% empty %}
+                    <div class="list-group-item text-center py-5">
+                        <i class="bi bi-journal-text display-4 text-muted"></i>
+                        <p class="mt-3">No active prayers. Start by adding one!</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Answered Prayers -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Answered Prayers</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for prayer in prayers %}
+                    {% if prayer.answered %}
+                    <div class="list-group-item">
+                        <h6 class="mb-1">{{ prayer.title }}</h6>
+                        <p class="mb-1">{{ prayer.content }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Answered on {{ prayer.answer_date|date:"F j, Y" }}</small>
+                            <span class="badge bg-success">Answered</span>
+                        </div>
+                        {% if prayer.answer_notes %}
+                        <div class="mt-2 p-2 bg-light rounded">
+                            <small class="text-muted">How God answered:</small>
+                            <p class="mb-0">{{ prayer.answer_notes }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Prayer Stats -->
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Prayer Statistics</h5>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="display-4">{{ prayers|length }}</div>
+                            <small class="text-muted">Total Prayers</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="display-4">{{ prayers|answered_count }}</div>
+                            <small class="text-muted">Answered</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prayer Tips -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Prayer Tips</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-3">
+                            <i class="bi bi-clock text-primary"></i>
+                            Set aside regular prayer time
+                        </li>
+                        <li class="mb-3">
+                            <i class="bi bi-journal-text text-success"></i>
+                            Be specific in your requests
+                        </li>
+                        <li class="mb-3">
+                            <i class="bi bi-heart text-danger"></i>
+                            Pray with faith and patience
+                        </li>
+                        <li>
+                            <i class="bi bi-chat-quote text-info"></i>
+                            Record how God answers
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
