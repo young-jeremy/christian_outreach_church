@@ -1,5 +1,7 @@
 from django.urls import reverse
 # Settings
+from .models import MensMinistry, MensEvent
+from .forms import MensMinistryForm, MensEventForm
 from django.conf import settings
 from django.db import models
 from django.views.decorators.http import require_POST
