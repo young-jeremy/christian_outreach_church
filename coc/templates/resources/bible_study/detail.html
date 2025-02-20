@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card">
+        <div class="card-header">
+            <h1>{{ material.title }}</h1>
+        </div>
+        <div class="card-body">
+            <p class="lead">{{ material.description }}</p>
+            <p><strong>Category:</strong> {{ material.get_category_display }}</p>
+            <p><strong>Author:</strong> {{ material.author }}</p>
+            <p><strong>Upload Date:</strong> {{ material.upload_date|date:"F d, Y" }}</p>
+            
+            <div class="mt-4">
+                <a href="{{ material.file.url }}" class="btn btn-primary" target="_blank">Download Material</a>
+                {% if user == material.author %}
+                <a href="{% url 'bible-study-update' material.pk %}" class="btn btn-warning">Edit</a>
+                <a href="{% url 'bible-study-delete' material.pk %}" class="btn btn-danger">Delete</a>
+                {% endif %}
+                <a href="{% url 'bible-study-list' %}" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

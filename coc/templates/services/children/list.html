@@ -1,0 +1,159 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-0">Children's Ministry</h1>
+            <p class="text-muted">Nurturing Young Hearts in Christ</p>
+        </div>
+        {% if user.is_authenticated and user.is_staff %}
+        <div>
+            <a href="{% url 'services:childrens_program_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Create Program
+            </a>
+            <a href="{% url 'services:child_registration' %}" class="btn btn-success">
+                <i class="bi bi-person-plus"></i> Register Child
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Links -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar-check display-4"></i>
+                    <h5 class="mt-2">Check-In</h5>
+                    <a href="{% url 'services:child_checkin' %}" class="btn btn-light mt-2">
+                        Start Check-In
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-people display-4"></i>
+                    <h5 class="mt-2">Parent Portal</h5>
+                    <a href="{% url 'services:parent_portal' %}" class="btn btn-light mt-2">
+                        Access Portal
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar-event display-4"></i>
+                    <h5 class="mt-2">Events</h5>
+                    <a href="{% url 'services:childrens_events' %}" class="btn btn-light mt-2">
+                        View Events
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body text-center">
+                    <i class="bi bi-file-earmark-text display-4"></i>
+                    <h5 class="mt-2">Resources</h5>
+                    <a href="{% url 'services:childrens_resources' %}" class="btn btn-light mt-2">
+                        View Resources
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Programs Grid -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for program in programs %}
+        <div class="col">
+            <div class="card h-100">
+                {% if program.image %}
+                <img src="{{ program.image.url }}" class="card-img-top" alt="{{ program.title }}"
+                     style="height: 200px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ program.title }}</h5>
+                    <span class="badge bg-primary mb-2">{{ program.get_age_group_display }}</span>
+                    <span class="badge bg-secondary mb-2">{{ program.get_program_type_display }}</span>
+                    <p class="card-text">{{ program.description|truncatewords:30 }}</p>
+                    <div class="small text-muted mb-2">
+                        <i class="bi bi-clock"></i> {{ program.meeting_time|date:"l g:i A" }}<br>
+                        <i class="bi bi-geo-alt"></i> {{ program.location }}
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'services:childrens_program_detail' slug=program.slug %}" 
+                           class="btn btn-outline-primary">
+                            View Details
+                        </a>
+                        {% if user.is_authenticated %}
+                        <button class="btn btn-outline-success enroll-child" 
+                                data-program-id="{{ program.id }}"
+                                {% if not program.has_space %}disabled{% endif %}>
+                            {% if user.children.exists %}
+                            Enroll Child
+                            {% else %}
+                            Register Child First
+                            {% endif %}
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <h4 class="alert-heading">No Programs Available</h4>
+                <p>There are currently no children's ministry programs.</p>
+                {% if user.is_authenticated and user.is_staff %}
+                <a href="{% url 'services:childrens_program_create' %}" class="btn btn-primary">
+                    Create First Program
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('.enroll-child').click(function() {
+        const programId = $(this).data('program-id');
+        {% if user.children.count > 1 %}
+            // Show child selection modal
+            $('#childSelectModal').modal('show');
+        {% else %}
+            // Direct enrollment for single child
+            enrollChild(programId, {{ user.children.first.id }});
+        {% endif %}
+    });
+});
+
+function enrollChild(programId, childId) {
+    $.post(`/services/childrens/program/${programId}/enroll/`, {
+        child_id: childId,
+        csrfmiddlewaretoken: '{{ csrf_token }}'
+    })
+    .done(function(response) {
+        if (response.status === 'success') {
+            location.reload();
+        } else {
+            alert(response.message);
+        }
+    });
+}
+</script>
+{% endblock %}
+
+{% endblock %} 

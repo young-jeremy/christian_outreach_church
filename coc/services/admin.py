@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     WorshipService, ForumCategory, ForumTopic, ForumPost, Topic, Post,
-    BibleStudy, ChildRegistration, Testimony, ChildrenMinistry,
+    BibleStudy, ChildRegistration, Testimony, ChildrensMinistry,
     NotificationPreferences, PrayerRequest, PrayerUpdate, SmallGroup,
     YouthEvent, YouthMinistry, ChildrenProgram, SongRequest, Event,
     EventRegistration, EventFeedback, Ministry, VolunteerOpportunity,
@@ -99,7 +99,7 @@ class SermonSeriesAdmin(admin.ModelAdmin):
 admin.site.register(Post)
 admin.site.register(ChildRegistration)
 admin.site.register(Testimony)
-admin.site.register(ChildrenMinistry)
+admin.site.register(ChildrensMinistry)
 admin.site.register(NotificationPreferences)
 admin.site.register(PrayerUpdate)
 admin.site.register(Child)

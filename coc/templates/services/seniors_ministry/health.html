@@ -1,0 +1,52 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <h2>Health & Wellness Resources</h2>
+            
+            {% for resource in resources %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">{{ resource.title }}</h5>
+                    <div class="card-text">{{ resource.content|safe }}</div>
+                    {% if resource.document %}
+                    <a href="{{ resource.document.url }}" class="btn btn-outline-primary mt-3">
+                        <i class="bi bi-download"></i> Download Resource
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-muted">
+                    Last updated: {{ resource.updated_at|date:"F j, Y" }}
+                </div>
+            </div>
+            {% empty %}
+            <div class="alert alert-info">
+                No health resources available at the moment.
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Links</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="#" class="list-group-item list-group-item-action">
+                        Emergency Contacts
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        Health Tips
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        Exercise Programs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

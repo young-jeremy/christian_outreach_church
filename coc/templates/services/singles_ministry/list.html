@@ -1,0 +1,135 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-0">Singles Ministry</h1>
+            <p class="text-muted">Connect, grow, and serve together</p>
+        </div>
+        {% if user.is_staff %}
+        <a href="{% url 'services:singles_ministry_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create Activity
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Filters Section -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Activity Type</label>
+                    <select name="activity_type" class="form-select">
+                        <option value="">All Types</option>
+                        {% for key, value in activity_types.items %}
+                        <option value="{{ key }}" {% if key == selected_type %}selected{% endif %}>
+                            {{ value }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Age Group</label>
+                    <select name="age_group" class="form-select">
+                        <option value="">All Ages</option>
+                        {% for key, value in age_groups.items %}
+                        <option value="{{ key }}" {% if key == selected_age %}selected{% endif %}>
+                            {{ value }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Status</label>
+                    <select name="relationship_status" class="form-select">
+                        <option value="">All Statuses</option>
+                        {% for key, value in relationship_statuses.items %}
+                        <option value="{{ key }}" {% if key == selected_status %}selected{% endif %}>
+                            {{ value }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-filter"></i> Apply Filters
+                    </button>
+                    <a href="{% url 'services:singles_ministry_list' %}" class="btn btn-outline-secondary">
+                        Clear Filters
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Activities Grid -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for activity in activities %}
+        <div class="col">
+            <div class="card h-100">
+                {% if activity.image %}
+                <img src="{{ activity.image.url }}" 
+                     class="card-img-top" 
+                     alt="{{ activity.title }}"
+                     style="height: 200px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ activity.title }}</h5>
+                    <p class="card-text text-muted">
+                        <i class="bi bi-tag"></i> {{ activity.get_activity_type_display }}<br>
+                        <i class="bi bi-calendar"></i> {{ activity.meeting_time|date:"l, g:i A" }}<br>
+                        <i class="bi bi-geo-alt"></i> {{ activity.location }}
+                    </p>
+                    <p class="card-text">{{ activity.description|truncatewords:30 }}</p>
+                    
+                    <!-- Tags -->
+                    <div class="mb-3">
+                        <span class="badge bg-info">{{ activity.get_age_group_display }}</span>
+                        {% if activity.relationship_status %}
+                        <span class="badge bg-secondary">
+                            {{ activity.get_relationship_status_display }}
+                        </span>
+                        {% endif %}
+                        {% if activity.max_participants %}
+                        <span class="badge bg-warning text-dark">
+                            {{ activity.members.count }}/{{ activity.max_participants }} Members
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid">
+                        <a href="{% url 'services:singles_ministry_detail' slug=activity.slug %}" 
+                           class="btn btn-outline-primary">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                No activities found matching your criteria.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize select2 for better dropdown experience
+    $('select').select2({
+        theme: 'bootstrap4',
+        width: '100%'
+    });
+});
+</script>
+{% endblock %}
+
+{% endblock %}

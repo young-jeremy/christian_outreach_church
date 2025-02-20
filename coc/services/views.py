@@ -1,9 +1,75 @@
 from django.urls import reverse
 # Settings
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.utils import timezone
+from django.http import JsonResponse
+from .models import (
+    SinglesMinistry,
+    SinglesEvent,
+    MentorshipRequest,
+    SinglesResource
+)
+from .forms import (
+    SinglesMinistryForm,
+    SinglesEventForm,
+    MentorshipRequestForm,
+    SinglesResourceForm,
+    MentorshipMatchForm,
+    SinglesEventRegistrationForm
+)
+from django.contrib.auth.models import User
+from .models import (
+    SeniorsMinistry,
+    SeniorsEvent,
+    TransportationRequest,
+    HealthResource,
+    PrayerPartner
+)
+from .forms import (
+    SeniorsMinistryForm,
+    SeniorsEventForm,
+    TransportationRequestForm
+)
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.utils import timezone
+from .models import SeniorsMinistry, SeniorsEvent, TransportationRequest
+from .forms import SeniorsMinistryForm, TransportationRequestForm, SeniorsEventForm
 from .models import MensMinistry, MensEvent
 from .forms import MensMinistryForm, MensEventForm
 from django.conf import settings
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from .models import YouthProgram, YouthEvent
+from .forms import YouthProgramForm, YouthEventForm
 from django.db import models
+from django.contrib import messages
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.http import require_POST
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.http import require_POST
+from .models import (
+    YouthProgram,
+    YouthEvent,
+    YouthEventAttendee,
+    YouthEventPayment,  # Changed from Payment
+    PermissionSlip,
+    AttendanceRecord
+)
+from .forms import YouthProgramForm, YouthEventForm, PaymentForm, PermissionSlipForm
+from django.utils import timezone
+
+# Rest of the code remains the same...from .forms import YouthProgramForm, YouthEventForm, PaymentForm, PermissionSlipForm
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.utils.text import slugify
 from django.urls import reverse
@@ -1473,12 +1539,12 @@ def create_youth_event(request):
             return redirect('services:youth_ministry_list')
     else:
         form = YouthEventForm()
-    return render(request, 'services/youth/create_youth_event.html', {'form': form})
+    return render(request, 'services/youth_programs/event_form.html', {'form': form})
 
 @login_required
 def children_ministry_list(request):
     programs = ChildrenProgram.objects.all().order_by('-date')
-    return render(request, 'services/children_programs.html', {'programs': programs})
+    return render(request, 'services/children/children_programs.html', {'programs': programs})
 
 @login_required
 def register_child(request):
@@ -1504,7 +1570,7 @@ def create_children_program(request):
             return redirect('services:children_ministry_list')
     else:
         form = ChildrenProgramForm()
-    return render(request, 'services/create_children_program.html', {'form': form})
+    return render(request, 'services/children/create_children_program.html', {'form': form})
 
 class CouplesHomeView(LoginRequiredMixin, TemplateView):
     template_name = 'services/couples/home.html'
@@ -2303,29 +2369,1220 @@ def mens_event_create(request, ministry_slug):
     })
 
 
+def youth_program_list(request):
+    programs = YouthProgram.objects.filter(is_active=True)
+    age_groups = dict(YouthProgram.AGE_GROUP_CHOICES)
+    program_types = dict(YouthProgram.PROGRAM_TYPE_CHOICES)
+
+    # Filter by age group and program type
+    age_group = request.GET.get('age_group')
+    program_type = request.GET.get('program_type')
+
+    if age_group:
+        programs = programs.filter(age_group=age_group)
+    if program_type:
+        programs = programs.filter(program_type=program_type)
+
+    context = {
+        'programs': programs,
+        'age_groups': age_groups,
+        'program_types': program_types,
+        'selected_age_group': age_group,
+        'selected_program_type': program_type,
+    }
+    return render(request, 'services/youth_programs/list.html', context)
+
+
+def youth_program_detail(request, slug):
+    program = get_object_or_404(YouthProgram, slug=slug)
+
+    # Get upcoming and past events
+    upcoming_events = program.events.filter(
+        date__gte=timezone.now()
+    ).order_by('date')
+
+    past_events = program.events.filter(
+        date__lt=timezone.now()
+    ).order_by('-date')
+
+    # Get member status for the current user
+    is_member = request.user in program.members.all() if request.user.is_authenticated else False
+
+    # Get event statuses for the current user
+    if request.user.is_authenticated:
+        event_statuses = {}
+        for event in upcoming_events:
+            try:
+                attendee = YouthEventAttendee.objects.get(event=event, user=request.user)
+                event_statuses[event.id] = {
+                    'is_attending': True,
+                    'permission_slip_submitted': attendee.permission_slip_submitted,
+                    'payment_completed': attendee.payment_completed
+                }
+            except YouthEventAttendee.DoesNotExist:
+                event_statuses[event.id] = {
+                    'is_attending': False,
+                    'permission_slip_submitted': False,
+                    'payment_completed': False
+                }
+    else:
+        event_statuses = {}
+
+    context = {
+        'program': program,
+        'slug': slug,
+        'upcoming_events': upcoming_events,
+        'past_events': past_events,
+        'is_member': is_member,
+        'event_statuses': event_statuses,
+        'can_edit': request.user.is_authenticated and (
+                request.user == program.leader or
+                request.user.is_staff
+        ),
+        'member_count': program.members.count(),
+        'has_space': program.has_space(),
+    }
+
+    return render(request, 'services/youth_programs/detail.html')
+
+
+@login_required
+def youth_program_create(request):
+    if request.method == 'POST':
+        form = YouthProgramForm(request.POST, request.FILES)
+        if form.is_valid():
+            program = form.save(commit=False)
+            program.leader = request.user
+
+            # Save first to generate slug
+            program.save()
+
+            # Now save many-to-many fields
+            form.save_m2m()
+
+            messages.success(request, 'Youth program created successfully!')
+            return redirect(program.get_absolute_url())  # Use get_absolute_url instead
+    else:
+        form = YouthProgramForm()
+
+    return render(request, 'services/youth/form.html', {
+        'form': form,
+        'action': 'Create'
+    })
+
+@login_required
+def youth_program_edit(request, slug):
+    program = get_object_or_404(YouthProgram, slug=slug)
+
+    if request.user != program.leader:
+        messages.error(request, "You don't have permission to edit this program.")
+        return redirect('services:youth_program_detail', slug=slug)
+
+    if request.method == 'POST':
+        form = YouthProgramForm(request.POST, request.FILES, instance=program)
+        if form.is_valid():
+            program = form.save(commit=False)
+            # Update slug if title changed
+            new_slug = slugify(program.title)
+            if new_slug != program.slug:
+                base_slug = new_slug
+                counter = 1
+                while YouthProgram.objects.filter(slug=new_slug).exists():
+                    new_slug = f"{base_slug}-{counter}"
+                    counter += 1
+                program.slug = new_slug
+            program.save()
+            messages.success(request, 'Youth program updated successfully!')
+            return redirect('services:youth_program_detail', slug=program.slug)
+    else:
+        form = YouthProgramForm(instance=program)
+
+    return render(request, 'services/youth_programs/form.html', {
+        'form': form,
+        'program': program,
+        'action': 'Edit'
+    })
+
+
+# Rest of your views remain the same...
+
+
+@login_required
+def youth_program_create(request):
+    if request.method == 'POST':
+        form = YouthProgramForm(request.POST, request.FILES)
+        if form.is_valid():
+            program = form.save(commit=False)
+            program.leader = request.user
+            program.save()
+            messages.success(request, 'Youth program created successfully!')
+            return redirect('services:youth_program_detail', slug=program.slug)
+    else:
+        form = YouthProgramForm()
+
+    return render(request, 'services/youth_programs/form.html', {
+        'form': form,
+        'action': 'Create'
+    })
+
+
+@login_required
+def youth_event_create(request, program_slug):
+    program = get_object_or_404(YouthProgram, slug=program_slug)
+
+    if request.user != program.leader:
+        messages.error(request, "You don't have permission to create events.")
+        return redirect('services:youth_program_detail', slug=program_slug)
+
+    if request.method == 'POST':
+        form = YouthEventForm(request.POST, request.FILES)
+        if form.is_valid():
+            event = form.save(commit=False)
+            event.program = program
+            event.save()
+            messages.success(request, 'Event created successfully!')
+            return redirect('services:youth_program_detail', slug=program_slug)
+    else:
+        form = YouthEventForm()
+
+    return render(request, 'services/youth_programs/event_form.html', {
+        'form': form,
+        'program': program,
+        'action': 'Create'
+    })
+
+
 @login_required
 @require_POST
-def toggle_event_attendance(request, event_id):
-    event = get_object_or_404(MensEvent, id=event_id)
+def toggle_program_membership(request, program_id):
+    program = get_object_or_404(YouthProgram, id=program_id)
 
-    if request.user in event.attendees.all():
-        event.attendees.remove(request.user)
+    if request.user in program.members.all():
+        program.members.remove(request.user)
         status = 'removed'
     else:
-        if not event.is_registration_open():
+        if not program.has_space():
             return JsonResponse({
                 'status': 'error',
-                'message': 'Registration is closed for this event.'
+                'message': 'This program has reached maximum capacity.'
             })
-        if not event.has_space():
-            return JsonResponse({
-                'status': 'error',
-                'message': 'This event has reached maximum capacity.'
-            })
-        event.attendees.add(request.user)
+        program.members.add(request.user)
         status = 'added'
 
     return JsonResponse({'status': status})
 
 
+@login_required
+def process_payment(request, event_id):
+    event = get_object_or_404(YouthEvent, id=event_id)
+    attendee = get_object_or_404(YouthEventAttendee, event=event, user=request.user)
 
+    if request.method == 'POST':
+        form = PaymentForm(request.POST)
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.attendee = attendee
+            payment.amount = event.cost
+
+            # Integrate with payment gateway here
+            try:
+                # Process payment (example)
+                payment_successful = process_payment_gateway(
+                    amount=event.cost,
+                    payment_method=form.cleaned_data['payment_method'],
+                    user=request.user
+                )
+
+                if payment_successful:
+                    payment.status = 'COMPLETED'
+                    payment.save()
+                    attendee.payment_completed = True
+                    attendee.save()
+                    messages.success(request, 'Payment processed successfully!')
+                    return redirect('services:youth_event_detail', event_id=event.id)
+            except PaymentError as e:
+                messages.error(request, str(e))
+    else:
+        form = PaymentForm()
+
+    return render(request, 'services/youth_programs/payment.html', {
+        'form': form,
+        'event': event,
+        'attendee': attendee
+    })
+
+
+@login_required
+def upload_permission_slip(request, event_id):
+    event = get_object_or_404(YouthEvent, id=event_id)
+    attendee = get_object_or_404(YouthEventAttendee, event=event, user=request.user)
+
+    if request.method == 'POST':
+        form = PermissionSlipForm(request.POST, request.FILES)
+        if form.is_valid():
+            permission_slip = form.save(commit=False)
+            permission_slip.attendee = attendee
+            permission_slip.save()
+
+            attendee.permission_slip_submitted = True
+            attendee.save()
+
+            messages.success(request, 'Permission slip uploaded successfully!')
+            return redirect('services:youth_event_detail', event_id=event.id)
+    else:
+        form = PermissionSlipForm()
+
+    return render(request, 'services/youth_programs/permission_slip.html', {
+        'form': form,
+        'event': event
+    })
+
+
+@login_required
+def record_attendance(request, event_id):
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to record attendance.")
+        return redirect('services:youth_event_detail', event_id=event_id)
+
+    event = get_object_or_404(YouthEvent, id=event_id)
+
+    if request.method == 'POST':
+        attendee_id = request.POST.get('attendee_id')
+        action = request.POST.get('action')
+
+        attendee = get_object_or_404(YouthEventAttendee, id=attendee_id)
+        attendance, created = AttendanceRecord.objects.get_or_create(
+            event=event,
+            attendee=attendee
+        )
+
+        if action == 'checkout':
+            attendance.check_out_time = timezone.now()
+            attendance.save()
+
+        return JsonResponse({'status': 'success'})
+
+    attendees = YouthEventAttendee.objects.filter(event=event)
+    attendance_records = AttendanceRecord.objects.filter(event=event)
+
+    return render(request, 'services/youth_programs/attendance.html', {
+        'event': event,
+        'attendees': attendees,
+        'attendance_records': attendance_records
+    })
+
+
+@login_required
+def attendance_report(request, event_id):
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to view attendance reports.")
+        return redirect('services:youth_event_detail', event_id=event_id)
+
+    event = get_object_or_404(YouthEvent, id=event_id)
+    attendance_records = AttendanceRecord.objects.filter(event=event)
+
+    # Generate Excel report
+    if request.GET.get('format') == 'excel':
+        workbook = generate_attendance_excel(event, attendance_records)
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = f'attachment; filename="{event.title}_attendance.xlsx"'
+        workbook.save(response)
+        return response
+
+    return render(request, 'services/youth_programs/attendance_report.html', {
+        'event': event,
+        'attendance_records': attendance_records
+    })
+
+
+
+@login_required
+def seniors_events(request):
+    upcoming_events = SeniorsEvent.objects.filter(date__gte=timezone.now()).order_by('date')
+    past_events = SeniorsEvent.objects.filter(date__lt=timezone.now()).order_by('-date')
+
+    context = {
+        'upcoming_events': upcoming_events,
+        'past_events': past_events,
+    }
+    return render(request, 'services/seniors_ministry/events.html', context)
+
+
+@login_required
+def seniors_event_create(request):
+    if request.method == 'POST':
+        form = SeniorsEventForm(request.POST, request.FILES)
+        if form.is_valid():
+            event = form.save()
+            messages.success(request, 'Event created successfully!')
+            return redirect('services:seniors_event_detail', event_id=event.id)
+    else:
+        form = SeniorsEventForm()
+
+    return render(request, 'services/seniors_ministry/form.html', {
+        'form': form,
+        'action': 'Create'
+    })
+
+
+@login_required
+def seniors_event_detail(request, event_id):
+    event = get_object_or_404(SeniorsEvent, id=event_id)
+    context = {
+        'event': event,
+        'can_edit': request.user.is_staff,
+        'is_registered': request.user in event.attendees.all(),
+    }
+    return render(request, 'services/seniors_ministry/detail.html', context)
+
+
+@login_required
+def seniors_event_register(request, event_id):
+    event = get_object_or_404(SeniorsEvent, id=event_id)
+
+    if request.method == 'POST':
+        if event.has_space() and event.is_registration_open():
+            event.attendees.add(request.user)
+            messages.success(request, 'Successfully registered for the event!')
+        else:
+            messages.error(request, 'Registration is not available.')
+
+    return redirect('services:seniors_event_detail', event_id=event.id)
+
+
+@login_required
+def seniors_health(request):
+    resources = HealthResource.objects.all().order_by('-created_at')
+    return render(request, 'services/seniors_ministry/health.html', {
+        'resources': resources
+    })
+
+
+@login_required
+def health_resource_detail(request, resource_id):
+    resource = get_object_or_404(HealthResource, id=resource_id)
+    return render(request, 'services/seniors_ministry/health_resource_detail.html', {
+        'resource': resource
+    })
+
+
+@login_required
+def seniors_prayer(request):
+    user_partnerships = PrayerPartner.objects.filter(user=request.user, active=True)
+    available_partners = User.objects.exclude(
+        id__in=user_partnerships.values_list('partner_id', flat=True)
+    ).exclude(id=request.user.id)
+
+    context = {
+        'partnerships': user_partnerships,
+        'available_partners': available_partners,
+    }
+    return render(request, 'services/seniors_ministry/prayer.html', context)
+
+
+@login_required
+def request_prayer_partner(request):
+    if request.method == 'POST':
+        partner_id = request.POST.get('partner_id')
+        partner = get_object_or_404(User, id=partner_id)
+
+        PrayerPartner.objects.create(
+            user=request.user,
+            partner=partner,
+            active=True
+        )
+
+        messages.success(request, 'Prayer partnership request sent!')
+        return JsonResponse({'status': 'success'})
+
+    return JsonResponse({'status': 'error'})
+
+
+@login_required
+def end_prayer_partnership(request):
+    if request.method == 'POST':
+        partnership_id = request.POST.get('partnership_id')
+        partnership = get_object_or_404(PrayerPartner, id=partnership_id, user=request.user)
+
+        partnership.active = False
+        partnership.save()
+
+        messages.success(request, 'Prayer partnership ended.')
+        return JsonResponse({'status': 'success'})
+
+    return JsonResponse({'status': 'error'})
+
+
+@login_required
+def seniors_transportation(request):
+    user_requests = TransportationRequest.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'services/seniors_ministry/transportation.html', {
+        'requests': user_requests
+    })
+
+
+@login_required
+def transportation_request(request, activity_id):
+    activity = get_object_or_404(SeniorsMinistry, id=activity_id)
+
+    if request.method == 'POST':
+        form = TransportationRequestForm(request.POST)
+        if form.is_valid():
+            transport = form.save(commit=False)
+            transport.activity = activity
+            transport.user = request.user
+            transport.save()
+            messages.success(request, 'Transportation request submitted successfully!')
+            return redirect('services:seniors_ministry_detail', slug=activity.slug)
+    else:
+        form = TransportationRequestForm()
+
+    return render(request, 'services/seniors_ministry/transportation_form.html', {
+        'form': form,
+        'activity': activity
+    })
+
+
+@login_required
+def cancel_transportation(request, request_id):
+    transport_request = get_object_or_404(TransportationRequest, id=request_id, user=request.user)
+    transport_request.status = 'CANCELLED'
+    transport_request.save()
+    messages.success(request, 'Transportation request cancelled.')
+    return redirect('services:seniors_transportation')
+
+
+@login_required
+def check_activity_space(request, activity_id):
+    activity = get_object_or_404(SeniorsMinistry, id=activity_id)
+    return JsonResponse({
+        'has_space': activity.has_space(),
+        'current_count': activity.members.count(),
+        'max_participants': activity.max_participants
+    })
+
+
+@login_required
+def get_event_attendees(request, event_id):
+    event = get_object_or_404(SeniorsEvent, id=event_id)
+    attendees = list(event.attendees.values('id', 'first_name', 'last_name'))
+    return JsonResponse({'attendees': attendees})
+
+
+@login_required
+def seniors_ministry_list(request):
+    upcoming_events = SeniorsEvent.objects.filter(
+        date__gte=timezone.now()
+    ).order_by('date')
+
+    past_events = SeniorsEvent.objects.filter(
+        date__lt=timezone.now()
+    ).order_by('-date')
+
+    # Check if there are any events
+    if not upcoming_events.exists() and not past_events.exists():
+        if request.user.is_staff:
+            messages.info(request, 'No events found. Create your first event!')
+            return redirect('services:seniors_event_create')
+        else:
+            messages.info(request, 'No events are currently scheduled. Please check back later.')
+            return redirect('services:seniors_ministry_list')
+
+    context = {
+        'upcoming_events': upcoming_events,
+        'past_events': past_events,
+    }
+    return render(request, 'services/seniors_ministry/list.html', context)
+
+
+@login_required
+def seniors_ministry_create(request):
+    if request.method == 'POST':
+        form = SeniorsMinistryForm(request.POST, request.FILES)
+        if form.is_valid():
+            activity = form.save(commit=False)
+            activity.leader = request.user
+            activity.save()
+            messages.success(request, 'Senior\'s ministry activity created successfully!')
+            return redirect('services:seniors_ministry_detail', slug=activity.slug)
+    else:
+        form = SeniorsMinistryForm()
+
+    return render(request, 'services/seniors_ministry/form.html', {
+        'form': form,
+        'action': 'Create'
+    })
+
+
+def seniors_ministry_detail(request, slug):
+    activity = get_object_or_404(SeniorsMinistry, slug=slug)
+    context = {
+        'activity': activity,
+        'can_edit': request.user.is_authenticated and (
+                request.user == activity.leader or request.user.is_staff
+        ),
+    }
+    return render(request, 'services/seniors_ministry/detail.html', context)
+
+
+@login_required
+def seniors_ministry_edit(request, slug):
+    activity = get_object_or_404(SeniorsMinistry, slug=slug)
+
+    if request.user != activity.leader and not request.user.is_staff:
+        messages.error(request, "You don't have permission to edit this activity.")
+        return redirect('services:seniors_ministry_detail', slug=slug)
+
+    if request.method == 'POST':
+        form = SeniorsMinistryForm(request.POST, request.FILES, instance=activity)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Activity updated successfully!')
+            return redirect('services:seniors_ministry_detail', slug=activity.slug)
+    else:
+        form = SeniorsMinistryForm(instance=activity)
+
+    return render(request, 'services/seniors_ministry/form.html', {
+        'form': form,
+        'activity': activity,
+        'action': 'Edit'
+    })
+
+
+@login_required
+def seniors_event_detail(request, event_id):
+    event = get_object_or_404(SeniorsEvent, id=event_id)
+    context = {
+        'event': event,
+        'can_edit': request.user.is_staff,
+        'is_registered': request.user in event.attendees.all(),
+    }
+    return render(request, 'services/seniors_ministry/detail.html', context)
+
+
+@login_required
+def seniors_event_register(request, event_id):
+    event = get_object_or_404(SeniorsEvent, id=event_id)
+
+    if request.method == 'POST':
+        if event.has_space() and event.is_registration_open():
+            if request.user in event.attendees.all():
+                event.attendees.remove(request.user)
+                messages.success(request, 'Successfully unregistered from the event.')
+            else:
+                event.attendees.add(request.user)
+                messages.success(request, 'Successfully registered for the event!')
+        else:
+            messages.error(request, 'Registration is not available.')
+
+    return redirect('services:seniors_event_detail', event_id=event.id)
+
+
+@login_required
+def seniors_event_delete(request, event_id):
+    event = get_object_or_404(SeniorsEvent, id=event_id)
+
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to delete this event.")
+        return redirect('services:seniors_event_detail', event_id=event_id)
+
+    if request.method == 'POST':
+        event.delete()
+        messages.success(request, 'Event deleted successfully!')
+        return redirect('services:seniors_events')
+
+    return render(request, 'services/seniors_ministry/event_confirm_delete.html', {
+        'event': event
+    })
+
+
+@login_required
+def get_event_attendees(request, event_id):
+    event = get_object_or_404(SeniorsEvent, id=event_id)
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    attendees = list(event.attendees.values('id', 'first_name', 'last_name'))
+    return JsonResponse({'attendees': attendees})
+
+
+@login_required
+def seniors_event_edit(request, event_id):
+    event = get_object_or_404(SeniorsEvent, id=event_id)
+
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to edit this event.")
+        return redirect('services:seniors_event_detail', event_id=event_id)
+
+    if request.method == 'POST':
+        form = SeniorsEventForm(request.POST, request.FILES, instance=event)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Event updated successfully!')
+            return redirect('services:seniors_event_detail', event_id=event.id)
+    else:
+        form = SeniorsEventForm(instance=event)
+
+    return render(request, 'services/seniors_ministry/event_form.html', {
+        'form': form,
+        'event': event,
+        'action': 'Edit'
+    })
+
+
+# Add these prayer partnership views to your existing views
+
+@login_required
+def seniors_prayer(request):
+    user_partnerships = PrayerPartner.objects.filter(
+        models.Q(user=request.user) | models.Q(partner=request.user),
+        active=True
+    )
+    available_partners = User.objects.exclude(
+        id__in=user_partnerships.values_list('partner_id', flat=True)
+    ).exclude(id=request.user.id)
+
+    pending_requests = PrayerPartner.objects.filter(
+        partner=request.user,
+        active=True,
+        accepted=False
+    )
+
+    context = {
+        'partnerships': user_partnerships,
+        'available_partners': available_partners,
+        'pending_requests': pending_requests,
+    }
+    return render(request, 'services/seniors_ministry/prayer.html', context)
+
+
+@login_required
+def request_prayer_partner(request):
+    if request.method == 'POST':
+        partner_id = request.POST.get('partner_id')
+        partner = get_object_or_404(User, id=partner_id)
+
+        # Check if partnership already exists
+        existing = PrayerPartner.objects.filter(
+            models.Q(user=request.user, partner=partner) |
+            models.Q(user=partner, partner=request.user),
+            active=True
+        ).exists()
+
+        if existing:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Partnership already exists'
+            })
+
+        PrayerPartner.objects.create(
+            user=request.user,
+            partner=partner,
+            active=True,
+            accepted=False
+        )
+
+        messages.success(request, 'Prayer partnership request sent!')
+        return JsonResponse({'status': 'success'})
+
+    return JsonResponse({'status': 'error'})
+
+
+@login_required
+def accept_prayer_partnership(request, partnership_id):
+    partnership = get_object_or_404(
+        PrayerPartner,
+        id=partnership_id,
+        partner=request.user,
+        active=True,
+        accepted=False
+    )
+
+    if request.method == 'POST':
+        partnership.accepted = True
+        partnership.save()
+        messages.success(request, 'Prayer partnership accepted!')
+        return JsonResponse({'status': 'success'})
+
+    return JsonResponse({'status': 'error'})
+
+
+@login_required
+def decline_prayer_partnership(request, partnership_id):
+    partnership = get_object_or_404(
+        PrayerPartner,
+        id=partnership_id,
+        partner=request.user,
+        active=True,
+        accepted=False
+    )
+
+    if request.method == 'POST':
+        partnership.active = False
+        partnership.save()
+        messages.success(request, 'Prayer partnership request declined.')
+        return JsonResponse({'status': 'success'})
+
+    return JsonResponse({'status': 'error'})
+
+
+@login_required
+def end_prayer_partnership(request):
+    if request.method == 'POST':
+        partnership_id = request.POST.get('partnership_id')
+        user_filter = models.Q(user=request.user) | models.Q(partner=request.user)
+        partnership = get_object_or_404(
+            PrayerPartner,
+            user_filter,
+            id=partnership_id,
+            active=True
+        )
+        partnership.active = False
+        partnership.save()
+
+        messages.success(request, 'Prayer partnership ended.')
+        return JsonResponse({'status': 'success'})
+
+    return JsonResponse({'status': 'error'})
+
+
+
+@login_required
+def download_health_resource(request, resource_id):
+    resource = get_object_or_404(HealthResource, id=resource_id)
+    if resource.document:
+        response = FileResponse(resource.document.open(), content_type='application/octet-stream')
+        response['Content-Disposition'] = f'attachment; filename="{resource.document.name}"'
+        return response
+    else:
+        messages.error(request, 'No document available for download.')
+        return redirect('services:seniors_health')
+
+
+@login_required
+def toggle_activity_membership(request, activity_id):
+    activity = get_object_or_404(SeniorsMinistry, id=activity_id)
+
+    if request.method == 'POST':
+        if request.user in activity.members.all():
+            activity.members.remove(request.user)
+            status = 'removed'
+            message = 'You have been removed from this activity.'
+        else:
+            if not activity.has_space():
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'This activity has reached maximum capacity.'
+                })
+            activity.members.add(request.user)
+            status = 'added'
+            message = 'You have been added to this activity.'
+
+        messages.success(request, message)
+        return JsonResponse({
+            'status': status,
+            'current_count': activity.members.count(),
+            'max_participants': activity.max_participants
+        })
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
+
+
+@login_required
+def activity_members(request, activity_id):
+    activity = get_object_or_404(SeniorsMinistry, id=activity_id)
+
+    if not request.user.is_staff and request.user != activity.leader:
+        messages.error(request, "You don't have permission to view member details.")
+        return redirect('services:seniors_ministry_detail', slug=activity.slug)
+
+    context = {
+        'activity': activity,
+        'members': activity.members.all().order_by('first_name', 'last_name')
+    }
+    return render(request, 'services/seniors_ministry/activity_members.html', context)
+
+
+@login_required
+def check_activity_space(request, activity_id):
+    activity = get_object_or_404(SeniorsMinistry, id=activity_id)
+    return JsonResponse({
+        'has_space': activity.has_space(),
+        'current_count': activity.members.count(),
+        'max_participants': activity.max_participants
+    })
+
+
+def singles_ministry_list(request):
+    activities = SinglesMinistry.objects.filter(is_active=True)
+
+    # Filter by activity type, age group, and relationship status
+    activity_type = request.GET.get('activity_type')
+    age_group = request.GET.get('age_group')
+    relationship_status = request.GET.get('relationship_status')
+
+    if activity_type:
+        activities = activities.filter(activity_type=activity_type)
+    if age_group:
+        activities = activities.filter(age_group=age_group)
+    if relationship_status:
+        activities = activities.filter(relationship_status=relationship_status)
+
+    context = {
+        'activities': activities,
+        'activity_types': dict(SinglesMinistry.ACTIVITY_CHOICES),
+        'age_groups': dict(SinglesMinistry.AGE_GROUP_CHOICES),
+        'relationship_statuses': dict(SinglesMinistry.RELATIONSHIP_STATUS_CHOICES),
+        'selected_type': activity_type,
+        'selected_age': age_group,
+        'selected_status': relationship_status,
+    }
+    return render(request, 'services/singles_ministry/list.html', context)
+
+
+@login_required
+def singles_ministry_create(request):
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to create activities.")
+        return redirect('services:singles_ministry_list')
+
+    if request.method == 'POST':
+        form = SinglesMinistryForm(request.POST, request.FILES)
+        if form.is_valid():
+            activity = form.save(commit=False)
+            activity.leader = request.user
+            activity.save()
+            messages.success(request, 'Singles ministry activity created successfully!')
+            return redirect('services:singles_ministry_detail', slug=activity.slug)
+    else:
+        form = SinglesMinistryForm()
+
+    return render(request, 'services/singles_ministry/form.html', {
+        'form': form,
+        'action': 'Create'
+    })
+
+
+@login_required
+def singles_ministry_edit(request, slug):
+    activity = get_object_or_404(SinglesMinistry, slug=slug)
+
+    if request.user != activity.leader and not request.user.is_staff:
+        messages.error(request, "You don't have permission to edit this activity.")
+        return redirect('services:singles_ministry_detail', slug=slug)
+
+    if request.method == 'POST':
+        form = SinglesMinistryForm(request.POST, request.FILES, instance=activity)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Activity updated successfully!')
+            return redirect('services:singles_ministry_detail', slug=activity.slug)
+    else:
+        form = SinglesMinistryForm(instance=activity)
+
+    return render(request, 'services/singles_ministry/form.html', {
+        'form': form,
+        'activity': activity,
+        'action': 'Edit'
+    })
+
+
+def singles_ministry_detail(request, slug):
+    activity = get_object_or_404(SinglesMinistry, slug=slug)
+    upcoming_events = activity.events.filter(date__gte=timezone.now()).order_by('date')
+
+    context = {
+        'activity': activity,
+        'upcoming_events': upcoming_events,
+        'is_member': request.user in activity.members.all() if request.user.is_authenticated else False,
+        'can_edit': request.user.is_authenticated and (
+                request.user == activity.leader or request.user.is_staff
+        ),
+    }
+    return render(request, 'services/singles_ministry/detail.html', context)
+
+
+@login_required
+def singles_events(request):
+    upcoming_events = SinglesEvent.objects.filter(
+        date__gte=timezone.now()
+    ).order_by('date')
+
+    past_events = SinglesEvent.objects.filter(
+        date__lt=timezone.now()
+    ).order_by('-date')
+
+    # Check if there are any events
+    if not upcoming_events.exists() and not past_events.exists():
+        if request.user.is_staff:
+            messages.info(request, 'No events found. Create your first event!')
+            return redirect('services:singles_event_create')
+        else:
+            messages.info(request, 'No events are currently scheduled. Please check back later.')
+            return redirect('services:singles_ministry_list')
+
+    context = {
+        'upcoming_events': upcoming_events,
+        'past_events': past_events,
+    }
+    return render(request, 'services/singles_ministry/events.html', context)
+
+
+@login_required
+def singles_event_create(request):
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to create events.")
+        return redirect('services:singles_events')
+
+    if request.method == 'POST':
+        form = SinglesEventForm(request.POST, request.FILES)
+        if form.is_valid():
+            event = form.save()
+            messages.success(request, 'Event created successfully!')
+            return redirect('services:singles_event_detail', event_id=event.id)
+    else:
+        form = SinglesEventForm()
+
+    return render(request, 'services/singles_ministry/event_form.html', {
+        'form': form,
+        'action': 'Create'
+    })
+
+
+@login_required
+def singles_event_detail(request, event_id):
+    event = get_object_or_404(SinglesEvent, id=event_id)
+    registration_form = SinglesEventRegistrationForm() if event.is_registration_open() else None
+
+    context = {
+        'event': event,
+        'registration_form': registration_form,
+        'is_registered': request.user in event.attendees.all(),
+        'can_edit': request.user.is_staff,
+        'now': timezone.now(),
+    }
+    return render(request, 'services/singles_ministry/event_detail.html', context)
+
+
+@login_required
+def singles_event_register(request, event_id):
+    event = get_object_or_404(SinglesEvent, id=event_id)
+
+    if request.method == 'POST':
+        form = SinglesEventRegistrationForm(request.POST)
+        if form.is_valid():
+            if event.has_space() and event.is_registration_open():
+                if request.user in event.attendees.all():
+                    event.attendees.remove(request.user)
+                    messages.success(request, 'Successfully unregistered from the event.')
+                else:
+                    event.attendees.add(request.user)
+                    messages.success(request, 'Successfully registered for the event!')
+            else:
+                messages.error(request, 'Registration is not available.')
+
+    return redirect('services:singles_event_detail', event_id=event.id)
+
+
+@login_required
+def mentorship_request(request):
+    if request.method == 'POST':
+        form = MentorshipRequestForm(request.POST)
+        if form.is_valid():
+            mentorship = form.save(commit=False)
+            mentorship.mentee = request.user
+            mentorship.save()
+            messages.success(request, 'Mentorship request submitted successfully!')
+            return redirect('services:singles_ministry_list')
+    else:
+        form = MentorshipRequestForm()
+
+    return render(request, 'services/singles_ministry/mentorship_form.html', {
+        'form': form
+    })
+
+
+@login_required
+def mentorship_list(request):
+    if request.user.is_staff:
+        pending_requests = MentorshipRequest.objects.filter(status='PENDING')
+        active_matches = MentorshipRequest.objects.filter(status='MATCHED')
+    else:
+        pending_requests = MentorshipRequest.objects.filter(
+            Q(mentee=request.user) | Q(mentor=request.user)
+        ).filter(status='PENDING')
+        active_matches = MentorshipRequest.objects.filter(
+            Q(mentee=request.user) | Q(mentor=request.user)
+        ).filter(status='MATCHED')
+
+    context = {
+        'pending_requests': pending_requests,
+        'active_matches': active_matches,
+    }
+    return render(request, 'services/singles_ministry/mentorship_list.html', context)
+
+
+@login_required
+def singles_resources(request):
+    resources = SinglesResource.objects.all().order_by('-created_at')
+    featured_resources = resources.filter(is_featured=True)
+
+    # Filter by category
+    category = request.GET.get('category')
+    if category:
+        resources = resources.filter(category=category)
+
+    context = {
+        'resources': resources,
+        'featured_resources': featured_resources,
+        'categories': dict(SinglesResource.CATEGORY_CHOICES),
+        'selected_category': category,
+    }
+    return render(request, 'services/singles_ministry/resources.html', context)
+
+
+@login_required
+def toggle_activity_membership(request, activity_id):
+    activity = get_object_or_404(SinglesMinistry, id=activity_id)
+
+    if request.method == 'POST':
+        if request.user in activity.members.all():
+            activity.members.remove(request.user)
+            status = 'removed'
+            message = 'You have been removed from this activity.'
+        else:
+            if not activity.has_space():
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'This activity has reached maximum capacity.'
+                })
+            activity.members.add(request.user)
+            status = 'added'
+            message = 'You have been added to this activity.'
+
+        messages.success(request, message)
+        return JsonResponse({
+            'status': status,
+            'current_count': activity.members.count(),
+            'max_participants': activity.max_participants
+        })
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
+
+
+@login_required
+def accept_mentorship(request, request_id):
+    mentorship = get_object_or_404(
+        MentorshipRequest,
+        id=request_id,
+        status='PENDING'
+    )
+
+    if request.method == 'POST':
+        if request.user.is_staff:
+            form = MentorshipMatchForm(request.POST, potential_mentors=User.objects.filter(is_staff=True))
+            if form.is_valid():
+                mentorship.mentor = form.cleaned_data['mentor']
+                mentorship.status = 'MATCHED'
+                mentorship.notes = form.cleaned_data['notes']
+                mentorship.save()
+
+                messages.success(
+                    request,
+                    f'Mentorship match created between {mentorship.mentee.get_full_name()} and {mentorship.mentor.get_full_name()}'
+                )
+                return redirect('services:singles_mentorship_list')
+        else:
+            messages.error(request, "You don't have permission to make mentorship matches.")
+
+    return redirect('services:singles_mentorship_list')
+
+
+@login_required
+def decline_mentorship(request, request_id):
+    mentorship = get_object_or_404(
+        MentorshipRequest,
+        id=request_id,
+        status='PENDING'
+    )
+
+    if request.method == 'POST':
+        if request.user.is_staff or request.user == mentorship.mentor:
+            mentorship.status = 'CANCELLED'
+            mentorship.save()
+            messages.success(request, 'Mentorship request declined.')
+        else:
+            messages.error(request, "You don't have permission to decline this request.")
+
+    return redirect('services:singles_mentorship_list')
+
+
+@login_required
+def complete_mentorship(request, request_id):
+    mentorship = get_object_or_404(
+        MentorshipRequest,
+        id=request_id,
+        status='MATCHED'
+    )
+
+    if request.method == 'POST':
+        if request.user == mentorship.mentor or request.user == mentorship.mentee:
+            mentorship.status = 'COMPLETED'
+            mentorship.save()
+
+            # Optional: Add completion notes
+            completion_notes = request.POST.get('completion_notes')
+            if completion_notes:
+                mentorship.notes += f"\n\nCompletion Notes ({timezone.now()}):\n{completion_notes}"
+                mentorship.save()
+
+            messages.success(request, 'Mentorship marked as completed.')
+        else:
+            messages.error(request, "You don't have permission to complete this mentorship.")
+
+    return redirect('services:singles_mentorship_list')
+
+
+@login_required
+def resource_detail(request, resource_id):
+    resource = get_object_or_404(SinglesResource, id=resource_id)
+
+    # Track resource views (optional)
+    if not request.session.get(f'viewed_resource_{resource_id}'):
+        request.session[f'viewed_resource_{resource_id}'] = True
+        # You could add a views counter to your model if desired
+
+    context = {
+        'resource': resource,
+        'related_resources': SinglesResource.objects.filter(
+            category=resource.category
+        ).exclude(id=resource.id)[:3],
+        'can_edit': request.user.is_staff
+    }
+    return render(request, 'services/singles_ministry/resource_detail.html', context)
+
+
+@login_required
+def download_resource(request, resource_id):
+    resource = get_object_or_404(SinglesResource, id=resource_id)
+
+    if not resource.document:
+        messages.error(request, 'No document available for download.')
+        return redirect('services:singles_resource_detail', resource_id=resource_id)
+
+    try:
+        response = FileResponse(
+            resource.document.open(),
+            content_type='application/octet-stream'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{resource.document.name}"'
+
+        # Track downloads (optional)
+        if not request.session.get(f'downloaded_resource_{resource_id}'):
+            request.session[f'downloaded_resource_{resource_id}'] = True
+            # You could add a downloads counter to your model if desired
+
+        return response
+    except Exception as e:
+        messages.error(request, 'Error downloading the resource. Please try again.')
+        return redirect('services:singles_resource_detail', resource_id=resource_id)

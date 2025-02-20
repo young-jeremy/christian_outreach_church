@@ -1,0 +1,243 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'services:seniors_ministry_list' %}">Senior's Ministry</a>
+            </li>
+            <li class="breadcrumb-item active">{{ activity.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                {% if activity.image %}
+                <img src="{{ activity.image.url }}" 
+                     class="card-img-top" 
+                     alt="{{ activity.title }}"
+                     style="max-height: 400px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <h2 class="card-title">{{ activity.title }}</h2>
+                    
+                    <!-- Activity Type and Transportation Badge -->
+                    <div class="mb-3">
+                        <span class="badge bg-primary">{{ activity.get_activity_type_display }}</span>
+                        {% if activity.transportation_provided %}
+                        <span class="badge bg-success">Transportation Available</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Description -->
+                    <p class="card-text">{{ activity.description }}</p>
+
+                    <!-- Meeting Details -->
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Meeting Details</h5>
+                            <p class="mb-1">
+                                <i class="bi bi-clock"></i> 
+                                {{ activity.meeting_time|date:"l, F j, Y" }} at 
+                                {{ activity.meeting_time|date:"g:i A" }}
+                            </p>
+                            <p class="mb-1">
+                                <i class="bi bi-geo-alt"></i> 
+                                {{ activity.location }}
+                            </p>
+                            <p class="mb-0">
+                                <i class="bi bi-people"></i> 
+                                {{ activity.members.count }} / 
+                                {% if activity.max_participants %}
+                                    {{ activity.max_participants }} participants
+                                {% else %}
+                                    Unlimited participants
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Health & Accessibility -->
+                    {% if activity.health_guidelines or activity.accessibility_notes %}
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            {% if activity.health_guidelines %}
+                            <h5>Health Guidelines</h5>
+                            <p>{{ activity.health_guidelines }}</p>
+                            {% endif %}
+                            
+                            {% if activity.accessibility_notes %}
+                            <h5>Accessibility Information</h5>
+                            <p class="mb-0">{{ activity.accessibility_notes }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        {% if user.is_authenticated %}
+                        <button class="btn btn-primary join-activity" 
+                                data-activity-id="{{ activity.id }}"
+                                {% if not activity.has_space %}disabled{% endif %}>
+                            {% if user in activity.members.all %}
+                            Leave Activity
+                            {% else %}
+                            Join Activity
+                            {% endif %}
+                        </button>
+                        {% if activity.transportation_provided %}
+                        <a href="{% url 'services:seniors_transportation_request' activity_id=activity.id %}" 
+                           class="btn btn-success">
+                            Request Transportation
+                        </a>
+                        {% endif %}
+                        {% else %}
+                        <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary">
+                            Login to Join
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Members Section -->
+            {% if user.is_authenticated %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Activity Members</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
+                        {% for member in activity.members.all %}
+                        <div class="col text-center">
+                            <div class="avatar mb-2">
+                                {% if member.profile.avatar %}
+                                <img src="{{ member.profile.avatar.url }}" 
+                                     alt="{{ member.get_full_name }}"
+                                     class="rounded-circle"
+                                     style="width: 64px; height: 64px; object-fit: cover;">
+                                {% else %}
+                                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                                     style="width: 64px; height: 64px;">
+                                    {{ member.get_full_name|make_list|first }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <p class="mb-0 small">{{ member.get_full_name }}</p>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <p class="text-muted mb-0">No members yet</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Leader Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Activity Leader</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        {% if activity.leader.profile.avatar %}
+                        <img src="{{ activity.leader.profile.avatar.url }}" 
+                             alt="{{ activity.leader.get_full_name }}"
+                             class="rounded-circle me-3"
+                             style="width: 64px; height: 64px; object-fit: cover;">
+                        {% else %}
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3"
+                             style="width: 64px; height: 64px;">
+                            {{ activity.leader.get_full_name|make_list|first }}
+                        </div>
+                        {% endif %}
+                        <div>
+                            <h6 class="mb-0">{{ activity.leader.get_full_name }}</h6>
+                            <p class="text-muted mb-0">Activity Leader</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Links</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'services:seniors_prayer' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-people me-2"></i> Prayer Partners
+                    </a>
+                    <a href="{% url 'services:seniors_health' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-heart-pulse me-2"></i> Health & Wellness
+                    </a>
+                    <a href="{% url 'services:seniors_events' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-calendar-event me-2"></i> Upcoming Events
+                    </a>
+                </div>
+            </div>
+
+            <!-- Share Activity -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Share Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="mailto:?subject={{ activity.title|urlencode }}&body={{ request.build_absolute_uri }}" 
+                           class="btn btn-outline-primary">
+                            <i class="bi bi-envelope"></i> Share via Email
+                        </a>
+                        <button class="btn btn-outline-info copy-link" 
+                                data-url="{{ request.build_absolute_uri }}">
+                            <i class="bi bi-link-45deg"></i> Copy Link
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Handle joining/leaving activity
+    $('.join-activity').click(function() {
+        const activityId = $(this).data('activity-id');
+        
+        $.post(`/services/seniors/activity/${activityId}/toggle-membership/`, {
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        })
+        .done(function(response) {
+            if (response.status === 'success') {
+                location.reload();
+            } else {
+                alert(response.message);
+            }
+        });
+    });
+
+    // Handle copy link
+    $('.copy-link').click(function() {
+        const url = $(this).data('url');
+        navigator.clipboard.writeText(url).then(function() {
+            alert('Link copied to clipboard!');
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% endblock %} 

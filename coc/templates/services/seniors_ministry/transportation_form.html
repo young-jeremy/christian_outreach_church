@@ -1,0 +1,40 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Transportation Request</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6>Activity Details</h6>
+                        <p class="mb-1"><strong>{{ activity.title }}</strong></p>
+                        <p class="mb-1">Date: {{ activity.meeting_time|date:"F j, Y" }}</p>
+                        <p class="mb-0">Time: {{ activity.meeting_time|date:"g:i A" }}</p>
+                    </div>
+
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        {{ form|crispy }}
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                Submit Request
+                            </button>
+                            <a href="{% url 'services:seniors_ministry_detail' slug=activity.slug %}" 
+                               class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

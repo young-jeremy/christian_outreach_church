@@ -1,0 +1,110 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-0">Singles Events</h1>
+            <p class="text-muted">Join us for fellowship and special events</p>
+        </div>
+        {% if user.is_staff %}
+        <a href="{% url 'services:singles_event_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create Event
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Upcoming Events Section -->
+    <h2 class="h4 mb-3">Upcoming Events</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+        {% for event in upcoming_events %}
+        <div class="col">
+            <div class="card h-100">
+                {% if event.image %}
+                <img src="{{ event.image.url }}" class="card-img-top" alt="{{ event.title }}"
+                     style="height: 200px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ event.title }}</h5>
+                    <p class="card-text text-muted">
+                        <i class="bi bi-calendar"></i> {{ event.date|date:"F j, Y" }}<br>
+                        <i class="bi bi-clock"></i> {{ event.date|date:"g:i A" }}<br>
+                        <i class="bi bi-geo-alt"></i> {{ event.location }}
+                    </p>
+                    <p class="card-text">{{ event.description|truncatewords:30 }}</p>
+                    
+                    <!-- Event Tags -->
+                    <div class="mb-3">
+                        {% if event.is_couples_allowed %}
+                        <span class="badge bg-info">Couples Welcome</span>
+                        {% endif %}
+                        {% if event.event_cost %}
+                        <span class="badge bg-secondary">
+                            Cost: ${{ event.event_cost }}
+                        </span>
+                        {% else %}
+                        <span class="badge bg-success">Free Event</span>
+                        {% endif %}
+                        {% if event.max_participants %}
+                        <span class="badge bg-warning text-dark">
+                            {{ event.attendees.count }}/{{ event.max_participants }} Registered
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid">
+                        <a href="{% url 'services:singles_event_detail' event_id=event.id %}" 
+                           class="btn btn-outline-primary">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                No upcoming events scheduled.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Past Events Section -->
+    <h2 class="h4 mb-3">Past Events</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for event in past_events %}
+        <div class="col">
+            <div class="card h-100 bg-light">
+                {% if event.image %}
+                <img src="{{ event.image.url }}" class="card-img-top" alt="{{ event.title }}"
+                     style="height: 200px; object-fit: cover; opacity: 0.7;">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title text-muted">{{ event.title }}</h5>
+                    <p class="card-text text-muted">
+                        <i class="bi bi-calendar"></i> {{ event.date|date:"F j, Y" }}<br>
+                        <i class="bi bi-clock"></i> {{ event.date|date:"g:i A" }}<br>
+                        <i class="bi bi-geo-alt"></i> {{ event.location }}
+                    </p>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            {{ event.attendees.count }} people attended
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                No past events to display.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

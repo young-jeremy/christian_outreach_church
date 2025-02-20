@@ -1,8 +1,13 @@
 from django import forms
-from django.contrib.auth import get_user_model
+from .models import SinglesMinistry, SinglesEvent, MentorshipRequest, SinglesResource
+
 from django_summernote.widgets import SummernoteWidget
 from crispy_forms.helper import FormHelper
+from .models import YouthProgram, YouthEvent, YouthEventPayment, PermissionSlip, AttendanceRecord
+from .models import SeniorsMinistry, SeniorsEvent, TransportationRequest
+from accounts.models import User
 from crispy_forms.layout import Layout, Row, Column, Submit
+from .models import YouthProgram, YouthEvent
 from django.core.validators import FileExtensionValidator
 from django.utils import timezone
 from django import forms
@@ -87,7 +92,7 @@ from .models import (
     
     # Youth and Children
     YouthEvent, YouthMinistry, ChildrenProgram, 
-    ChildrenMinistry, Child,
+    ChildrensMinistry, Child,
     
     # Groups and Registration
     SmallGroup, MinistryRegistration,
@@ -129,7 +134,6 @@ from videos.models import (
     Playlist, PlaylistVideo, Queue, QueueItem
 )
 
-User = get_user_model()
 
 class TopicForm(forms.ModelForm):
     class Meta:
@@ -489,28 +493,44 @@ class YouthMinistryForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 4}),
         }
 
-
-class ChildrenMinistryForm(forms.ModelForm):
+class ChildrensProgramForm(forms.ModelForm):
     class Meta:
-        model = ChildrenMinistry
+        model = ChildrensMinistry
         fields = [
-            'title', 'program_type', 'description', 'date', 'age_group',
-            'teacher', 'location', 'max_children', 'materials_needed'
+            'title', 'description', 'age_group', 'program_type',
+            'meeting_time', 'location', 'image', 'max_capacity',
+            'curriculum', 'safety_guidelines', 'allergies_aware'
         ]
         widgets = {
-            'date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            'description': forms.Textarea(attrs={'rows': 4}),
-            'materials_needed': forms.Textarea(attrs={'rows': 4}),
+            'meeting_time': forms.DateTimeInput(
+                attrs={'type': 'datetime-local', 'class': 'form-control'}
+            ),
+            'description': forms.Textarea(
+                attrs={'rows': 4, 'class': 'form-control'}
+            ),
+            'safety_guidelines': forms.Textarea(
+                attrs={'rows': 3, 'class': 'form-control'}
+            ),
         }
-
 
 class ChildRegistrationForm(forms.ModelForm):
     class Meta:
         model = Child
-        exclude = ['parent', 'created_at']
+        fields = [
+            'first_name', 'last_name', 'date_of_birth',
+            'allergies', 'medical_notes', 'emergency_contact',
+            'photo_permission', 'special_needs', 'pickup_allowed_by'
+        ]
         widgets = {
-            'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
-            'allergies': forms.Textarea(attrs={'rows': 3})
+            'date_of_birth': forms.DateInput(
+                attrs={'type': 'date', 'class': 'form-control'}
+            ),
+            'allergies': forms.Textarea(
+                attrs={'rows': 2, 'class': 'form-control'}
+            ),
+            'medical_notes': forms.Textarea(
+                attrs={'rows': 2, 'class': 'form-control'}
+            ),
         }
 
 
@@ -1064,3 +1084,294 @@ class MensEventForm(forms.ModelForm):
             ),
         }
 
+# Add to your existing forms.py
+class YouthProgramForm(forms.ModelForm):
+    class Meta:
+        model = YouthProgram
+        fields = [
+            'title', 'description', 'program_type', 'age_group',
+            'meeting_time', 'location', 'image', 'max_participants',
+            'requirements', 'parent_consent_required'
+        ]
+        widgets = {
+            'meeting_time': forms.DateTimeInput(
+                attrs={'type': 'datetime-local', 'class': 'form-control'}
+            ),
+            'description': forms.Textarea(
+                attrs={'rows': 4, 'class': 'form-control'}
+            ),
+            'requirements': forms.Textarea(
+                attrs={'rows': 3, 'class': 'form-control'}
+            ),
+        }
+
+
+class PaymentForm(forms.ModelForm):
+    class Meta:
+        model = YouthEventPayment
+        fields = ['payment_method']
+        widgets = {
+            'payment_method': forms.Select(choices=[
+                ('CARD', 'Credit/Debit Card'),
+                ('MPESA', 'M-PESA'),
+                ('CASH', 'Cash')
+            ])
+        }
+
+class PermissionSlipForm(forms.ModelForm):
+    class Meta:
+        model = PermissionSlip
+        fields = ['document']
+        widgets = {
+            'document': forms.FileInput(attrs={'accept': '.pdf,.doc,.docx'})
+        }
+
+    def clean_document(self):
+        document = self.cleaned_data.get('document')
+        if document:
+            if document.size > 5*1024*1024:  # 5MB limit
+                raise forms.ValidationError("File size must be under 5MB")
+            ext = document.name.split('.')[-1].lower()
+            if ext not in ['pdf', 'doc', 'docx']:
+                raise forms.ValidationError("Only PDF and Word documents are allowed")
+        return document
+
+class AttendanceRecordForm(forms.ModelForm):
+    class Meta:
+        model = AttendanceRecord
+        fields = ['notes']
+
+
+
+
+class SeniorsMinistryForm(forms.ModelForm):
+    class Meta:
+        model = SeniorsMinistry
+        fields = [
+            'title', 'description', 'activity_type', 'meeting_time',
+            'location', 'image', 'max_participants', 'transportation_provided',
+            'accessibility_notes', 'health_guidelines'
+        ]
+        widgets = {
+            'meeting_time': forms.DateTimeInput(
+                attrs={'type': 'datetime-local', 'class': 'form-control'}
+            ),
+            'description': forms.Textarea(
+                attrs={'rows': 4, 'class': 'form-control'}
+            ),
+            'accessibility_notes': forms.Textarea(
+                attrs={'rows': 3, 'class': 'form-control'}
+            ),
+            'health_guidelines': forms.Textarea(
+                attrs={'rows': 3, 'class': 'form-control'}
+            ),
+        }
+
+class TransportationRequestForm(forms.ModelForm):
+    class Meta:
+        model = TransportationRequest
+        fields = [
+            'pickup_address', 'special_needs', 'emergency_contact',
+            'preferred_pickup_time', 'notes'
+        ]
+        widgets = {
+            'preferred_pickup_time': forms.TimeInput(
+                attrs={'type': 'time', 'class': 'form-control'}
+            ),
+            'notes': forms.Textarea(
+                attrs={'rows': 3, 'class': 'form-control'}
+            ),
+        }
+
+class SeniorsEventForm(forms.ModelForm):
+    class Meta:
+        model = SeniorsEvent
+        fields = [
+            'title', 'description', 'date', 'location',
+            'max_participants', 'transportation_provided',
+            'registration_deadline', 'image', 'ministry'
+        ]
+        widgets = {
+            'date': forms.DateTimeInput(
+                attrs={'type': 'datetime-local', 'class': 'form-control'}
+            ),
+            'registration_deadline': forms.DateTimeInput(
+                attrs={'type': 'datetime-local', 'class': 'form-control'}
+            ),
+            'description': forms.Textarea(
+                attrs={'rows': 4, 'class': 'form-control'}
+            ),
+        }
+
+
+class SinglesMinistryForm(forms.ModelForm):
+    class Meta:
+        model = SinglesMinistry
+        fields = [
+            'title', 'description', 'activity_type', 'meeting_time',
+            'location', 'image', 'max_participants', 'age_group',
+            'relationship_status', 'guidelines'
+        ]
+        widgets = {
+            'meeting_time': forms.DateTimeInput(
+                attrs={'type': 'datetime-local', 'class': 'form-control'}
+            ),
+            'description': forms.Textarea(
+                attrs={'rows': 4, 'class': 'form-control'}
+            ),
+            'guidelines': forms.Textarea(
+                attrs={'rows': 4, 'class': 'form-control'}
+            ),
+            'age_group': forms.Select(
+                attrs={'class': 'form-select'}
+            ),
+            'relationship_status': forms.Select(
+                attrs={'class': 'form-select'}
+            ),
+            'activity_type': forms.Select(
+                attrs={'class': 'form-select'}
+            ),
+        }
+
+class SinglesEventForm(forms.ModelForm):
+    class Meta:
+        model = SinglesEvent
+        fields = [
+            'ministry', 'title', 'description', 'date',
+            'location', 'image', 'max_participants',
+            'registration_deadline', 'is_couples_allowed',
+            'event_cost', 'dress_code', 'special_instructions'
+        ]
+        widgets = {
+            'date': forms.DateTimeInput(
+                attrs={'type': 'datetime-local', 'class': 'form-control'}
+            ),
+            'registration_deadline': forms.DateTimeInput(
+                attrs={'type': 'datetime-local', 'class': 'form-control'}
+            ),
+            'description': forms.Textarea(
+                attrs={'rows': 4, 'class': 'form-control'}
+            ),
+            'special_instructions': forms.Textarea(
+                attrs={'rows': 3, 'class': 'form-control'}
+            ),
+            'ministry': forms.Select(
+                attrs={'class': 'form-select'}
+            ),
+            'event_cost': forms.NumberInput(
+                attrs={'class': 'form-control', 'step': '0.01'}
+            ),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        date = cleaned_data.get('date')
+        registration_deadline = cleaned_data.get('registration_deadline')
+
+        if date and registration_deadline and registration_deadline > date:
+            raise forms.ValidationError(
+                "Registration deadline cannot be after the event date."
+            )
+        return cleaned_data
+
+class MentorshipRequestForm(forms.ModelForm):
+    class Meta:
+        model = MentorshipRequest
+        fields = [
+            'areas_of_focus', 'preferred_meeting_times', 'notes'
+        ]
+        widgets = {
+            'areas_of_focus': forms.Textarea(
+                attrs={
+                    'rows': 4,
+                    'class': 'form-control',
+                    'placeholder': 'What areas would you like mentorship in?'
+                }
+            ),
+            'preferred_meeting_times': forms.TextInput(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': 'e.g., Weekday evenings, Saturday mornings'
+                }
+            ),
+            'notes': forms.Textarea(
+                attrs={
+                    'rows': 3,
+                    'class': 'form-control',
+                    'placeholder': 'Any additional information you\'d like to share'
+                }
+            ),
+        }
+
+class SinglesResourceForm(forms.ModelForm):
+    class Meta:
+        model = SinglesResource
+        fields = [
+            'title', 'category', 'content', 'document', 'is_featured'
+        ]
+        widgets = {
+            'title': forms.TextInput(
+                attrs={'class': 'form-control'}
+            ),
+            'category': forms.Select(
+                attrs={'class': 'form-select'}
+            ),
+            'content': forms.Textarea(
+                attrs={
+                    'rows': 6,
+                    'class': 'form-control',
+                    'id': 'resource-content'
+                }
+            ),
+        }
+
+class MentorshipMatchForm(forms.Form):
+    mentor = forms.ModelChoiceField(
+        queryset=None,  # Set in __init__
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        empty_label="Select a mentor"
+    )
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                'rows': 3,
+                'class': 'form-control',
+                'placeholder': 'Add any notes about this match'
+            }
+        )
+    )
+
+    def __init__(self, *args, **kwargs):
+        potential_mentors = kwargs.pop('potential_mentors', None)
+        super().__init__(*args, **kwargs)
+        if potential_mentors is not None:
+            self.fields['mentor'].queryset = potential_mentors
+
+class SinglesEventRegistrationForm(forms.Form):
+    special_requirements = forms.CharField(
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                'rows': 3,
+                'class': 'form-control',
+                'placeholder': 'Any special requirements or dietary restrictions?'
+            }
+        )
+    )
+    emergency_contact = forms.CharField(
+        required=True,
+        widget=forms.TextInput(
+            attrs={
+                'class': 'form-control',
+                'placeholder': 'Emergency contact name and phone number'
+            }
+        )
+    )
+    accept_guidelines = forms.BooleanField(
+        required=True,
+        widget=forms.CheckboxInput(
+            attrs={'class': 'form-check-input'}
+        ),
+        help_text='I have read and accept the event guidelines'
+    )

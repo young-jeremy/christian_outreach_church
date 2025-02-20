@@ -1,0 +1,137 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'services:youth_program_list' %}">Youth Programs</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'services:youth_program_detail' slug=event.program.slug %}">
+                        {{ event.program.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'services:youth_attendance' event_id=event.id %}">Attendance</a>
+                </li>
+                <li class="breadcrumb-item active">Report</li>
+            </ol>
+        </nav>
+        <div class="btn-group">
+            <a href="{% url 'services:youth_attendance_report' event_id=event.id %}?format=excel" 
+               class="btn btn-success">
+                <i class="bi bi-file-excel"></i> Export to Excel
+            </a>
+            <a href="{% url 'services:youth_attendance_report' event_id=event.id %}?format=pdf" 
+               class="btn btn-danger">
+                <i class="bi bi-file-pdf"></i> Export to PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Event Details -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4>{{ event.title }}</h4>
+            <p class="mb-1">
+                <strong>Date:</strong> {{ event.date|date:"F j, Y, g:i a" }}
+            </p>
+            <p class="mb-1">
+                <strong>Location:</strong> {{ event.location }}
+            </p>
+            <p class="mb-0">
+                <strong>Total Attendees:</strong> {{ attendance_records.count }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Total Registered</h6>
+                    <h2 class="mb-0">{{ event.attendees.count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Present</h6>
+                    <h2 class="mb-0">{{ attendance_records.count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h6 class="card-title">Absent</h6>
+                    <h2 class="mb-0">{{ event.attendees.count|subtract:attendance_records.count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Attendance Rate</h6>
+                    <h2 class="mb-0">{{ attendance_rate }}%</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Report -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Detailed Attendance Report</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Check-in Time</th>
+                            <th>Check-out Time</th>
+                            <th>Duration</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in attendance_records %}
+                        <tr>
+                            <td>{{ record.attendee.user.get_full_name }}</td>
+                            <td>{{ record.check_in_time|date:"g:i a" }}</td>
+                            <td>
+                                {% if record.check_out_time %}
+                                    {{ record.check_out_time|date:"g:i a" }}
+                                {% else %}
+                                    Still Present
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if record.check_out_time %}
+                                    {{ record.duration }}
+                                {% else %}
+                                    Ongoing
+                                {% endif %}
+                            </td>
+                            <td>{{ record.notes|default:"-" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No attendance records found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

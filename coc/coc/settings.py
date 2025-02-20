@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import logging
+from django.contrib.messages import constants as message_constants
 import json
 import os
 from pathlib import Path
@@ -23,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-pxrh=7@@zb#5-6+v88o$x5)p7=64719^p!*5i@limgjt-$su(6'
+SECRET_KEY = "django-insecure-pxrh=7@@zb#5-6+v88o$x5)p7=64719^p!*5i@limgjt-$su(6"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -33,108 +35,89 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
     # user defined applications
-    'dashboard',
-    'accounts',
-    'allauth.mfa',
-
+    "dashboard",
+    "accounts",
+    "allauth.mfa",
     # C
-    'crispy_forms',
-    'comments',
-    'blog',
-
+    "crispy_forms",
+    "comments",
+    "blog",
     # D
-    'django_daraja',
-    'django_summernote',
-
+    "django_daraja",
+    "django_summernote",
     # E
-    'events',
-
+    "events",
     # H
-
-    'home',
-    'crispy_bootstrap5',
-
+    "home",
+    "crispy_bootstrap5",
     # M
-    'members',
-
+    "members",
     # N
-    'notifications',
-
+    "notifications",
     # O
-    'outreach',
-
+    "outreach",
     # P
-    'phonenumber_field',
-
+    "phonenumber_field",
     # R
-    'resources',
-
-    'payments',
-
+    "resources",
+    "payments",
     # S
-    'social_django',
-    'services',
-    'channels',
-    'videos',
-    'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
+    "social_django",
+    "services",
+    "channels",
+    "videos",
+    "django.contrib.sites",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
     # Add providers you need (e.g., Google, Facebook)
-    'allauth.socialaccount.providers.google',
-    'rest_framework',  # For API
-
-    #v
-    'volunteers',
-
-
+    "allauth.socialaccount.providers.google",
+    "rest_framework",  # For API
+    # v
+    "volunteers",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.contrib.sites.middleware.CurrentSiteMiddleware',
-    'social_django.middleware.SocialAuthExceptionMiddleware',
-
-    'allauth.account.middleware.AccountMiddleware',  # Add this line
-
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.contrib.sites.middleware.CurrentSiteMiddleware",
+    "social_django.middleware.SocialAuthExceptionMiddleware",
+    "allauth.account.middleware.AccountMiddleware",  # Add this line
 ]
 
-ROOT_URLCONF = 'coc.urls'
+ROOT_URLCONF = "coc.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'social_django.context_processors.backends',
-                'social_django.context_processors.login_redirect',
-
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "social_django.context_processors.backends",
+                "social_django.context_processors.login_redirect",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'coc.wsgi.application'
+WSGI_APPLICATION = "coc.wsgi.application"
 
 SITE_ID = 1  # Required by django-allauth
 
@@ -142,38 +125,38 @@ SITE_ID = 1  # Required by django-allauth
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
-AUTH_USER_MODEL = 'accounts.User'
+AUTH_USER_MODEL = "accounts.User"
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -181,52 +164,52 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
-STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_URL = "/media/"
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTHENTICATION_BACKENDS = [
     # 'social_core.backends.facebook.FacebookOAuth2',
-    'django.contrib.auth.backends.ModelBackend',
-    'social_core.backends.google.GoogleOAuth2',
-
-    'allauth.account.auth_backends.AuthenticationBackend',  # Allauth
+    "django.contrib.auth.backends.ModelBackend",
+    "social_core.backends.google.GoogleOAuth2",
+    "allauth.account.auth_backends.AuthenticationBackend",  # Allauth
 ]
 
-LOGIN_URL = 'account_login'
-LOGIN_REDIRECT_URL = 'videos:category_list'
-LOGOUT_URL = 'accounts:logout'
-LOGOUT_REDIRECT_URL = 'account_login'
+LOGIN_URL = "account_login"
+LOGIN_REDIRECT_URL = "videos:category_list"
+LOGOUT_URL = "accounts:logout"
+LOGOUT_REDIRECT_URL = "account_login"
 SOCIAL_AUTH_FACEBOOK_KEY = "#############"
 SOCIAL_AUTH_FACEBOOK_SECRET = "############"
 
 # for extra info
 SOCIAL_AUTH_FACEBOOK_SCOPE = [
-    'email',
+    "email",
 ]
 ACCOUNT_EMAIL_REQUIRED = True  # Require email during signup
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # Require email verification
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # Require email verification
 ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = True  # Redirect after login
 ACCOUNT_USERNAME_REQUIRED = False  # Allow users to log in with email only
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-SOCIALACCOUNT_EMAIL_AUTHENTICATION = 'True'
-SOCIALACCOUNT_AUTO_SIGNUP = 'True'
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = "True"
+SOCIALACCOUNT_AUTO_SIGNUP = "True"
 SOCIALACCOUNT_QUERY_EMAIL = True  # Get email address from Google
-SOCIALACCOUNT_ADAPTER = 'accounts.adapters.MySocialAccountAdapter'
+SOCIALACCOUNT_ADAPTER = "accounts.adapters.MySocialAccountAdapter"
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'jeremymayaka96@gmail.com'
-EMAIL_HOST_PASSWORD = 'ocpuiqeuraxijdhj'  # Use an app password if 2FA is enabled
+EMAIL_HOST_USER = "jeremymayaka96@gmail.com"
+# Use an app password if 2FA is enabled
+EMAIL_HOST_PASSWORD = "ocpuiqeuraxijdhj"
 
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
@@ -243,7 +226,7 @@ GOOGLE_CLOUD_CREDENTIALS = {
     "token_uri": "https://oauth2.googleapis.com/token",
     "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
     "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/christian-outreach-church%40christian-outreach-church.iam.gserviceaccount.com",
-    "universe_domain": "googleapis.com"
+    "universe_domain": "googleapis.com",
 }
 
 # Convert the dictionary to a JSON string and create credentials
@@ -257,41 +240,35 @@ credentials = service_account.Credentials.from_service_account_info(
 # Optionally, add this to settings for easier reference
 
 
-TWILIO_ACCOUNT_SID = 'AC00f1cc518c94c4bce8c31bc2d4300515'
-TWILIO_AUTH_TOKEN = 'f6b7e7560aa9e5815f1017c3ac4c6206'
-TWILIO_PHONE_NUMBER = '+12293408990'
+TWILIO_ACCOUNT_SID = "AC00f1cc518c94c4bce8c31bc2d4300515"
+TWILIO_AUTH_TOKEN = "f6b7e7560aa9e5815f1017c3ac4c6206"
+TWILIO_PHONE_NUMBER = "+12293408990"
 
-CRISPY_TEMPLATE_PACK = 'bootstrap5'
+CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 MFA_FORMS = {
-    'authenticate': 'allauth.mfa.base.forms.AuthenticateForm',
-    'reauthenticate': 'allauth.mfa.base.forms.AuthenticateForm',
-    'activate_totp': 'allauth.mfa.totp.forms.ActivateTOTPForm',
-    'deactivate_totp': 'allauth.mfa.totp.forms.DeactivateTOTPForm',
-    'generate_recovery_codes': 'allauth.mfa.recovery_codes.forms.GenerateRecoveryCodesForm',
+    "authenticate": "allauth.mfa.base.forms.AuthenticateForm",
+    "reauthenticate": "allauth.mfa.base.forms.AuthenticateForm",
+    "activate_totp": "allauth.mfa.totp.forms.ActivateTOTPForm",
+    "deactivate_totp": "allauth.mfa.totp.forms.DeactivateTOTPForm",
+    "generate_recovery_codes": "allauth.mfa.recovery_codes.forms.GenerateRecoveryCodesForm",
 }
 
-from django.contrib.messages import constants as message_constants
 
 MESSAGE_TAGS = {
-    message_constants.DEBUG: 'secondary',
-    message_constants.INFO: 'info',
-    message_constants.SUCCESS: 'success',
-    message_constants.WARNING: 'warning',
-    message_constants.ERROR: 'danger',
+    message_constants.DEBUG: "secondary",
+    message_constants.INFO: "info",
+    message_constants.SUCCESS: "success",
+    message_constants.WARNING: "warning",
+    message_constants.ERROR: "danger",
 }
 
-import logging
 
 logging.basicConfig(
     level=logging.DEBUG,
     handlers=[logging.StreamHandler()],
-    format='%(asctime)s %(levelname)s %(message)s',
+    format="%(asctime)s %(levelname)s %(message)s",
 )
-
-
-
-
 
 
 FIRE_BASE_KEY = {
@@ -305,75 +282,74 @@ FIRE_BASE_KEY = {
     "token_uri": "https://oauth2.googleapis.com/token",
     "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
     "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-y0pkc%40christian-outreach-churc-6eed3.iam.gserviceaccount.com",
-    "universe_domain": "googleapis.com"
+    "universe_domain": "googleapis.com",
 }
 
 # Initialize environment variables
 # settings.py
-MPESA_ENVIRONMENT = 'sandbox'
+MPESA_ENVIRONMENT = "sandbox"
 MPESA_CONSUMER_KEY = "nNfdvPlAm2iH2fKnrFqOyMdmpoFX99VaICdB4mDrPDZjzD06"
-MPESA_CONSUMER_SECRET = "oXeNhIHMtAmoNMWDSGnTEFPOGCnnF6plVtAmfdGHCRyPjmaELymikwmk6H2k7Qmh"
+MPESA_CONSUMER_SECRET = (
+    "oXeNhIHMtAmoNMWDSGnTEFPOGCnnF6plVtAmfdGHCRyPjmaELymikwmk6H2k7Qmh"
+)
 MPESA_EXPRESS_SHORTCODE = "174379"  # Default test shortcode
-MPESA_PASSKEY = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"  # Ensure you replace this with your actual passkey
+# Ensure you replace this with your actual passkey
+MPESA_PASSKEY = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
 MPESA_BASE_URL = "https://sandbox.safaricom.co.ke"  # Use live URL for production
 CALLBACK_URL = "https://yourdomain.com/payments/callback"
-INITIATOR_PASSWORD = 'MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjQxMTEyMjAwMzQ4'
+INITIATOR_PASSWORD = "MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjQxMTEyMjAwMzQ4"
 
 SOCIAL_AUTH_PIPELINE = (
-    'social_core.pipeline.social_auth.social_details',
-    'social_core.pipeline.social_auth.social_uid',
-    'social_core.pipeline.social_auth.auth_allowed',
-    'social_core.pipeline.social_auth.social_user',
-    'social_core.pipeline.user.get_username',
-    'social_core.pipeline.user.create_user',
-    'accounts.pipeline.save_google_profile',  # Custom function
-    'social_core.pipeline.social_auth.associate_user',
-    'social_core.pipeline.social_auth.load_extra_data',
-    'social_core.pipeline.user.user_details',
+    "social_core.pipeline.social_auth.social_details",
+    "social_core.pipeline.social_auth.social_uid",
+    "social_core.pipeline.social_auth.auth_allowed",
+    "social_core.pipeline.social_auth.social_user",
+    "social_core.pipeline.user.get_username",
+    "social_core.pipeline.user.create_user",
+    "accounts.pipeline.save_google_profile",  # Custom function
+    "social_core.pipeline.social_auth.associate_user",
+    "social_core.pipeline.social_auth.load_extra_data",
+    "social_core.pipeline.user.user_details",
 )
 
-SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
-    'fields': 'id, name, email'
-}
-SOCIAL_AUTH_USER_FIELDS = ['email', 'first_name', 'username', 'password']
+SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {"fields": "id, name, email"}
+SOCIAL_AUTH_USER_FIELDS = ["email", "first_name", "username", "password"]
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
-    'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/userinfo.profile',
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
 ]
 
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = 'AIzaSyD5kUv-e4P_SrhwAcjCcju9cS1zmxz8N4U'  # Client ID
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '757103117798-ha3rgshnegne1uiienpfb1ph29a4cpim.apps.googleusercontent.com'  # Client Secret
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = "AIzaSyD5kUv-e4P_SrhwAcjCcju9cS1zmxz8N4U"  # Client ID
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = "757103117798-ha3rgshnegne1uiienpfb1ph29a4cpim.apps.googleusercontent.com"  # Client Secret
 
 SESSION_COOKIE_AGE = 3600  # Session expires after 1 hour (3600 seconds)
 
 NGROK_AUTHTOKEN = "2oqgfIqHNHZSrK7YqqmbWedPCTu_5LVRdgAp2gr3q9x6jVG57 python example.py"
 
 # Offline video settings
-OFFLINE_DOWNLOADS_PATH = os.path.join(MEDIA_ROOT, 'downloads')
-ALLOWED_DOWNLOAD_FORMATS = ['video/mp4', 'video/webm']
+OFFLINE_DOWNLOADS_PATH = os.path.join(MEDIA_ROOT, "downloads")
+ALLOWED_DOWNLOAD_FORMATS = ["video/mp4", "video/webm"]
 MAX_DOWNLOAD_SIZE = 1024 * 1024 * 500  # 500MB
 
 # Elasticsearch configuration
 ELASTICSEARCH_DSL = {
-    'default': {
-        'hosts': 'localhost:9200'
-    },
+    "default": {"hosts": "localhost:9200"},
 }
 
 # Name of the Elasticsearch index
 ELASTICSEARCH_INDEX_NAMES = {
-    'videos.documents.VideoDocument': 'videos',
+    "videos.documents.VideoDocument": "videos",
 }
 
 # Celery Configuration
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
-DEFAULT_FROM_EMAIL = 'Christian Outreach  Church <jeremymayaka96@gmail.com>'
+DEFAULT_FROM_EMAIL = "Christian Outreach  Church <jeremymayaka96@gmail.com>"
 
 """
 # Channel Layers for WebSocket
@@ -398,24 +374,24 @@ CACHES = {
 }"""
 
 # Celery Beat settings
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 # Set the Celery app name
-CELERY_APP = 'christian_outreach_church'
+CELERY_APP = "christian_outreach_church"
 
 SUMMERNOTE_CONFIG = {
-    'iframe': True,
-    'summernote': {
-        'width': '100%',
-        'height': '300px',
-        'toolbar': [
-            ['style', ['style']],
-            ['font', ['bold', 'italic', 'underline', 'clear']],
-            ['para', ['ul', 'ol', 'paragraph']],
-            ['insert', ['link', 'picture']],
-            ['view', ['fullscreen', 'codeview']],
+    "iframe": True,
+    "summernote": {
+        "width": "100%",
+        "height": "300px",
+        "toolbar": [
+            ["style", ["style"]],
+            ["font", ["bold", "italic", "underline", "clear"]],
+            ["para", ["ul", "ol", "paragraph"]],
+            ["insert", ["link", "picture"]],
+            ["view", ["fullscreen", "codeview"]],
         ],
-    }
+    },
 }
 
 # Redis Configuration
@@ -434,8 +410,8 @@ CACHES = {
 }
 """
 # Session Configuration (Optional - for using Redis as session backend)
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'default'
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
 
 # Channels Configuration (for WebSocket support)
 """CHANNEL_LAYERS = {
@@ -448,16 +424,16 @@ SESSION_CACHE_ALIAS = 'default'
 }"""
 
 # Summernote Configuration
-X_FRAME_OPTIONS = 'SAMEORIGIN'
-SUMMERNOTE_THEME = 'bs4'
+X_FRAME_OPTIONS = "SAMEORIGIN"
+SUMMERNOTE_THEME = "bs4"
 
 CELERY_BEAT_SCHEDULE = {
-    'send-anniversary-reminders': {
-        'task': 'services.tasks.send_anniversary_reminders',
-        'schedule': crontab(hour=9, minute=0),  # Run daily at 9 AM
+    "send-anniversary-reminders": {
+        "task": "services.tasks.send_anniversary_reminders",
+        "schedule": crontab(hour=9, minute=0),  # Run daily at 9 AM
     },
-    'send-counseling-reminders': {
-        'task': 'services.tasks.send_counseling_reminders',
-        'schedule': crontab(hour=16, minute=0),  # Run daily at 4 PM
+    "send-counseling-reminders": {
+        "task": "services.tasks.send_counseling_reminders",
+        "schedule": crontab(hour=16, minute=0),  # Run daily at 4 PM
     },
 }

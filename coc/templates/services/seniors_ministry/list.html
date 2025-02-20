@@ -1,0 +1,190 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-0">Senior's Ministry</h1>
+            <p class="text-muted">Growing in Faith, Fellowship, and Wisdom</p>
+        </div>
+        {% if user.is_staff %}
+        <a href="{% url 'services:seniors_ministry_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create Activity
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Quick Links Section -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar-event display-4"></i>
+                    <h5 class="mt-2">Upcoming Events</h5>
+                    <a href="{% url 'services:seniors_events' %}" class="btn btn-light mt-2">
+                        View Calendar
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-car-front display-4"></i>
+                    <h5 class="mt-2">Transportation</h5>
+                    <a href="{% url 'services:seniors_transportation' %}" class="btn btn-light mt-2">
+                        Request Ride
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-heart-pulse display-4"></i>
+                    <h5 class="mt-2">Health & Wellness</h5>
+                    <a href="{% url 'services:seniors_health' %}" class="btn btn-light mt-2">
+                        Learn More
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body text-center">
+                    <i class="bi bi-people display-4"></i>
+                    <h5 class="mt-2">Prayer Partners</h5>
+                    <a href="{% url 'services:seniors_prayer' %}" class="btn btn-light mt-2">
+                        Join Group
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Activity Type</label>
+                    <select name="activity_type" class="form-select">
+                        <option value="">All Activities</option>
+                        {% for key, value in activity_types.items %}
+                        <option value="{{ key }}" {% if key == selected_type %}selected{% endif %}>
+                            {{ value }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Day of Week</label>
+                    <select name="day" class="form-select">
+                        <option value="">Any Day</option>
+                        <option value="monday">Monday</option>
+                        <option value="tuesday">Tuesday</option>
+                        <option value="wednesday">Wednesday</option>
+                        <option value="thursday">Thursday</option>
+                        <option value="friday">Friday</option>
+                        <option value="saturday">Saturday</option>
+                        <option value="sunday">Sunday</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-filter"></i> Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Activities Grid -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for activity in activities %}
+        <div class="col">
+            <div class="card h-100">
+                {% if activity.image %}
+                <img src="{{ activity.image.url }}" class="card-img-top" alt="{{ activity.title }}"
+                     style="height: 200px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ activity.title }}</h5>
+                    <span class="badge bg-primary mb-2">{{ activity.get_activity_type_display }}</span>
+                    {% if activity.transportation_provided %}
+                    <span class="badge bg-success mb-2">Transportation Available</span>
+                    {% endif %}
+                    <p class="card-text">{{ activity.description|truncatewords:30 }}</p>
+                    <div class="small text-muted mb-2">
+                        <i class="bi bi-clock"></i> {{ activity.meeting_time|date:"l g:i A" }}<br>
+                        <i class="bi bi-geo-alt"></i> {{ activity.location }}
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'services:seniors_ministry_detail' slug=activity.slug %}" 
+                           class="btn btn-outline-primary">
+                            View Details
+                        </a>
+                        {% if user.is_authenticated %}
+                        <button class="btn btn-outline-success join-activity" 
+                                data-activity-id="{{ activity.id }}"
+                                {% if not activity.has_space %}disabled{% endif %}>
+                            {% if user in activity.members.all %}
+                            Leave Activity
+                            {% else %}
+                            Join Activity
+                            {% endif %}
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <h4 class="alert-heading">No Activities Available</h4>
+                <p>There are currently no senior's ministry activities.</p>
+                {% if user.is_staff %}
+                <a href="{% url 'services:seniors_ministry_create' %}" class="btn btn-primary">
+                    Create First Activity
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Handle joining/leaving activities
+    $('.join-activity').click(function() {
+        const activityId = $(this).data('activity-id');
+        
+        $.post(`/services/seniors/activity/${activityId}/toggle-membership/`, {
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        })
+        .done(function(response) {
+            if (response.status === 'success') {
+                location.reload();
+            } else {
+                alert(response.message);
+            }
+        });
+    });
+
+    // Add hover effect to cards
+    $('.card').hover(
+        function() { $(this).addClass('shadow-sm'); },
+        function() { $(this).removeClass('shadow-sm'); }
+    );
+});
+</script>
+{% endblock %}
+
+{% endblock %}

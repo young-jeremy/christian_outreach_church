@@ -1,0 +1,158 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <h2>Prayer Partners</h2>
+            
+            <!-- Current Partnerships -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Your Prayer Partners</h5>
+                </div>
+                <div class="card-body">
+                    {% for partnership in partnerships %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            {% if partnership.partner.profile.avatar %}
+                            <img src="{{ partnership.partner.profile.avatar.url }}" 
+                                 class="rounded-circle" 
+                                 style="width: 50px; height: 50px; object-fit: cover;">
+                            {% else %}
+                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                                 style="width: 50px; height: 50px;">
+                                {{ partnership.partner.get_full_name|make_list|first }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-0">{{ partnership.partner.get_full_name }}</h6>
+                            <small class="text-muted">
+                                Partners since {{ partnership.created_at|date:"F j, Y" }}
+                            </small>
+                        </div>
+                        <button class="btn btn-outline-danger btn-sm end-partnership" 
+                                data-partnership-id="{{ partnership.id }}">
+                            End Partnership
+                        </button>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted mb-0">You don't have any prayer partners yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Available Partners -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Available Prayer Partners</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                        {% for partner in available_partners %}
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            {% if partner.profile.avatar %}
+                                            <img src="{{ partner.profile.avatar.url }}" 
+                                                 class="rounded-circle" 
+                                                 style="width: 64px; height: 64px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                                                 style="width: 64px; height: 64px;">
+                                                {{ partner.get_full_name|make_list|first }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-0">{{ partner.get_full_name }}</h6>
+                                            <small class="text-muted">
+                                                Member since {{ partner.date_joined|date:"F Y" }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <button class="btn btn-primary btn-sm request-partnership"
+                                                data-partner-id="{{ partner.id }}">
+                                            Request Partnership
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <p class="text-muted mb-0">No available prayer partners at the moment.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Prayer Guidelines</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success"></i>
+                            Commit to regular prayer times
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success"></i>
+                            Maintain confidentiality
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success"></i>
+                            Be supportive and encouraging
+                        </li>
+                        <li>
+                            <i class="bi bi-check-circle text-success"></i>
+                            Share prayer requests respectfully
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('.request-partnership').click(function() {
+        const partnerId = $(this).data('partner-id');
+        $.post('/services/seniors/prayer/request/', {
+            partner_id: partnerId,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        })
+        .done(function() {
+            location.reload();
+        });
+    });
+
+    $('.end-partnership').click(function() {
+        if (confirm('Are you sure you want to end this prayer partnership?')) {
+            const partnershipId = $(this).data('partnership-id');
+            $.post('/services/seniors/prayer/end/', {
+                partnership_id: partnershipId,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            })
+            .done(function() {
+                location.reload();
+            });
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% endblock %}

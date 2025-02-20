@@ -1,0 +1,158 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item">
+                                <a href="{% url 'services:youth_program_list' %}">Youth Programs</a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                <a href="{% url 'services:youth_program_detail' slug=event.program.slug %}">
+                                    {{ event.program.title }}
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active">Payment</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="card-body">
+                    <h2 class="mb-4">Event Payment</h2>
+                    
+                    <!-- Event Details -->
+                    <div class="alert alert-info mb-4">
+                        <h5>{{ event.title }}</h5>
+                        <p class="mb-1">
+                            <strong>Date:</strong> {{ event.date|date:"F j, Y, g:i a" }}
+                        </p>
+                        <p class="mb-1">
+                            <strong>Amount:</strong> ${{ event.cost }}
+                        </p>
+                    </div>
+
+                    <!-- Payment Form -->
+                    <form method="post" id="payment-form" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        {{ form|crispy }}
+
+                        <div id="card-element" class="mb-3" style="display: none;">
+                            <!-- Stripe Elements Placeholder -->
+                        </div>
+
+                        <div id="mpesa-fields" class="mb-3" style="display: none;">
+                            <div class="form-group">
+                                <label for="phone">M-PESA Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" 
+                                       pattern="[0-9]{10}" placeholder="Enter phone number">
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary" id="submit-button">
+                                Process Payment
+                            </button>
+                            <a href="{% url 'services:youth_event_detail' event_id=event.id %}" 
+                               class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+$(document).ready(function() {
+    const stripe = Stripe('{{ stripe_public_key }}');
+    const elements = stripe.elements();
+    const card = elements.create('card');
+    
+    // Handle payment method selection
+    $('#id_payment_method').change(function() {
+        const method = $(this).val();
+        $('#card-element, #mpesa-fields').hide();
+        
+        if (method === 'CARD') {
+            $('#card-element').show();
+            card.mount('#card-element');
+        } else if (method === 'MPESA') {
+            $('#mpesa-fields').show();
+        }
+    });
+
+    // Handle form submission
+    $('#payment-form').submit(function(event) {
+        event.preventDefault();
+        const method = $('#id_payment_method').val();
+        
+        if (method === 'CARD') {
+            processCardPayment();
+        } else if (method === 'MPESA') {
+            processMpesaPayment();
+        } else {
+            processCashPayment();
+        }
+    });
+
+    // Payment processing functions
+    async function processCardPayment() {
+        const {token, error} = await stripe.createToken(card);
+        if (error) {
+            alert(error.message);
+        } else {
+            submitPayment({
+                token: token.id,
+                method: 'CARD'
+            });
+        }
+    }
+
+    function processMpesaPayment() {
+        const phone = $('#phone').val();
+        if (!phone) {
+            alert('Please enter your phone number');
+            return;
+        }
+        submitPayment({
+            phone: phone,
+            method: 'MPESA'
+        });
+    }
+
+    function processCashPayment() {
+        submitPayment({
+            method: 'CASH'
+        });
+    }
+
+    function submitPayment(data) {
+        $.post('', {
+            ...data,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        })
+        .done(function(response) {
+            if (response.status === 'success') {
+                window.location.href = response.redirect_url;
+            } else {
+                alert(response.message);
+            }
+        })
+        .fail(function() {
+            alert('Payment processing failed. Please try again.');
+        });
+    }
+});
+</script>
+{% endblock %}
+
+{% endblock %}

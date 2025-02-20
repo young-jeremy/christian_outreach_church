@@ -1,0 +1,158 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'services:youth_program_list' %}">Youth Programs</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'services:youth_program_detail' slug=event.program.slug %}">
+                        {{ event.program.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">Attendance</li>
+            </ol>
+        </nav>
+        <div>
+            <a href="{% url 'services:youth_attendance_report' event_id=event.id %}?format=excel" 
+               class="btn btn-success">
+                <i class="bi bi-file-excel"></i> Export to Excel
+            </a>
+        </div>
+    </div>
+
+    <!-- Event Details -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4>{{ event.title }}</h4>
+            <p class="mb-1">
+                <strong>Date:</strong> {{ event.date|date:"F j, Y, g:i a" }}
+            </p>
+            <p class="mb-0">
+                <strong>Location:</strong> {{ event.location }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Attendance Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Attendance Record</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Check-in Time</th>
+                            <th>Check-out Time</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attendee in attendees %}
+                        <tr>
+                            <td>{{ attendee.user.get_full_name }}</td>
+                            <td>
+                                {% with record=attendance_records|get_item:attendee.id %}
+                                    {% if record %}
+                                        {{ record.check_in_time|date:"g:i a" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td>
+                                {% with record=attendance_records|get_item:attendee.id %}
+                                    {% if record.check_out_time %}
+                                        {{ record.check_out_time|date:"g:i a" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td>
+                                {% with record=attendance_records|get_item:attendee.id %}
+                                    {% if not record %}
+                                        <span class="badge bg-secondary">Not Arrived</span>
+                                    {% elif not record.check_out_time %}
+                                        <span class="badge bg-success">Present</span>
+                                    {% else %}
+                                        <span class="badge bg-info">Checked Out</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td>
+                                {% with record=attendance_records|get_item:attendee.id %}
+                                    {% if not record %}
+                                        <button class="btn btn-sm btn-success check-in" 
+                                                data-attendee-id="{{ attendee.id }}">
+                                            Check In
+                                        </button>
+                                    {% elif not record.check_out_time %}
+                                        <button class="btn btn-sm btn-warning check-out" 
+                                                data-attendee-id="{{ attendee.id }}">
+                                            Check Out
+                                        </button>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No attendees registered for this event.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Handle check-in
+    $('.check-in').click(function() {
+        const attendeeId = $(this).data('attendee-id');
+        $.post('{% url "services:youth_attendance_record" event_id=event.id %}', {
+            attendee_id: attendeeId,
+            action: 'checkin',
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        })
+        .done(function() {
+            location.reload();
+        })
+        .fail(function() {
+            alert('Failed to record check-in. Please try again.');
+        });
+    });
+
+    // Handle check-out
+    $('.check-out').click(function() {
+        const attendeeId = $(this).data('attendee-id');
+        $.post('{% url "services:youth_attendance_record" event_id=event.id %}', {
+            attendee_id: attendeeId,
+            action: 'checkout',
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        })
+        .done(function() {
+            location.reload();
+        })
+        .fail(function() {
+            alert('Failed to record check-out. Please try again.');
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% endblock %}

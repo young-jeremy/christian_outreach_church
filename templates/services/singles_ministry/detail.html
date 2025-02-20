@@ -1,0 +1,187 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'services:singles_ministry_list' %}">Singles Ministry</a>
+            </li>
+            <li class="breadcrumb-item active">{{ activity.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                {% if activity.image %}
+                <img src="{{ activity.image.url }}" 
+                     class="card-img-top" 
+                     alt="{{ activity.title }}"
+                     style="max-height: 400px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <h1 class="card-title h2">{{ activity.title }}</h1>
+                    
+                    <!-- Activity Type Badge -->
+                    <span class="badge bg-primary">
+                        {{ activity.get_activity_type_display }}
+                    </span>
+                    
+                    <!-- Tags -->
+                    <div class="mt-2">
+                        <span class="badge bg-info">{{ activity.get_age_group_display }}</span>
+                        {% if activity.relationship_status %}
+                        <span class="badge bg-secondary">
+                            {{ activity.get_relationship_status_display }}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Activity Details -->
+                    <div class="mt-4">
+                        <h5>Activity Details</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-calendar-event text-primary"></i>
+                                {{ activity.meeting_time|date:"l, F j, Y" }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-clock text-primary"></i>
+                                {{ activity.meeting_time|date:"g:i A" }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-geo-alt text-primary"></i>
+                                {{ activity.location }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-people text-primary"></i>
+                                {% if activity.max_participants %}
+                                {{ activity.members.count }} / {{ activity.max_participants }} Members
+                                {% else %}
+                                {{ activity.members.count }} Members
+                                {% endif %}
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-person-check text-primary"></i>
+                                Led by {{ activity.leader.get_full_name }}
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mt-4">
+                        <h5>About This Activity</h5>
+                        <p>{{ activity.description|linebreaks }}</p>
+                    </div>
+
+                    <!-- Guidelines -->
+                    {% if activity.guidelines %}
+                    <div class="mt-4">
+                        <h5>Guidelines</h5>
+                        <div class="alert alert-info">
+                            {{ activity.guidelines|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Upcoming Events -->
+            {% if upcoming_events %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Upcoming Events</h5>
+                </div>
+                <div class="card-body">
+                    {% for event in upcoming_events %}
+                    <div class="d-flex align-items-center mb-3">
+                        {% if event.image %}
+                        <img src="{{ event.image.url }}" 
+                             alt="{{ event.title }}"
+                             class="rounded"
+                             style="width: 100px; height: 60px; object-fit: cover;">
+                        {% endif %}
+                        <div class="ms-3">
+                            <h6 class="mb-0">{{ event.title }}</h6>
+                            <small class="text-muted">
+                                {{ event.date|date:"F j, Y" }} at {{ event.date|date:"g:i A" }}
+                            </small>
+                        </div>
+                        <a href="{% url 'services:singles_event_detail' event_id=event.id %}" 
+                           class="btn btn-sm btn-outline-primary ms-auto">
+                            Details
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Membership Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    {% if is_member %}
+                    <div class="alert alert-success mb-3">
+                        <i class="bi bi-check-circle"></i> You're a member!
+                    </div>
+                    {% endif %}
+
+                    {% if user.is_authenticated %}
+                    <form method="post" action="{% url 'services:singles_toggle_membership' activity.id %}">
+                        {% csrf_token %}
+                        {% if is_member %}
+                        <button type="submit" class="btn btn-outline-danger w-100">
+                            Leave Activity
+                        </button>
+                        {% else %}
+                            {% if activity.has_space %}
+                            <button type="submit" class="btn btn-primary w-100">
+                                Join Activity
+                            </button>
+                            {% else %}
+                            <button type="button" class="btn btn-secondary w-100" disabled>
+                                Activity Full
+                            </button>
+                            {% endif %}
+                        {% endif %}
+                    </form>
+                    {% else %}
+                    <a href="{% url 'login' %}?next={{ request.path }}" 
+                       class="btn btn-primary w-100">
+                        Login to Join
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Staff Actions -->
+            {% if can_edit %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Staff Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'services:singles_ministry_edit' activity.slug %}" 
+                           class="btn btn-outline-primary">
+                            <i class="bi bi-pencil"></i> Edit Activity
+                        </a>
+                        <a href="{% url 'services:singles_activity_members' activity.id %}" 
+                           class="btn btn-outline-info">
+                            <i class="bi bi-people"></i> View Members
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

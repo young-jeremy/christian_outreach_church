@@ -421,31 +421,124 @@ class Testimony(models.Model):
         return self.title
 
 
-class ChildrenMinistry(models.Model):
-    PROGRAM_TYPES = [
-        ('sunday_school', 'Sunday School'),
-        ('vbs', 'Vacation Bible School'),
-        ('special', 'Special Program'),
+class Child(models.Model):
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    date_of_birth = models.DateField()
+    parent = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='children'
+    )
+    allergies = models.TextField(blank=True)
+    medical_notes = models.TextField(blank=True)
+    emergency_contact = models.CharField(max_length=200)
+    photo_permission = models.BooleanField(default=False)
+    special_needs = models.TextField(blank=True)
+    pickup_allowed_by = models.TextField(help_text="Names of people allowed to pick up the child", null=True)
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
+
+    @property
+    def age(self):
+        today = date.today()
+        return today.year - self.date_of_birth.year - (
+            (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
+        )
+
+
+class ChildrensMinistry(models.Model):
+    AGE_GROUP_CHOICES = [
+        ('2-4', 'Toddlers (2-4)'),
+        ('5-7', 'Early Elementary (5-7)'),
+        ('8-10', 'Elementary (8-10)'),
+        ('11-12', 'Pre-Teens (11-12)')
+    ]
+
+    PROGRAM_TYPE_CHOICES = [
+        ('SUNDAY_SCHOOL', 'Sunday School'),
+        ('BIBLE_CLUB', 'Bible Club'),
+        ('VACATION_BIBLE', 'Vacation Bible School'),
+        ('CHOIR', 'Children\'s Choir'),
+        ('ARTS_CRAFTS', 'Arts & Crafts'),
+        ('DRAMA', 'Drama Ministry'),
+        ('MISSIONS', 'Kids Missions')
     ]
 
     title = models.CharField(max_length=200)
-    program_type = models.CharField(max_length=20, choices=PROGRAM_TYPES)
+    slug = models.SlugField(unique=True, blank=True)
     description = models.TextField()
-    date = models.DateTimeField()
-    age_group = models.CharField(max_length=50)  # e.g., "4-6 years"
-    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='children_ministry')
+    age_group = models.CharField(max_length=20, choices=AGE_GROUP_CHOICES)
+    program_type = models.CharField(max_length=50, choices=PROGRAM_TYPE_CHOICES)
+    leader = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='led_childrens_ministries'
+    )
+    teachers = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='teaching_ministries',
+        blank=True
+    )
+    children = models.ManyToManyField(
+        'Child',
+        related_name='enrolled_programs',
+        through='ChildEnrollment'
+    )
+    meeting_time = models.DateTimeField()
     location = models.CharField(max_length=200)
-    max_children = models.PositiveIntegerField()
-    registered_children = models.ManyToManyField('Child', related_name='programs')
-    materials_needed = models.TextField(blank=True)
+    image = models.ImageField(upload_to='childrens_ministry/', blank=True, null=True)
+    max_capacity = models.PositiveIntegerField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    curriculum = models.FileField(upload_to='curriculum/', blank=True, null=True)
+    safety_guidelines = models.TextField(blank=True)
+    allergies_aware = models.BooleanField(default=True)
 
-    class Meta:
-        verbose_name_plural = "Children's Ministry Programs"
-        ordering = ['-date']
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
+
+
+class ChildEnrollment(models.Model):
+    child = models.ForeignKey(Child, on_delete=models.CASCADE)
+    program = models.ForeignKey(ChildrensMinistry, on_delete=models.CASCADE)
+    enrollment_date = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)
+    attendance_record = models.ManyToManyField(
+        'ChildAttendance',
+        related_name='enrollments',
+        blank=True
+    )
+    notes = models.TextField(blank=True)
+
+class ChildAttendance(models.Model):
+    child = models.ForeignKey(Child, on_delete=models.CASCADE)
+    program = models.ForeignKey(ChildrensMinistry, on_delete=models.CASCADE)
+    date = models.DateField()
+    check_in_time = models.TimeField()
+    check_out_time = models.TimeField(null=True, blank=True)
+    checked_in_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='checkins_performed'
+    )
+    checked_out_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='checkouts_performed'
+    )
+    pickup_person = models.CharField(max_length=200, blank=True)
+    notes = models.TextField(blank=True)
 
 
 class NotificationPreferences(models.Model):
@@ -689,70 +782,121 @@ class SmallGroup(models.Model):
         return False
 
 
-class YouthEvent(models.Model):
-    EVENT_TYPES = [
-        ('fellowship', 'Youth Fellowship'),
-        ('worship', 'Youth Worship'),
-        ('outreach', 'Youth Outreach'),
-        ('camp', 'Youth Camp'),
-        ('workshop', 'Workshop/Training'),
-        ('social', 'Social Event'),
+from django.db import models
+from django.conf import settings
+from django.urls import reverse
+from django.utils.text import slugify
+
+
+class YouthProgram(models.Model):
+    PROGRAM_TYPE_CHOICES = [
+        ('WORSHIP', 'Worship Team'),
+        ('BIBLE_STUDY', 'Bible Study'),
+        ('MENTORSHIP', 'Mentorship'),
+        ('OUTREACH', 'Outreach'),
+        ('SPORTS', 'Sports Ministry'),
+        ('ARTS', 'Arts & Music'),
+        ('LEADERSHIP', 'Leadership Development'),
     ]
 
-    AGE_RANGES = [
-        ('13-15', '13-15 years'),
-        ('16-18', '16-18 years'),
-        ('19-25', '19-25 years'),
-        ('all', 'All Youth'),
+    AGE_GROUP_CHOICES = [
+        ('13-15', 'Young Teens (13-15)'),
+        ('16-18', 'Older Teens (16-18)'),
+        ('19-25', 'Young Adults (19-25)'),
     ]
 
     title = models.CharField(max_length=200)
-    event_type = models.CharField(max_length=20, choices=EVENT_TYPES)
-    date = models.DateField()
-    time = models.TimeField()
-    end_time = models.TimeField()
-    location = models.CharField(max_length=200)
-    age_range = models.CharField(max_length=10, choices=AGE_RANGES)
+    slug = models.SlugField(unique=True, blank=True)
     description = models.TextField()
-    image = models.ImageField(upload_to='youth_events/', blank=True)
-    banner = models.ImageField(upload_to='youth_events/banners/', blank=True)
-
-    # Event Details
-    leaders = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='youth_event_leaders')
-    max_participants = models.PositiveIntegerField(default=20)
-    registration_deadline = models.DateTimeField()
-    registration_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
-    # Additional Info
-    schedule = models.TextField(blank=True)
-    requirements = models.TextField(blank=True)
-    parent_consent_required = models.BooleanField(default=True)
-    transportation_provided = models.BooleanField(default=False)
-    is_featured = models.BooleanField(default=False)
-
-    # Metadata
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
-                                   related_name='created_youth_events')
+    program_type = models.CharField(max_length=50, choices=PROGRAM_TYPE_CHOICES)
+    age_group = models.CharField(max_length=20, choices=AGE_GROUP_CHOICES)
+    leader = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='led_youth_programs'
+    )
+    members = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='youth_program_memberships',
+        blank=True
+    )
+    meeting_time = models.DateTimeField()
+    location = models.CharField(max_length=200)
+    image = models.ImageField(upload_to='youth_programs/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+    max_participants = models.PositiveIntegerField(null=True, blank=True)
+    requirements = models.TextField(blank=True)
+    parent_consent_required = models.BooleanField(default=True)
 
-    class Meta:
-        ordering = ['-date', '-time']
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            # Generate base slug from title
+            base_slug = slugify(self.title)
+            slug = base_slug
+
+            # Ensure unique slug
+            counter = 1
+            while YouthProgram.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+
+            self.slug = slug
+
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse('services:youth_program_detail', kwargs={'slug': self.slug})
+
+
+
+class YouthEvent(models.Model):
+    program = models.ForeignKey(YouthProgram, on_delete=models.CASCADE, related_name='events', null=True)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    date = models.DateTimeField()
+    location = models.CharField(max_length=200)
+    image = models.ImageField(upload_to='youth_events/', blank=True, null=True)
+    attendees = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        through='YouthEventAttendee',
+        related_name='youth_events_attending'
+    )
+    max_attendees = models.PositiveIntegerField(null=True, blank=True)
+    registration_deadline = models.DateTimeField(null=True, blank=True)
+    permission_slip_required = models.BooleanField(default=False)
+    cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     def __str__(self):
-        return self.title
+        return f"{self.title} - {self.program.title}"
 
-    @property
-    def is_past(self):
-        return timezone.now() > timezone.make_aware(datetime.combine(self.date, self.time))
+    def is_registration_open(self):
+        if not self.registration_deadline:
+            return True
+        return timezone.now() <= self.registration_deadline
 
-    @property
-    def registered_participants_count(self):
-        return self.registrations.count()
+    def has_space(self):
+        if not self.max_attendees:
+            return True
+        return self.attendees.count() < self.max_attendees
 
-    @property
-    def spots_available(self):
-        return self.max_participants - self.registered_participants_count
+    def get_attendee_status(self, user):
+        try:
+            attendee = YouthEventAttendee.objects.get(event=self, user=user)
+            return {
+                'is_attending': True,
+                'permission_slip_submitted': attendee.permission_slip_submitted,
+                'payment_completed': attendee.payment_completed
+            }
+        except YouthEventAttendee.DoesNotExist:
+            return {
+                'is_attending': False,
+                'permission_slip_submitted': False,
+                'payment_completed': False
+            }
+
 
 
 class YouthMinistry(models.Model):
@@ -1197,30 +1341,6 @@ class VolunteerSignup(models.Model):
 
     def __str__(self):
         return f"{self.volunteer.get_full_name()} - {self.opportunity.title}"
-
-
-
-
-class Child(models.Model):
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    date_of_birth = models.DateField()
-    parent = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='children')
-    allergies = models.TextField(blank=True)
-    emergency_contact = models.CharField(max_length=100)
-    emergency_phone = models.CharField(max_length=20)
-    photo_permission = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.first_name} {self.last_name}"
-
-    @property
-    def age(self):
-        today = date.today()
-        return today.year - self.date_of_birth.year - (
-                (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
-        )
 
 
 class MinistryRegistration(models.Model):
@@ -2283,12 +2403,6 @@ class Category(models.Model):
         super().save(*args, **kwargs)
 
 
-
-from django.db import models
-from django.conf import settings
-from django.utils import timezone
-
-
 class CounselingRequest(models.Model):
     REASON_CHOICES = [
         ('PREMARITAL', 'Premarital Counseling'),
@@ -2407,3 +2521,373 @@ class MensEvent(models.Model):
         if not self.max_attendees:
             return True
         return self.attendees.count() < self.max_attendees
+
+
+
+class YouthEventAttendee(models.Model):
+    event = models.ForeignKey('YouthEvent', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    registered_at = models.DateTimeField(auto_now_add=True)
+    permission_slip_submitted = models.BooleanField(default=False)
+    payment_completed = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ['event', 'user']
+
+class YouthEventPayment(models.Model):
+    PAYMENT_STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('COMPLETED', 'Completed'),
+        ('FAILED', 'Failed'),
+        ('REFUNDED', 'Refunded')
+    ]
+
+    attendee = models.ForeignKey(YouthEventAttendee, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_date = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='PENDING')
+    transaction_id = models.CharField(max_length=100, blank=True)
+    payment_method = models.CharField(max_length=50, blank=True)
+    notes = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"Payment for {self.attendee.event.title} - {self.attendee.user.get_full_name()}"
+
+class PermissionSlip(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending Review'),
+        ('APPROVED', 'Approved'),
+        ('REJECTED', 'Rejected')
+    ]
+
+    attendee = models.ForeignKey(YouthEventAttendee, on_delete=models.CASCADE)
+    document = models.FileField(upload_to='permission_slips/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_permission_slips'
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"Permission Slip for {self.attendee.event.title} - {self.attendee.user.get_full_name()}"
+
+class AttendanceRecord(models.Model):
+    event = models.ForeignKey(YouthEvent, on_delete=models.CASCADE)
+    attendee = models.ForeignKey(YouthEventAttendee, on_delete=models.CASCADE)
+    check_in_time = models.DateTimeField(auto_now_add=True)
+    check_out_time = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        unique_together = ['event', 'attendee']
+
+    def __str__(self):
+        return f"Attendance for {self.event.title} - {self.attendee.user.get_full_name()}"
+
+
+
+class SeniorsMinistry(models.Model):
+    ACTIVITY_CHOICES = [
+        ('BIBLE_STUDY', 'Bible Study'),
+        ('FELLOWSHIP', 'Fellowship Gathering'),
+        ('PRAYER', 'Prayer Meeting'),
+        ('OUTREACH', 'Community Outreach'),
+        ('VISITATION', 'Home Visitation'),
+        ('WORKSHOP', 'Life Skills Workshop'),
+        ('HEALTH', 'Health & Wellness'),
+    ]
+
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True, blank=True)
+    description = models.TextField()
+    activity_type = models.CharField(max_length=50, choices=ACTIVITY_CHOICES)
+    leader = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='led_seniors_ministries'
+    )
+    members = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='seniors_memberships',
+        blank=True
+    )
+    meeting_time = models.DateTimeField()
+    location = models.CharField(max_length=200)
+    image = models.ImageField(upload_to='seniors_ministry/', blank=True, null=True)
+    max_participants = models.PositiveIntegerField(null=True, blank=True)
+    transportation_provided = models.BooleanField(default=False)
+    accessibility_notes = models.TextField(blank=True)
+    health_guidelines = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse('services:seniors_ministry_detail', kwargs={'slug': self.slug})
+
+
+class SeniorsEvent(models.Model):
+    ACTIVITY_CHOICES = [
+        ('BIBLE_STUDY', 'Bible Study'),
+        ('FELLOWSHIP', 'Fellowship Gathering'),
+        ('PRAYER', 'Prayer Meeting'),
+        ('OUTREACH', 'Community Outreach'),
+        ('VISITATION', 'Home Visitation'),
+        ('WORKSHOP', 'Life Skills Workshop'),
+        ('HEALTH', 'Health & Wellness'),
+    ]
+    ministry = models.CharField(max_length=100, choices=ACTIVITY_CHOICES, default='BIBLE_STUDY')
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    date = models.DateTimeField()
+    location = models.CharField(max_length=200)
+    image = models.ImageField(upload_to='seniors_events/', blank=True, null=True)
+    max_participants = models.PositiveIntegerField(null=True, blank=True)
+    transportation_provided = models.BooleanField(default=False)
+    registration_deadline = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    attendees = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='seniors_events_attending')
+
+    def __str__(self):
+        return self.title
+
+    def has_space(self):
+        if not self.max_participants:
+            return True
+        return self.attendees.count() < self.max_participants
+
+    def is_registration_open(self):
+        return timezone.now() <= self.registration_deadline
+
+class TransportationRequest(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('APPROVED', 'Approved'),
+        ('COMPLETED', 'Completed'),
+        ('CANCELLED', 'Cancelled')
+    ]
+
+    activity = models.ForeignKey(SeniorsMinistry, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    pickup_address = models.CharField(max_length=255)
+    special_needs = models.TextField(blank=True)
+    emergency_contact = models.CharField(max_length=100)
+    preferred_pickup_time = models.TimeField()
+    notes = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class PrayerPartner(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='prayer_partnerships')
+    partner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='prayer_partners')
+    created_at = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)
+
+class HealthResource(models.Model):
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    document = models.FileField(upload_to='seniors_health_resources/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+
+class PrayerPartner(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='prayer_partnerships')
+    partner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='prayer_partners')
+    created_at = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)
+    accepted = models.BooleanField(default=False)  # Add this field
+
+    class Meta:
+        unique_together = ['user', 'partner']
+
+    def __str__(self):
+        return f"{self.user} - {self.partner} Prayer Partnership"
+
+
+class SinglesMinistry(models.Model):
+    ACTIVITY_CHOICES = [
+        ('BIBLE_STUDY', 'Bible Study'),
+        ('FELLOWSHIP', 'Fellowship Group'),
+        ('PRAYER', 'Prayer Meeting'),
+        ('SOCIAL', 'Social Event'),
+        ('WORKSHOP', 'Life Skills Workshop'),
+        ('MENTORSHIP', 'Mentorship Program'),
+        ('OUTREACH', 'Community Outreach'),
+    ]
+
+    RELATIONSHIP_STATUS_CHOICES = [
+        ('SINGLE', 'Single'),
+        ('DIVORCED', 'Divorced'),
+        ('WIDOWED', 'Widowed'),
+    ]
+
+    AGE_GROUP_CHOICES = [
+        ('18-25', '18-25 years'),
+        ('26-35', '26-35 years'),
+        ('36-45', '36-45 years'),
+        ('46+', '46+ years'),
+    ]
+
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True, blank=True)
+    description = models.TextField()
+    activity_type = models.CharField(max_length=50, choices=ACTIVITY_CHOICES)
+    leader = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='led_singles_ministries'
+    )
+    members = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='singles_memberships',
+        blank=True
+    )
+    meeting_time = models.DateTimeField()
+    location = models.CharField(max_length=200)
+    image = models.ImageField(upload_to='singles_ministry/', blank=True, null=True)
+    max_participants = models.PositiveIntegerField(null=True, blank=True)
+    age_group = models.CharField(max_length=10, choices=AGE_GROUP_CHOICES)
+    relationship_status = models.CharField(
+        max_length=20,
+        choices=RELATIONSHIP_STATUS_CHOICES,
+        blank=True
+    )
+    guidelines = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name_plural = "Singles Ministries"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse('services:singles_ministry_detail', kwargs={'slug': self.slug})
+
+    def has_space(self):
+        if not self.max_participants:
+            return True
+        return self.members.count() < self.max_participants
+
+    def __str__(self):
+        return self.title
+
+class SinglesEvent(models.Model):
+    ministry = models.ForeignKey(
+        SinglesMinistry,
+        on_delete=models.CASCADE,
+        related_name='events'
+    )
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    date = models.DateTimeField()
+    location = models.CharField(max_length=200)
+    image = models.ImageField(upload_to='singles_events/', blank=True, null=True)
+    max_participants = models.PositiveIntegerField(null=True, blank=True)
+    registration_deadline = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    attendees = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='singles_events_attending'
+    )
+    is_couples_allowed = models.BooleanField(default=False)
+    event_cost = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+    dress_code = models.CharField(max_length=200, blank=True)
+    special_instructions = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.title
+
+    def has_space(self):
+        if not self.max_participants:
+            return True
+        return self.attendees.count() < self.max_participants
+
+    def is_registration_open(self):
+        return timezone.now() <= self.registration_deadline
+
+class MentorshipRequest(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('MATCHED', 'Matched'),
+        ('COMPLETED', 'Completed'),
+        ('CANCELLED', 'Cancelled')
+    ]
+
+    mentee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='mentorship_requests'
+    )
+    mentor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='mentor_requests',
+        null=True,
+        blank=True
+    )
+    areas_of_focus = models.TextField()
+    preferred_meeting_times = models.CharField(max_length=200)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='PENDING'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    notes = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"Mentorship Request - {self.mentee.get_full_name()}"
+
+class SinglesResource(models.Model):
+    CATEGORY_CHOICES = [
+        ('RELATIONSHIP', 'Relationship Advice'),
+        ('SPIRITUAL', 'Spiritual Growth'),
+        ('CAREER', 'Career Development'),
+        ('PERSONAL', 'Personal Development'),
+        ('DATING', 'Dating Guidelines'),
+    ]
+
+    title = models.CharField(max_length=200)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    content = models.TextField()
+    document = models.FileField(
+        upload_to='singles_resources/',
+        blank=True,
+        null=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_featured = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.title

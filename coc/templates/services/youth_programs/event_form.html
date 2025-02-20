@@ -1,0 +1,169 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item">
+                                <a href="{% url 'services:youth_program_list' %}">Youth Programs</a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                <a href="{% url 'services:youth_program_detail' slug=program.slug %}">
+                                    {{ program.title }}
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active">{{ action }} Event</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="card-body">
+                    <h2 class="mb-4">{{ action }} Event</h2>
+
+                    <!-- Program Info -->
+                    <div class="alert alert-info mb-4">
+                        <h5 class="alert-heading">Program Details</h5>
+                        <p class="mb-1">
+                            <strong>Program:</strong> {{ program.title }}
+                        </p>
+                        <p class="mb-1">
+                            <strong>Type:</strong> {{ program.get_program_type_display }}
+                        </p>
+                        <p class="mb-0">
+                            <strong>Age Group:</strong> {{ program.get_age_group_display }}
+                        </p>
+                    </div>
+
+                    <!-- Event Form -->
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                {{ form.title|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.description|as_crispy_field }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.date|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.registration_deadline|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.location|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.max_attendees|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.cost|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.permission_slip_required|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.image|as_crispy_field }}
+                            {% if form.instance.image %}
+                            <div class="mt-2">
+                                <img src="{{ form.instance.image.url }}"
+                                     alt="Current event image"
+                                     class="img-thumbnail"
+                                     style="max-height: 200px">
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                {{ action }} Event
+                            </button>
+                            <a href="{% url 'services:youth_program_detail' slug=program.slug %}"
+                               class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Image preview
+document.getElementById('id_image').addEventListener('change', function(e) {
+    if (this.files && this.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var preview = document.createElement('img');
+            preview.src = e.target.result;
+            preview.className = 'img-thumbnail mt-2';
+            preview.style.maxHeight = '200px';
+
+            var container = document.getElementById('id_image').parentNode;
+            var existingPreview = container.querySelector('img');
+            if (existingPreview) {
+                container.removeChild(existingPreview);
+            }
+            container.appendChild(preview);
+        }
+        reader.readAsDataURL(this.files[0]);
+    }
+});
+
+// Date validation
+document.getElementById('id_date').addEventListener('change', function() {
+    var eventDate = new Date(this.value);
+    var registrationDeadline = document.getElementById('id_registration_deadline');
+
+    if (registrationDeadline.value) {
+        var deadlineDate = new Date(registrationDeadline.value);
+        if (deadlineDate > eventDate) {
+            alert('Registration deadline cannot be after the event date');
+            registrationDeadline.value = '';
+        }
+    }
+
+    registrationDeadline.max = this.value;
+});
+</script>
+{% endblock %}
+
+{% endblock %}

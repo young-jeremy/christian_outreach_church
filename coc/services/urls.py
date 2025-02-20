@@ -172,7 +172,116 @@ urlpatterns = [
     path('mens-ministry/<slug:ministry_slug>/event/create/', views.mens_event_create, name='mens_event_create'),
     path('mens-ministry/event/<int:event_id>/toggle-attendance/', views.toggle_event_attendance, name='mens_event_toggle_attendance'),
 
+    # Add these to your existing urlpatterns
+    path('youth/', views.youth_program_list, name='youth_program_list'),
+    path('youth/create/', views.youth_program_create, name='youth_program_create'),
+    path('youth/<slug:slug>/', views.youth_program_detail, name='youth_program_detail'),
+    path('youth/<slug:program_slug>/event/create/', views.youth_event_create, name='youth_event_create'),
+    path('youth/program/<int:program_id>/toggle-membership/', views.toggle_program_membership, name='youth_program_toggle_membership'),
 
+    # ... your other URLs ...
+    path('youth/', views.youth_program_list, name='youth_program_list'),
+    path('youth/create/', views.youth_program_create, name='youth_program_create'),
+
+    # ... your existing URLs ...
+
+    # Seniors Ministry Base URLs
+    path('seniors/', views.seniors_ministry_list, name='seniors_ministry_list'),
+    path('seniors/create/', views.seniors_ministry_create, name='seniors_ministry_create'),
+    path('seniors/<slug:slug>/', views.seniors_ministry_detail, name='seniors_ministry_detail'),
+    path('seniors/<slug:slug>/edit/', views.seniors_ministry_edit, name='seniors_ministry_edit'),
+
+    # Seniors Events URLs
+    path('seniors/events/', views.seniors_events, name='seniors_events'),
+    path('seniors/events/create/', views.seniors_event_create, name='seniors_event_create'),
+    path('seniors/events/<int:event_id>/', views.seniors_event_detail, name='seniors_event_detail'),
+    path('seniors/events/<int:event_id>/edit/', views.seniors_event_edit, name='seniors_event_edit'),
+    path('seniors/events/<int:event_id>/register/', views.seniors_event_register, name='seniors_event_register'),
+
+    # Transportation URLs
+    path('seniors/transportation/', views.seniors_transportation, name='seniors_transportation'),
+    path('seniors/transportation/request/<int:activity_id>/',
+         views.transportation_request, name='seniors_transportation_request'),
+    path('seniors/transportation/<int:request_id>/cancel/',
+         views.cancel_transportation, name='seniors_cancel_transportation'),
+
+    # Prayer Partnership URLs
+    path('seniors/prayer/', views.seniors_prayer, name='seniors_prayer'),
+    path('seniors/prayer/request/', views.request_prayer_partner, name='seniors_prayer_request'),
+    path('seniors/prayer/end/', views.end_prayer_partnership, name='seniors_prayer_end'),
+    path('seniors/prayer/<int:partnership_id>/accept/',
+         views.accept_prayer_partnership, name='seniors_accept_prayer'),
+
+    # Health & Wellness URLs
+    path('seniors/health/', views.seniors_health, name='seniors_health'),
+    path('seniors/health/resources/<int:resource_id>/',
+         views.health_resource_detail, name='seniors_health_resource'),
+    path('seniors/health/resources/download/<int:resource_id>/',
+         views.download_health_resource, name='seniors_download_resource'),
+
+    # Activity Membership URLs
+    path('seniors/activity/<int:activity_id>/toggle-membership/',views.toggle_activity_membership, name='seniors_toggle_membership'),
+    path('seniors/activity/<int:activity_id>/members/',
+         views.activity_members, name='seniors_activity_members'),
+
+    # API Endpoints for AJAX
+    path('api/seniors/activity/<int:activity_id>/check-space/',
+         views.check_activity_space, name='seniors_check_space'),
+    path('api/seniors/events/<int:event_id>/attendees/',
+         views.get_event_attendees, name='seniors_event_attendees'),
+
+
+    # Add these URLs to your urlpatterns
+
+    # Prayer Partnership URLs
+    path('seniors/prayer/', views.seniors_prayer, name='seniors_prayer'),
+    path('seniors/prayer/request/', views.request_prayer_partner, name='seniors_prayer_request'),
+    path('seniors/prayer/accept/<int:partnership_id>/', views.accept_prayer_partnership, name='seniors_accept_prayer'),
+    path('seniors/prayer/decline/<int:partnership_id>/', views.decline_prayer_partnership, name='seniors_decline_prayer'),
+    path('seniors/prayer/end/', views.end_prayer_partnership, name='seniors_prayer_end'),
+
+
+    # Singles Ministry Base URLs
+    path('singles/', views.singles_ministry_list, name='singles_ministry_list'),
+    path('singles/create/', views.singles_ministry_create, name='singles_ministry_create'),
+    path('singles/<slug:slug>/', views.singles_ministry_detail, name='singles_ministry_detail'),
+    path('singles/<slug:slug>/edit/', views.singles_ministry_edit, name='singles_ministry_edit'),
+
+    # Singles Events URLs
+    path('singles/events/', views.singles_events, name='singles_events'),
+    path('singles/events/create/', views.singles_event_create, name='singles_event_create'),
+    path('singles/events/<int:event_id>/', views.singles_event_detail, name='singles_event_detail'),
+    path('singles/events/<int:event_id>/register/',
+         views.singles_event_register, name='singles_event_register'),
+
+    # Mentorship Program URLs
+    path('singles/mentorship/request/', views.mentorship_request, name='singles_mentorship_request'),
+    path('singles/mentorship/', views.mentorship_list, name='singles_mentorship_list'),
+    path('singles/mentorship/<int:request_id>/accept/',
+         views.accept_mentorship, name='singles_accept_mentorship'),
+    path('singles/mentorship/<int:request_id>/decline/',
+         views.decline_mentorship, name='singles_decline_mentorship'),
+    path('singles/mentorship/<int:request_id>/complete/',
+         views.complete_mentorship, name='singles_complete_mentorship'),
+
+    # Resources URLs
+    path('singles/resources/', views.singles_resources, name='singles_resources'),
+    path('singles/resources/<int:resource_id>/',
+         views.resource_detail, name='singles_resource_detail'),
+    path('singles/resources/download/<int:resource_id>/',
+         views.download_resource, name='singles_download_resource'),
+
+    # Activity Membership URLs
+    path('singles/activity/<int:activity_id>/toggle-membership/',
+         views.toggle_activity_membership, name='singles_toggle_membership'),
+    path('singles/activity/<int:activity_id>/members/',
+         views.activity_members, name='singles_activity_members'),
+
+    # API Endpoints for AJAX
+    path('api/singles/activity/<int:activity_id>/check-space/',
+         views.check_activity_space, name='singles_check_space'),
+    path('api/singles/events/<int:event_id>/attendees/',
+         views.get_event_attendees, name='singles_event_attendees'),
 
 
 
