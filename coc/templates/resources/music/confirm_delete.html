@@ -1,0 +1,38 @@
+{% extends 'base_dashboard.html' %}
+
+{% block content %}
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h2 class="h4 mb-0">Delete Bible Study Material</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Warning:</strong> This action cannot be undone.
+                        </div>
+
+                        <p class="mb-4">
+                            Are you sure you want to delete the material:<br>
+                            <strong>"{{ object.title }}"</strong>?
+                        </p>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'bible-study-list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash me-2"></i>Confirm Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

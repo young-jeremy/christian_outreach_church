@@ -121,4 +121,26 @@ urlpatterns = [
     path('offline-videos/<int:video_id>/delete/', views.delete_downloaded_video, name='delete_downloaded_video'),
     path('video/<int:video_id>/add_comment/', views.add_video_comment, name='add_video_comment'),
 
+    # Video List and Search
+    path('', views.VideoListView.as_view(), name='video_list'),
+    path('category/<str:category>/', views.VideoListView.as_view(), name='video_category'),
+
+    # Video CRUD
+    path('upload/', views.create_video, name='create_video'),
+    path('<slug:slug>/', views.VideoDetailView.as_view(), name='video_detail'),
+    path('<slug:slug>/edit/', views.VideoUpdateView.as_view(), name='video_edit'),
+    path('<slug:slug>/delete/', views.VideoDeleteView.as_view(), name='video_delete'),
+
+    # Video Actions
+    path('<slug:slug>/like/', views.video_like, name='video_like'),
+    path('<slug:slug>/comment/', views.add_comment, name='add_comment'),
+    path('comment/<int:pk>/delete/', views.delete_comment, name='delete_comment'),
+
+    # Video Processing
+    path('check-status/<int:video_id>/', views.check_processing_status, name='check_status'),
+
+
+
+
+
 ]

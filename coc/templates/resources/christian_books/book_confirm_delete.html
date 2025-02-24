@@ -1,0 +1,163 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="delete-confirmation-container">
+        <div class="card">
+            <div class="card-header">
+                <h2>Delete Book</h2>
+            </div>
+            <div class="card-body">
+                <div class="book-info">
+                    <h3>{{ book.title }}</h3>
+                    <p class="author">by {{ book.author }}</p>
+                    <div class="book-meta">
+                    <span class="category">
+                        <i class="fas fa-bookmark"></i> {{ book.get_category_display }}
+                    </span>
+                        {% if book.publication_year %}
+                            <span class="year">
+                        <i class="fas fa-calendar"></i> {{ book.publication_year }}
+                    </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> This action cannot be undone. The following will be deleted:
+                    <ul>
+                        <li>Book details and metadata</li>
+                        {% if book.cover_image %}
+                            <li>Cover image</li>
+                        {% endif %}
+                        {% if book.pdf_file %}
+                            <li>PDF file</li>
+                        {% endif %}
+                        {% if book.sample_chapter %}
+                            <li>Sample chapter</li>
+                        {% endif %}
+                        <li>All associated reviews and ratings</li>
+                    </ul>
+                </div>
+
+                <form method="post" class="delete-form">
+                    {% csrf_token %}
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Confirm Delete
+                        </button>
+                        <a href="{% url 'resources:book_detail' book.pk %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .delete-confirmation-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid #eee;
+            padding: 1.5rem;
+        }
+
+        .card-header h2 {
+            margin: 0;
+            color: #dc3545;
+            font-size: 1.5rem;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .book-info {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .book-info h3 {
+            margin: 0;
+            color: #333;
+            font-size: 1.8rem;
+        }
+
+        .author {
+            color: #666;
+            font-style: italic;
+            margin: 0.5rem 0;
+        }
+
+        .book-meta {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            color: #666;
+            margin-top: 1rem;
+        }
+
+        .book-meta i {
+            margin-right: 0.5rem;
+        }
+
+        .alert {
+            margin: 2rem 0;
+        }
+
+        .alert i {
+            margin-right: 0.5rem;
+        }
+
+        .alert ul {
+            margin-top: 1rem;
+            margin-bottom: 0;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1.5rem;
+        }
+
+        .btn i {
+            margin-right: 0.5rem;
+        }
+
+        @media (max-width: 576px) {
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .form-actions .btn {
+                width: 100%;
+            }
+
+            .book-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+{% endblock %}

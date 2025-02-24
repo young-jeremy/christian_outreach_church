@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="bible-study-list-container">
+        <div class="header-section">
+            <h1>Bible Studies</h1>
+            {% if user.is_authenticated %}
+                <a href="{% url 'bible_study_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create New Study
+                </a>
+            {% endif %}
+        </div>
+
+        <div class="filters-section">
+            <form method="get" class="filter-form">
+                <div class="row">
+                    <div class="col-md-4">
+                        <select name="type" class="form-control">
+                            <option value="">All Types</option>
+                            <option value="OT" {% if request.GET.type == 'OT' %}selected{% endif %}>Old Testament
+                            </option>
+                            <option value="NT" {% if request.GET.type == 'NT' %}selected{% endif %}>New Testament
+                            </option>
+                            <option value="TH" {% if request.GET.type == 'TH' %}selected{% endif %}>Theology</option>
+                            <option value="DC" {% if request.GET.type == 'DC' %}selected{% endif %}>Doctrine</option>
+                            <option value="AP" {% if request.GET.type == 'AP' %}selected{% endif %}>Apologetics</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <input type="text" name="search" class="form-control" placeholder="Search studies..."
+                               value="{{ request.GET.search }}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-secondary w-100">Filter</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="studies-grid">
+            {% for study in bible_studies %}
+                <div class="study-card">
+                    <div class="card">
+                        <div class="card-body">
+                            <span class="badge badge-primary">{{ study.get_study_type_display }}</span>
+                            <h5 class="card-title">{{ study.title }}</h5>
+                            <p class="card-text">{{ study.description|truncatewords:30 }}</p>
+                            <div class="study-meta">
+                                <small>Start Date: {{ study.start_date }}</small>
+                                <small>Created by: {{ study.created_by.get_full_name }}</small>
+                            </div>
+                            <a href="{% url 'bible_study_detail' study.pk %}" class="btn btn-outline-primary">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="no-studies">
+                    <p>No Bible studies found.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if is_paginated %}
+            <nav aria-label="Page navigation" class="pagination-section">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .bible-study-list-container {
+            padding: 2rem;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .filters-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .studies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .study-card {
+            transition: transform 0.2s;
+        }
+
+        .study-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .study-meta {
+            display: flex;
+            justify-content: space-between;
+            margin: 1rem 0;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .pagination-section {
+            margin-top: 2rem;
+        }
+
+        .no-studies {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+    </style>
+{% endblock %}

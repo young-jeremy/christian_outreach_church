@@ -1,0 +1,97 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Create{% endif %} Video{% endblock %}
+
+{% block content %}
+    <div class="form-container">
+        <div class="card">
+            <div class="card-header">
+                <h2>
+                    <i class="fas {% if form.instance.pk %}fa-edit{% else %}fa-plus{% endif %}"></i>
+                    {% if form.instance.pk %}Edit{% else %}Create{% endif %} Video
+                </h2>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            {{ form.title|as_crispy_field }}
+                            {{ form.description|as_crispy_field }}
+                            {{ form.category|as_crispy_field }}
+                            {{ form.tags|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {% if form.instance.thumbnail %}
+                                <div class="current-thumbnail mb-3">
+                                    <label>Current Thumbnail</label>
+                                    <img src="{{ form.instance.thumbnail.url }}" class="img-fluid rounded"
+                                         alt="Video thumbnail">
+                                </div>
+                            {% endif %}
+                            {{ form.thumbnail|as_crispy_field }}
+                            {{ form.visibility|as_crispy_field }}
+                            {{ form.language|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{% url 'videos:video_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .form-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background: linear-gradient(to right, #1a237e, #0d47a1);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 1rem 1rem 0 0;
+        }
+
+        .card-header h2 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .current-thumbnail img {
+            max-width: 100%;
+            border-radius: 0.5rem;
+        }
+    </style>
+{% endblock %}

@@ -10,13 +10,16 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-import logging
-from django.contrib.messages import constants as message_constants
 import json
+import logging
 import os
 from pathlib import Path
+
 from celery.schedules import crontab
+from django.contrib.messages import constants as message_constants
 from google.oauth2 import service_account
+
+# Google Cloud credentials
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -44,6 +47,7 @@ INSTALLED_APPS = [
     # user defined applications
     "dashboard",
     "accounts",
+
     "allauth.mfa",
     # C
     "crispy_forms",
@@ -52,11 +56,13 @@ INSTALLED_APPS = [
     # D
     "django_daraja",
     "django_summernote",
+    'django.contrib.humanize',
     # E
     "events",
     # H
     "home",
     "crispy_bootstrap5",
+    'django_cleanup.apps.CleanupConfig',
     # M
     "members",
     # N
@@ -437,3 +443,11 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(hour=16, minute=0),  # Run daily at 4 PM
     },
 }
+
+FILE_UPLOAD_HANDLERS = [
+    'django.core.files.uploadhandler.MemoryFileUploadHandler',
+    'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+]
+
+# Maximum file upload size (5MB)
+MAX_UPLOAD_SIZE = 5242880

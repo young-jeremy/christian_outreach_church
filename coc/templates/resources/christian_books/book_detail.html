@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="book-detail-container">
+        <div class="book-header">
+            <div class="book-cover-section">
+                <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="book-cover">
+                {% if book.is_bestseller %}
+                    <span class="bestseller-badge">Bestseller</span>
+                {% endif %}
+            </div>
+
+            <div class="book-info-section">
+                <h1>{{ book.title }}</h1>
+                <h3 class="author">by <a href="{% url 'author_detail' book.author.pk %}">{{ book.author.name }}</a></h3>
+
+                <div class="book-meta">
+                    <div class="rating-box">
+                        <div class="stars">
+                            {% with ''|center:book.average_rating as range %}
+                                {% for _ in range %}
+                                    <i class="fas fa-star"></i>
+                                {% endfor %}
+                            {% endwith %}
+                        </div>
+                        <span class="rating-count">({{ book.bookreview_set.count }} reviews)</span>
+                    </div>
+
+                    <div class="book-details">
+                        <p><strong>Category:</strong> {{ book.get_category_display }}</p>
+                        <p><strong>Publisher:</strong> {{ book.publisher }}</p>
+                        <p><strong>ISBN:</strong> {{ book.isbn }}</p>
+                        <p><strong>Pages:</strong> {{ book.pages }}</p>
+                        <p><strong>Published:</strong> {{ book.publication_date }}</p>
+                    </div>
+
+                    <div class="price-section">
+                        <span class="price">${{ book.price }}</span>
+                        {% if user.is_authenticated %}
+                            <button class="btn btn-primary add-to-reading-list" data-book-id="{{ book.pk }}">
+                                <i class="fas fa-bookmark"></i> Add to Reading List
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="book-content">
+            <div class="description-section">
+                <h2>About the Book</h2>
+                <div class="description">
+                    {{ book.description|linebreaks }}
+                </div>
+            </div>
+
+            <div class="reviews-section">
+                <h2>Reviews</h2>
+                {% if user.is_authenticated and not user_review %}
+                    <div class="review-form-container">
+                        <h4>Write a Review</h4>
+                        <form method="post" action="{% url 'book_review' book.pk %}" class="review-form">
+                            {% csrf_token %}
+                            <div class="rating-input">
+                                {% for i in "12345" %}
+                                    <input type="radio" name="rating" value="{{ i }}" id="star{{ i }}">
+                                    <label for="star{{ i }}"><i class="far fa-star"></i></label>
+                                {% endfor %}
+                            </div>
+                            <textarea name="review_text" placeholder="Share your thoughts about this book..."
+                                      required></textarea>
+                            <button type="submit" class="btn btn-primary">Submit Review</button>
+                        </form>
+                    </div>
+                {% endif %}
+
+                <div class="reviews-list">
+                    {% for review in reviews %}
+                        <div class="review-card">
+                            <div class="review-header">
+                                <div class="reviewer-info">
+                                    <strong>{{ review.user.get_full_name }}</strong>
+                                    <span class="review-date">{{ review.created_at|date:"F d, Y" }}</span>
+                                </div>
+                                <div class="review-rating">
+                                    {% with ''|center:review.rating as range %}
+                                        {% for _ in range %}
+                                            <i class="fas fa-star"></i>
+                                        {% endfor %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                            <div class="review-content">
+                                {{ review.review_text|linebreaks }}
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="no-reviews">No reviews yet. Be the first to review this book!</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .book-detail-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .book-header {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .book-cover-section {
+            position: relative;
+        }
+
+        .book-cover {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .bestseller-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #ffc107;
+            color: #000;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+        }
+
+        .book-info-section h1 {
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .author {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .author a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .rating-box {
+            margin-bottom: 1rem;
+        }
+
+        .stars {
+            color: #ffc107;
+            margin-right: 0.5rem;
+        }
+
+        .rating-count {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .book-details {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .price-section {
+            margin-top: 2rem;
+        }
+
+        .price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #28a745;
+            margin-right: 1rem;
+        }
+
+        .book-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .description-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .reviews-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .review-form-container {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .rating-input {
+            margin-bottom: 1rem;
+        }
+
+        .rating-input input[type="radio"] {
+            display: none;
+        }
+
+        .rating-input label {
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #ddd;
+            margin-right: 0.25rem;
+        }
+
+        .rating-input input[type="radio"]:checked ~ label {
+            color: #ffc107;
+        }
+
+        .review-form textarea {
+            width: 100%;
+            min-height: 100px;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .review-card {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 1rem;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .reviewer-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .review-date {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .review-rating {
+            color: #ffc107;
+        }
+
+        @media (max-width: 768px) {
+            .book-header {
+                grid-template-columns: 1fr;
+            }
+
+            .book-content {
+                grid-template-columns: 1fr;
+            }
+
+            .book-cover-section {
+                max-width: 300px;
+                margin: 0 auto;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Rating input interaction
+            const ratingInputs = document.querySelectorAll('.rating-input input[type="radio"]');
+            ratingInputs.forEach(input => {
+                input.addEventListener('change', function () {
+                    const labels = document.querySelectorAll('.rating-input label');
+                    labels.forEach(label => {
+                        label.innerHTML = '<i class="far fa-star"></i>';
+                    });
+
+                    for (let i = 0; i < this.value; i++) {
+                        labels[i].innerHTML = '<i class="fas fa-star"></i>';
+                    }
+                });
+            });
+
+            // Add to reading list functionality
+            const addToListBtn = document.querySelector('.add-to-reading-list');
+            if (addToListBtn) {
+                addToListBtn.addEventListener('click', function () {
+                    const bookId = this.dataset.bookId;
+                    fetch('/reading-list/add/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        },
+                        body: JSON.stringify({book_id: bookId})
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                alert('Book added to your reading list!');
+                            }
+                        })
+                        .catch(error => console.error('Error:', error));
+                });
+            }
+        });
+    </script>
+{% endblock %} 

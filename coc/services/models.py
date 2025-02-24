@@ -1,75 +1,29 @@
-from django.contrib import messages
-from django.db import models
+from datetime import datetime, date, time
+
 from django.conf import settings
-from django.shortcuts import redirect, get_object_or_404
-from django.utils import timezone
-from django.utils.text import slugify
-from django.urls import reverse
+from django.contrib import messages
 from django.core.validators import (
-    MinValueValidator,
-    MaxValueValidator,
-    FileExtensionValidator,
     RegexValidator
 )
+from django.shortcuts import redirect, get_object_or_404
 from django_summernote.fields import SummernoteTextField
-from datetime import datetime, date, timedelta, time
 
 # Optional but recommended for type hints
-from typing import List, Optional
 
 # Get the User model
 User = settings.AUTH_USER_MODEL
 
-from django.db import models
-from django.conf import settings
-from django.utils.text import slugify
-from django.core.validators import MinValueValidator
-from django.db import models
-from django.conf import settings
-from django.utils.text import slugify
-from django_summernote.fields import SummernoteTextField
-from django.db import models
-from django.utils.text import slugify
 from django.core.validators import FileExtensionValidator
-from django.db import models
-from django.utils.text import slugify
 from datetime import timedelta
-from django.db import models
-from django.core.validators import MinValueValidator
 from django.utils import timezone
-from django.db import models
-from django.conf import settings
-from django.utils.text import slugify
 from django.core.validators import MinValueValidator, MaxValueValidator
 import importlib
 
 importlib.invalidate_caches()
-from django.db import models
-from django.conf import settings
-from django.utils.text import slugify
-from django.urls import reverse
 
 from django.db import models
 from django.conf import settings
-from django.utils.text import slugify
-from django.urls import reverse
 
-from django.db import models
-from django.conf import settings
-from django.urls import reverse
-from django.utils.text import slugify
-from django.utils.html import mark_safe
-import markdown
-from django.db import models
-from django.conf import settings
-from django.urls import reverse
-from django.utils.text import slugify
-from django.db import models
-from django.conf import settings
-from django.db import models
-from django.conf import settings
-from django.urls import reverse
-from django.utils.text import slugify
 
 class WomensMinistry(models.Model):
     MINISTRY_TYPE_CHOICES = [
@@ -1496,15 +1450,61 @@ class SermonComment(models.Model):
 
 
 class SermonNote(models.Model):
-    sermon = models.ForeignKey('Sermon', on_delete=models.CASCADE, related_name='user_notes')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    content = models.TextField()
-    timestamp = models.DurationField()  # Point in the sermon where note was taken
+    CATEGORY_CHOICES = [
+        ('SU', 'Sunday Service'),
+        ('MI', 'Midweek Service'),
+        ('RE', 'Revival'),
+        ('CO', 'Conference'),
+        ('YO', 'Youth Service'),
+        ('OT', 'Other'),
+    ]
+
+    title = models.CharField(max_length=200, null=True, blank=True)
+    slug = models.SlugField(max_length=250, unique=True, blank=True)
+    preacher = models.CharField(max_length=100, null=True, blank=True)
+    date = models.DateField(default=timezone.now)
+    scripture_reference = models.CharField(max_length=200, null=True, blank=True)
+    category = models.CharField(max_length=2, choices=CATEGORY_CHOICES, default='SU')
+
+    # Main content
+    introduction = models.TextField(null=True, blank=True)
+    main_points = models.JSONField(default=list)  # Store points as JSON array
+    conclusion = models.TextField(null=True, blank=True)
+
+    # Additional fields
+    key_verses = models.TextField(blank=True, null=True)
+    practical_applications = models.TextField(blank=True, null=True)
+    additional_notes = models.TextField(blank=True, null=True)
+
+    # Media attachments
+    audio_recording = models.FileField(upload_to='sermon_audio/', blank=True)
+    presentation_file = models.FileField(upload_to='sermon_presentations/', blank=True)
+
+    # Metadata
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_published = models.BooleanField(default=False)
+    tags = models.CharField(max_length=200, blank=True)
 
     class Meta:
-        ordering = ['timestamp']
+        ordering = ['-date']
+        indexes = [
+            models.Index(fields=['date']),
+            models.Index(fields=['category']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} - {self.preacher} ({self.date})"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse('services:sermon_note_detail', kwargs={'slug': self.slug})
+
 
 
 class Channel(models.Model):

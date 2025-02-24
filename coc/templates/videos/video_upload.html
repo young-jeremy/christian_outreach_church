@@ -1,0 +1,711 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="video-upload-container">
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-cloud-upload-alt"></i> Upload Video</h2>
+            </div>
+
+            <!-- Upload Steps Progress -->
+            <div class="upload-progress-steps">
+                <div class="step active" id="step-upload">
+                    <div class="step-icon"><i class="fas fa-file-upload"></i></div>
+                    <div class="step-label">Upload</div>
+                </div>
+                <div class="step" id="step-details">
+                    <div class="step-icon"><i class="fas fa-info-circle"></i></div>
+                    <div class="step-label">Details</div>
+                </div>
+                <div class="step" id="step-checks">
+                    <div class="step-icon"><i class="fas fa-tasks"></i></div>
+                    <div class="step-label">Checks</div>
+                </div>
+                <div class="step" id="step-processing">
+                    <div class="step-icon"><i class="fas fa-cogs"></i></div>
+                    <div class="step-label">Processing</div>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="videoUploadForm" class="needs-validation"
+                      novalidate>
+                    {% csrf_token %}
+
+                    <!-- Step 1: File Upload -->
+                    <div class="upload-section" id="uploadSection">
+                        <div class="upload-zone" id="dropZone">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Drag and drop your video here or click to select</p>
+                            <input type="file" id="videoFile" name="video" accept="video/*" class="hidden-input"
+                                   required>
+                            <div class="file-requirements">
+                                <p>Accepted formats: MP4, MOV, AVI</p>
+                                <p>Maximum file size: 2GB</p>
+                                <p>Maximum duration: 60 minutes</p>
+                            </div>
+                        </div>
+
+                        <div class="upload-progress hidden" id="uploadProgress">
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <div class="upload-status">
+                                <span class="status-text">Uploading: 0%</span>
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="cancelUpload">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Video Details -->
+                    <div class="details-section hidden" id="detailsSection">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <!-- Basic Details -->
+                                <div class="form-group">
+                                    <label for="title">Title *</label>
+                                    <input type="text" class="form-control" id="title" name="title" required
+                                           maxlength="100" data-check="profanity">
+                                    <div class="invalid-feedback">
+                                        Please provide an appropriate title.
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="description">Description *</label>
+                                    <textarea class="form-control" id="description" name="description" rows="4"
+                                              required data-check="profanity"></textarea>
+                                    <div class="invalid-feedback">
+                                        Please provide an appropriate description.
+                                    </div>
+                                </div>
+
+                                <!-- Categories and Tags -->
+                                <div class="form-group">
+                                    <label for="category">Category *</label>
+                                    <select class="form-control" id="category" name="category" required>
+                                        <option value="">Select a category</option>
+                                        <option value="WO">Worship</option>
+                                        <option value="TE">Teaching</option>
+                                        <option value="SE">Sermon</option>
+                                        <option value="TE">Testimony</option>
+                                        <option value="MU">Music</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="tags">Tags</label>
+                                    <input type="text" class="form-control" id="tags" name="tags"
+                                           placeholder="Add tags (comma separated)">
+                                    <small class="text-muted">
+                                        Add relevant tags to help people find your video
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <!-- Thumbnail -->
+                                <div class="thumbnail-section">
+                                    <label>Thumbnail</label>
+                                    <div class="thumbnail-preview" id="thumbnailPreview">
+                                        <img src="{% static 'img/default-thumbnail.png' %}" alt="Thumbnail">
+                                    </div>
+                                    <div class="thumbnail-options">
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                                id="generateThumbnails">
+                                            Generate
+                                        </button>
+                                        <input type="file" id="customThumbnail" name="thumbnail" accept="image/*"
+                                               class="hidden-input">
+                                        <label for="customThumbnail" class="btn btn-sm btn-outline-secondary">
+                                            Upload
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Visibility Settings -->
+                                <div class="visibility-settings">
+                                    <label>Visibility</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="visibility"
+                                               id="visibilityPublic" value="public" checked>
+                                        <label class="form-check-label" for="visibilityPublic">
+                                            <i class="fas fa-globe"></i> Public
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="visibility"
+                                               id="visibilityUnlisted" value="unlisted">
+                                        <label class="form-check-label" for="visibilityUnlisted">
+                                            <i class="fas fa-link"></i> Unlisted
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="visibility"
+                                               id="visibilityPrivate" value="private">
+                                        <label class="form-check-label" for="visibilityPrivate">
+                                            <i class="fas fa-lock"></i> Private
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Checks and Compliance -->
+                    <div class="checks-section hidden" id="checksSection">
+                        <div class="compliance-checklist">
+                            <h4>Before Publishing</h4>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="copyrightCheck" required>
+                                <label class="form-check-label" for="copyrightCheck">
+                                    I confirm that I have all necessary rights to this content and it doesn't violate
+                                    any copyrights
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="appropriateCheck" required>
+                                <label class="form-check-label" for="appropriateCheck">
+                                    I confirm this content is appropriate and doesn't contain nudity or vulgar content
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="guidelinesCheck" required>
+                                <label class="form-check-label" for="guidelinesCheck">
+                                    I have read and agree to the community guidelines
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="auto-checks mt-4">
+                            <h4>Automatic Checks</h4>
+                            <div class="check-item" id="copyrightCheckStatus">
+                                <i class="fas fa-spinner fa-spin"></i> Checking for copyright issues...
+                            </div>
+                            <div class="check-item" id="contentCheckStatus">
+                                <i class="fas fa-spinner fa-spin"></i> Scanning content...
+                            </div>
+                            <div class="check-item" id="profanityCheckStatus">
+                                <i class="fas fa-spinner fa-spin"></i> Checking for inappropriate language...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Processing -->
+                    <div class="processing-section hidden" id="processingSection">
+                        <div class="processing-status">
+                            <div class="status-item">
+                                <i class="fas fa-video"></i>
+                                <span>Processing Video</span>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="status-item">
+                                <i class="fas fa-closed-captioning"></i>
+                                <span>Generating Captions</span>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="status-item">
+                                <i class="fas fa-image"></i>
+                                <span>Creating Thumbnails</span>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="prevStep" disabled>
+                            <i class="fas fa-arrow-left"></i> Previous
+                        </button>
+                        <button type="button" class="btn btn-primary" id="nextStep">
+                            Next <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button type="submit" class="btn btn-success hidden" id="publishButton">
+                            <i class="fas fa-check"></i> Publish
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block extra_css %}
+    <style>
+        /* Header Styles */
+        .card-header {
+            background: linear-gradient(to right, #1a237e, #0d47a1);
+            color: white;
+            padding: 1.5rem;
+            border-bottom: none;
+        }
+
+        .card-header h2 {
+            margin: 0;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card-header h2 i {
+            font-size: 1.5rem;
+        }
+
+        /* Upload Progress Steps */
+        .upload-progress-steps {
+            display: flex;
+            justify-content: space-between;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .step::after {
+            content: '';
+            position: absolute;
+            top: 25px;
+            left: 60%;
+            width: 80%;
+            height: 2px;
+            background: #dee2e6;
+            z-index: 1;
+        }
+
+        .step:last-child::after {
+            display: none;
+        }
+
+        .step.active .step-icon,
+        .step.completed .step-icon {
+            background: #007bff;
+            color: white;
+        }
+
+        .step.completed::after {
+            background: #007bff;
+        }
+
+        .step-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s ease;
+        }
+
+        .step-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .step.active .step-label {
+            color: #007bff;
+            font-weight: 600;
+        }
+
+        /* Upload Zone Enhancements */
+        .upload-zone {
+            border: 2px dashed #dee2e6;
+            border-radius: 1rem;
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            cursor: pointer;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+
+        .upload-zone i {
+            font-size: 3rem;
+            color: #007bff;
+            margin-bottom: 1rem;
+        }
+
+        /* Enhanced Form Elements */
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        /* Thumbnail Section */
+        .thumbnail-section {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .thumbnail-preview {
+            margin: 1rem 0;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            overflow: hidden;
+        }
+
+        .thumbnail-preview img {
+            width: 100%;
+            height: auto;
+        }
+
+        .thumbnail-options {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Visibility Settings */
+        .visibility-settings {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+
+        .visibility-settings .form-check {
+            margin: 0.5rem 0;
+        }
+
+        .visibility-settings i {
+            width: 20px;
+            color: #6c757d;
+        }
+
+        /* Processing Animation */
+        .processing-status .status-item {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .processing-status .progress {
+            margin-top: 0.5rem;
+            height: 0.5rem;
+        }
+
+        /* Button Enhancements */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            border: none;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        /* Compliance Checklist */
+        .compliance-checklist {
+            background: #fff3cd;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .compliance-checklist h4 {
+            color: #856404;
+            margin-bottom: 1rem;
+        }
+
+        .compliance-checklist .form-check {
+            margin: 0.75rem 0;
+        }
+
+        /* Auto Checks Animation */
+        @keyframes checkPulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .check-item.completed {
+            animation: checkPulse 0.3s ease-in-out;
+        }
+
+        /* Responsive Enhancements */
+        @media (max-width: 768px) {
+            .card-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .upload-progress-steps {
+                padding: 1rem;
+            }
+
+            .step-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 0.9rem;
+            }
+
+            .upload-zone {
+                padding: 2rem 1rem;
+            }
+
+            .thumbnail-options {
+                flex-direction: column;
+            }
+
+            .thumbnail-options .btn {
+                width: 100%;
+            }
+        }
+
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            .card {
+                background: #2d3436;
+                color: #f5f6fa;
+            }
+
+            .upload-zone {
+                background: #2d3436;
+                border-color: #636e72;
+            }
+
+            .form-control {
+                background: #2d3436;
+                border-color: #636e72;
+                color: #f5f6fa;
+            }
+
+            .thumbnail-section,
+            .visibility-settings {
+                background: #2d3436;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('videoUploadForm');
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('videoFile');
+            const progressBar = document.querySelector('.progress-bar');
+            const statusText = document.querySelector('.status-text');
+
+            // File Upload Handling
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length) {
+                    handleFileSelect(files[0]);
+                }
+            });
+
+            dropZone.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+
+            function handleFileSelect(file) {
+                if (!file.type.startsWith('video/')) {
+                    alert('Please select a valid video file');
+                    return;
+                }
+
+                // Show upload progress
+                document.getElementById('uploadProgress').classList.remove('hidden');
+                simulateUpload();
+            }
+
+            function simulateUpload() {
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 5;
+                    progressBar.style.width = `${progress}%`;
+                    statusText.textContent = `Uploading: ${progress}%`;
+
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        moveToNextStep();
+                    }
+                }, 200);
+            }
+
+            // Navigation between steps
+            let currentStep = 1;
+            const totalSteps = 4;
+            const nextBtn = document.getElementById('nextStep');
+            const prevBtn = document.getElementById('prevStep');
+            const publishBtn = document.getElementById('publishButton');
+
+            nextBtn.addEventListener('click', () => {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    updateStepDisplay();
+                }
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (currentStep > 1) {
+                    currentStep--;
+                    updateStepDisplay();
+                }
+            });
+
+            function updateStepDisplay() {
+                // Update progress steps
+                document.querySelectorAll('.step').forEach((step, index) => {
+                    if (index + 1 === currentStep) {
+                        step.classList.add('active');
+                    } else if (index + 1 < currentStep) {
+                        step.classList.add('completed');
+                        step.classList.remove('active');
+                    } else {
+                        step.classList.remove('active', 'completed');
+                    }
+                });
+
+                // Show/hide sections
+                document.getElementById('uploadSection').classList.toggle('hidden', currentStep !== 1);
+                document.getElementById('detailsSection').classList.toggle('hidden', currentStep !== 2);
+                document.getElementById('checksSection').classList.toggle('hidden', currentStep !== 3);
+                document.getElementById('processingSection').classList.toggle('hidden', currentStep !== 4);
+
+                // Update buttons
+                prevBtn.disabled = currentStep === 1;
+                nextBtn.classList.toggle('hidden', currentStep === totalSteps);
+                publishBtn.classList.toggle('hidden', currentStep !== totalSteps);
+            }
+
+            // Form validation
+            form.addEventListener('submit', function (e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+
+            // Profanity check simulation
+            document.querySelectorAll('[data-check="profanity"]').forEach(input => {
+                input.addEventListener('blur', async function () {
+                    const response = await simulateProfanityCheck(this.value);
+                    if (!response.isClean) {
+                        this.setCustomValidity('This content contains inappropriate language');
+                    } else {
+                        this.setCustomValidity('');
+                    }
+                });
+            });
+
+            async function simulateProfanityCheck(text) {
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 500));
+                return {isClean: !text.includes('bad_word')};
+            }
+
+            // Automatic checks simulation
+            function simulateAutoChecks() {
+                setTimeout(() => {
+                    document.getElementById('copyrightCheckStatus').innerHTML =
+                        '<i class="fas fa-check text-success"></i> No copyright issues found';
+                }, 2000);
+
+                setTimeout(() => {
+                    document.getElementById('contentCheckStatus').innerHTML =
+                        '<i class="fas fa-check text-success"></i> Content appears appropriate';
+                }, 3000);
+
+                setTimeout(() => {
+                    document.getElementById('profanityCheckStatus').innerHTML =
+                        '<i class="fas fa-check text-success"></i> No inappropriate language detected';
+                }, 4000);
+            }
+
+            // Thumbnail generation
+            document.getElementById('generateThumbnails').addEventListener('click', function () {
+                // Simulate thumbnail generation
+                const preview = document.getElementById('thumbnailPreview');
+                preview.innerHTML = `
+            <div class="row">
+                <div class="col-4">
+                    <img src="{% static 'img/thumbnail-1.png' %}" class="img-fluid" alt="Thumbnail 1">
+                </div>
+                <div class="col-4">
+                    <img src="{% static 'img/thumbnail-2.png' %}" class="img-fluid" alt="Thumbnail 2">
+                </div>
+                <div class="col-4">
+                    <img src="{% static 'img/thumbnail-3.png' %}" class="img-fluid" alt="Thumbnail 3">
+                </div>
+            </div>
+        `;
+            });
+        });
+    </script>
+{% endblock %}

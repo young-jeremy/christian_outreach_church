@@ -1,26 +1,19 @@
-from django import forms
-from .models import SinglesMinistry, SinglesEvent, MentorshipRequest, SinglesResource
-
-from django_summernote.widgets import SummernoteWidget
 from crispy_forms.helper import FormHelper
-from .models import YouthProgram, YouthEvent, YouthEventPayment, PermissionSlip, AttendanceRecord
-from .models import SeniorsMinistry, SeniorsEvent, TransportationRequest
-from accounts.models import User
 from crispy_forms.layout import Layout, Row, Column, Submit
-from .models import YouthProgram, YouthEvent
+from django import forms
 from django.core.validators import FileExtensionValidator
-from django.utils import timezone
-from django import forms
-from crispy_forms.helper import FormHelper
-from .models import PrayerRequest, CounselingRequest, BibleReadingPlan, MensMinistry, MensEvent
+from django_summernote.widgets import SummernoteWidget
 
-from django import forms
-from .models import CoupleProfile, PrayerRequest, CounselingRequest, BibleReadingPlan
-
+from accounts.models import User
+from .models import MensMinistry, MensEvent
+from .models import SeniorsMinistry, SeniorsEvent, TransportationRequest
+from .models import SinglesMinistry, SinglesEvent, MentorshipRequest, SinglesResource
+from .models import WomensMinistry, MinistryEvent
 # ... rest of your forms ...
 from .models import WorshipService
-from django import forms
-from .models import WomensMinistry, MinistryEvent
+from .models import YouthEventPayment, PermissionSlip, AttendanceRecord
+from .models import YouthProgram
+
 
 class WomensMinistryForm(forms.ModelForm):
     class Meta:
@@ -81,24 +74,22 @@ class WorshipServiceForm(forms.ModelForm):
 
 from .models import (
     # Core models
-    Event, EventRegistration, EventFeedback, Ministry,
-    
-    # Bible Study related
-    BibleStudy, SermonCategory, SermonSeries, Sermon, 
+    EventRegistration, EventFeedback,  # Bible Study related
+    BibleStudy, SermonCategory, SermonSeries, Sermon,
     SermonComment, SermonNote, SermonTag,
     
     # Service related
-    WorshipService, SongRequest,
+    SongRequest,
     
     # Youth and Children
-    YouthEvent, YouthMinistry, ChildrenProgram, 
+    YouthEvent, YouthMinistry, ChildrenProgram,
     ChildrensMinistry, Child,
     
     # Groups and Registration
     SmallGroup, MinistryRegistration,
     
     # Couples Ministry
-    CoupleEvent, CoupleProfile, CounselingSession,
+    CoupleEvent, CounselingSession,
     CoupleResource, CoupleJournal, DateNightIdea,
     CouplePrayerRequest,
     
@@ -130,7 +121,7 @@ from .models import (
 
 # Video related models
 from videos.models import (
-    Content, ShortVideo, Comments, 
+    ShortVideo, Comments,
     Playlist, PlaylistVideo, Queue, QueueItem
 )
 
@@ -573,15 +564,102 @@ class SermonCommentForm(forms.ModelForm):
             'content': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Add a comment...'})
         }
 
-
 class SermonNoteForm(forms.ModelForm):
+    # Convert the JSONField to a more user-friendly textarea
+    main_points = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'rows': 5,
+            'class': 'form-control',
+            'placeholder': 'Enter each main point on a new line'
+        }),
+        help_text="Enter each point on a new line. They will be automatically formatted."
+    )
+
     class Meta:
         model = SermonNote
-        fields = ['content', 'timestamp']
+        fields = [
+            'title',
+            'preacher',
+            'date',
+            'scripture_reference',
+            'category',
+            'introduction',
+            'main_points',
+            'conclusion',
+            'key_verses',
+            'practical_applications',
+            'additional_notes',
+            'audio_recording',
+            'presentation_file',
+            'tags',
+            'is_published'
+        ]
         widgets = {
-            'content': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Take notes...'}),
-            'timestamp': forms.TimeInput(attrs={'type': 'time', 'step': '1'})
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter sermon title'
+            }),
+            'preacher': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter preacher name'
+            }),
+            'date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control'
+            }),
+            'scripture_reference': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., John 3:16-17'
+            }),
+            'category': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'introduction': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Enter sermon introduction'
+            }),
+            'conclusion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Enter sermon conclusion'
+            }),
+            'key_verses': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Enter key Bible verses'
+            }),
+            'practical_applications': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Enter practical applications'
+            }),
+            'additional_notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Enter any additional notes'
+            }),
+            'tags': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter tags separated by commas'
+            }),
+            'is_published': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
         }
+
+    def clean_main_points(self):
+        """Convert the textarea input into a list for the JSONField"""
+        points = self.cleaned_data['main_points']
+        # Split by newlines and remove empty lines
+        points_list = [p.strip() for p in points.split('\n') if p.strip()]
+        return points_list
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # If we're editing an existing sermon note, convert the JSON list back to newline-separated text
+        if self.instance.pk and isinstance(self.instance.main_points, list):
+            self.initial['main_points'] = '\n'.join(self.instance.main_points)
 
 
 class SermonTagForm(forms.ModelForm):

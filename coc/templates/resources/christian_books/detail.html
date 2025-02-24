@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="bible-study-container">
+        <div class="study-header">
+            <h1>{{ bible_study.title }}</h1>
+            <span class="badge badge-primary">{{ bible_study.get_study_type_display }}</span>
+        </div>
+
+        <div class="scripture-reference">
+            <h3>Scripture Reference</h3>
+            <p>{{ bible_study.scripture_reference }}</p>
+        </div>
+
+        <div class="study-content">
+            <div class="description">
+                {{ bible_study.description|safe }}
+            </div>
+
+            {% if bible_study.video_link %}
+                <div class="video-section">
+                    <h3>Study Video</h3>
+                    <div class="embed-responsive embed-responsive-16by9">
+                        <iframe class="embed-responsive-item" src="{{ bible_study.video_link }}"
+                                allowfullscreen></iframe>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if bible_study.materials %}
+                <div class="study-materials">
+                    <h3>Study Materials</h3>
+                    <a href="{{ bible_study.materials.url }}" class="btn btn-primary">
+                        <i class="fas fa-download"></i> Download Materials
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="study-meta">
+            <p>Created by: {{ bible_study.created_by.get_full_name }}</p>
+            <p>Start Date: {{ bible_study.start_date }}</p>
+            <p>End Date: {{ bible_study.end_date }}</p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .bible-study-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .study-header {
+            border-bottom: 2px solid #eee;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+        }
+
+        .scripture-reference {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+        }
+
+        .video-section {
+            margin: 2rem 0;
+        }
+
+        .study-materials {
+            margin: 2rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .study-meta {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
+{% endblock %}

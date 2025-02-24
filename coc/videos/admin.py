@@ -1,16 +1,59 @@
-from django.contrib import admin
+import admin
 from .models import (
-    Content, ContentGuidelines, Moderation, Privacy, Playlist, ModerationRequest, ShortVideo, LikedVideo,
-    FavoriteVideo, Advertisement, WatchedVideo, WatchLater, Category
+    Content, ContentGuidelines, Moderation, ModerationRequest, FavoriteVideo, Advertisement, WatchedVideo, Category
 
 )
-from .models import ShortVideo, Privacy, LikedVideo, UploadedVideo, VideoView, Share, Comments, VideoLikes, LiveStreamEvent, WatchLater, VideoQueue, Queue, QueueItem, Playlist, PlaylistVideo, DownloadedVideo, SearchHistory
-from django.utils.translation import ngettext
 from django.contrib import messages
+from django.utils.translation import ngettext
 
-from django.contrib.auth import get_permission_codename
+from .models import (
+    Content, ContentGuidelines, Moderation, ModerationRequest, FavoriteVideo, Advertisement, WatchedVideo, Category
+
+)
+from .models import ShortVideo, Privacy, LikedVideo, UploadedVideo, VideoView, Share, Comments, VideoLikes, WatchLater, \
+    Playlist
+from .models import Video, Comment
 
 
+@admin.register(Video)
+class VideoAdmin(admin.ModelAdmin):
+    list_display = ['title', 'user', 'category', 'view_count', 'created_at', 'is_active']
+    list_filter = ['category', 'is_active', 'is_featured', 'has_profanity']
+    search_fields = ['title', 'description', 'user__username']
+    prepopulated_fields = {'slug': ('title',)}
+    date_hierarchy = 'created_at'
+    readonly_fields = ['view_count', 'like_count', 'comment_count', 'processing_status']
+
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'slug', 'description', 'video_file', 'thumbnail')
+        }),
+        ('Categorization', {
+            'fields': ('category', 'tags')
+        }),
+        ('Settings', {
+            'fields': ('visibility', 'language', 'is_active', 'is_featured')
+        }),
+        ('Processing', {
+            'fields': ('processing_status', 'has_profanity', 'captions')
+        }),
+        ('Statistics', {
+            'fields': ('view_count', 'like_count', 'comment_count'),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('user', 'created_at', 'updated_at', 'published_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ['user', 'video', 'created_at', 'is_active']
+    list_filter = ['is_active', 'created_at']
+    search_fields = ['text', 'user__username', 'video__title']
+    readonly_fields = ['like_count']
 
 
 @admin.register(ContentGuidelines)

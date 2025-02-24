@@ -1,0 +1,45 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container py-5">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1 class="mb-0">{{ devotion.title }}</h1>
+                    <span class="text-muted">{{ devotion.publication_date|date:"F d, Y" }}</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="scripture-section mb-4">
+                    <h4>Scripture Reading</h4>
+                    <p class="font-weight-bold">{{ devotion.scripture_reference }}</p>
+                    <blockquote class="blockquote">
+                        {{ devotion.scripture_text|linebreaks }}
+                    </blockquote>
+                </div>
+
+                <div class="devotional-section mb-4">
+                    <h4>Devotional</h4>
+                    {{ devotion.devotional_content|linebreaks }}
+                </div>
+
+                <div class="prayer-section mb-4">
+                    <h4>Prayer Focus</h4>
+                    {{ devotion.prayer_focus|linebreaks }}
+                </div>
+
+                <div class="mt-4">
+                    {% if user.is_staff %}
+                        <a href="{% url 'resources:devotion-update' devotion.pk %}" class="btn btn-warning">Edit</a>
+                        <a href="{% url 'resources:devotion-delete' devotion.pk %}" class="btn btn-danger">Delete</a>
+                    {% endif %}
+                    <a href="{% url 'resources:devotion-list' %}" class="btn btn-secondary">Back to List</a>
+                </div>
+            </div>
+            <div class="card-footer text-muted">
+                Written by {{ devotion.author.get_full_name|default:devotion.author.username }}
+            </div>
+        </div>
+    </div>
+{% endblock %} 

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="delete-confirmation-container">
+        <div class="card">
+            <div class="card-body text-center">
+                <h2>Delete Bible Study</h2>
+                <p class="lead">Are you sure you want to delete "{{ object.title }}"?</p>
+                <p class="text-danger">This action cannot be undone.</p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Confirm Delete
+                        </button>
+                        <a href="{% url 'bible_study_detail' object.pk %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .delete-confirmation-container {
+            max-width: 500px;
+            margin: 3rem auto;
+            padding: 0 1rem;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-group {
+            margin-top: 2rem;
+        }
+
+        .button-group .btn {
+            margin: 0 0.5rem;
+        }
+
+        .lead {
+            margin: 1.5rem 0;
+        }
+    </style>
+{% endblock %}

@@ -1,0 +1,255 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="review-form-container">
+        <div class="card">
+            <div class="card-header">
+                <h2>
+                    {% if form.instance.pk %}
+                        Edit Review
+                    {% else %}
+                        Write a Review
+                    {% endif %}
+                </h2>
+                <div class="content-info">
+                    {% with content_object=form.instance.content_object|default:content_object %}
+                        <span class="content-type">{{ content_object|class_name }}</span>
+                        <h3>{{ content_object.title }}</h3>
+                    {% endwith %}
+                </div>
+            </div>
+
+            <div class="card-body">
+                <form method="post" class="review-form">
+                    {% csrf_token %}
+
+                    <!-- Rating Section -->
+                    <div class="rating-section">
+                        <label>Rating</label>
+                        <div class="star-rating">
+                            {% for value, label in form.fields.rating.choices %}
+                                <input type="radio" id="star{{ value }}" name="rating" value="{{ value }}"
+                                       {% if form.rating.value|add:"0" == value %}checked{% endif %}>
+                                <label for="star{{ value }}" title="{{ value }} stars">
+                                    <i class="far fa-star"></i>
+                                </label>
+                            {% endfor %}
+                        </div>
+                        {% if form.rating.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.rating.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Review Title -->
+                    <div class="review-title-section">
+                        {{ form.title|as_crispy_field }}
+                    </div>
+
+                    <!-- Review Comment -->
+                    <div class="review-comment-section">
+                        {{ form.comment|as_crispy_field }}
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            {% if form.instance.pk %}
+                                Update Review
+                            {% else %}
+                                Submit Review
+                            {% endif %}
+                        </button>
+                        <a href="{{ content_object.get_absolute_url }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .review-form-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid #eee;
+            padding: 1.5rem;
+        }
+
+        .card-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #333;
+        }
+
+        .content-info {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .content-type {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: #e9ecef;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .content-info h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .rating-section {
+            margin-bottom: 2rem;
+        }
+
+        .star-rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-start;
+            gap: 0.5rem;
+        }
+
+        .star-rating input {
+            display: none;
+        }
+
+        .star-rating label {
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #ffc107;
+            transition: all 0.2s ease;
+        }
+
+        .star-rating label:hover,
+        .star-rating label:hover ~ label,
+        .star-rating input:checked ~ label {
+            color: #ffc107;
+        }
+
+        .star-rating label:hover i,
+        .star-rating label:hover ~ label i,
+        .star-rating input:checked ~ label i {
+            font-weight: 900;
+            content: "\f005";
+            font-family: "Font Awesome 5 Free";
+        }
+
+        .review-title-section,
+        .review-comment-section {
+            margin-bottom: 2rem;
+        }
+
+        .review-comment-section textarea {
+            min-height: 150px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .btn i {
+            margin-right: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .card-body {
+                padding: 1rem;
+            }
+
+            .star-rating {
+                justify-content: center;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .form-actions .btn {
+                width: 100%;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Star rating interaction
+            const starLabels = document.querySelectorAll('.star-rating label');
+            starLabels.forEach(label => {
+                label.addEventListener('mouseover', function () {
+                    const star = this.querySelector('i');
+                    star.classList.remove('far');
+                    star.classList.add('fas');
+                });
+
+                label.addEventListener('mouseout', function () {
+                    const radio = document.querySelector(`#${this.getAttribute('for')}`);
+                    const star = this.querySelector('i');
+                    if (!radio.checked) {
+                        star.classList.remove('fas');
+                        star.classList.add('far');
+                    }
+                });
+
+                label.addEventListener('click', function () {
+                    const stars = document.querySelectorAll('.star-rating i');
+                    stars.forEach(s => {
+                        s.classList.remove('fas');
+                        s.classList.add('far');
+                    });
+
+                    const clickedStar = this.querySelector('i');
+                    const prevStars = this.parentElement.querySelectorAll(`label:not([for="${this.getAttribute('for')}"]) i`);
+
+                    clickedStar.classList.remove('far');
+                    clickedStar.classList.add('fas');
+
+                    prevStars.forEach(s => {
+                        s.classList.remove('far');
+                        s.classList.add('fas');
+                    });
+                });
+            });
+
+            // Form validation
+            const form = document.querySelector('.review-form');
+            form.addEventListener('submit', function (e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        });
+    </script>
+{% endblock %}

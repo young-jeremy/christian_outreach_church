@@ -1,0 +1,412 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Upload{% endif %} Video{% endblock %}
+
+{% block content %}
+    <div class="upload-container">
+        <div class="card">
+            <div class="card-header">
+                <h2>
+                    <i class="fas {% if form.instance.pk %}fa-edit{% else %}fa-cloud-upload-alt{% endif %}"></i>
+                    {% if form.instance.pk %}Edit{% else %}Upload{% endif %} Video
+                </h2>
+            </div>
+
+            <!-- Upload Progress Steps -->
+            <div class="upload-steps">
+                <div class="step active" id="uploadStep">
+                    <div class="step-icon"><i class="fas fa-file-upload"></i></div>
+                    <div class="step-label">Upload</div>
+                </div>
+                <div class="step" id="detailsStep">
+                    <div class="step-icon"><i class="fas fa-info-circle"></i></div>
+                    <div class="step-label">Details</div>
+                </div>
+                <div class="step" id="processingStep">
+                    <div class="step-icon"><i class="fas fa-cogs"></i></div>
+                    <div class="step-label">Processing</div>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="videoUploadForm">
+                    {% csrf_token %}
+
+                    <!-- Step 1: Upload -->
+                    <div class="upload-section" id="uploadSection">
+                        <div class="upload-zone" id="dropZone">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <h3>Drag and drop your video here</h3>
+                            <p>or</p>
+                            <button type="button" class="btn btn-primary" id="selectFileBtn">
+                                Select File
+                            </button>
+                            {{ form.video_file }}
+                            <div class="upload-requirements">
+                                <p><i class="fas fa-check"></i> Accepted formats: MP4, MOV, AVI</p>
+                                <p><i class="fas fa-check"></i> Maximum file size: 2GB</p>
+                                <p><i class="fas fa-check"></i> Maximum duration: 60 minutes</p>
+                            </div>
+                        </div>
+
+                        <div class="upload-progress hidden" id="uploadProgress">
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <div class="progress-status">
+                                <span class="status-text">Uploading: 0%</span>
+                                <button type="button" class="btn btn-sm btn-danger" id="cancelUpload">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Details -->
+                    <div class="details-section hidden" id="detailsSection">
+                        <div class="row">
+                            <div class="col-md-8">
+                                {{ form.title|as_crispy_field }}
+                                {{ form.description|as_crispy_field }}
+                                {{ form.category|as_crispy_field }}
+                                {{ form.tags|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                <div class="thumbnail-section">
+                                    <h4>Thumbnail</h4>
+                                    <div class="thumbnail-preview">
+                                        <img src="
+                                                {% if form.instance.thumbnail %}{{ form.instance.thumbnail.url }}{% else %}{% static 'img/default-thumbnail.jpg' %}{% endif %}"
+                                             alt="Video thumbnail" id="thumbnailPreview">
+                                    </div>
+                                    <div class="thumbnail-actions">
+                                        <button type="button" class="btn btn-outline-primary" id="generateThumbnail">
+                                            Generate
+                                        </button>
+                                        <input type="file" id="customThumbnail" accept="image/*" class="hidden">
+                                        <label for="customThumbnail" class="btn btn-outline-secondary">
+                                            Upload Custom
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="visibility-section">
+                                    <h4>Settings</h4>
+                                    {{ form.visibility|as_crispy_field }}
+                                    {{ form.language|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Processing -->
+                    <div class="processing-section hidden" id="processingSection">
+                        <div class="processing-status text-center">
+                            <div class="status-icon">
+                                <i class="fas fa-cog fa-spin fa-3x"></i>
+                            </div>
+                            <h4>Processing Your Video</h4>
+                            <p class="status-text">This may take a few minutes...</p>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                     role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <div class="processing-tasks">
+                                <div class="task" id="thumbnailTask">
+                                    <i class="fas fa-image"></i> Generating thumbnails
+                                </div>
+                                <div class="task" id="captionsTask">
+                                    <i class="fas fa-closed-captioning"></i> Creating captions
+                                </div>
+                                <div class="task" id="qualityTask">
+                                    <i class="fas fa-video"></i> Processing quality versions
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="prevStep" disabled>
+                            <i class="fas fa-arrow-left"></i> Previous
+                        </button>
+                        <button type="button" class="btn btn-primary" id="nextStep" disabled>
+                            Next <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button type="submit" class="btn btn-success hidden" id="publishBtn">
+                            <i class="fas fa-check"></i> Publish Video
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .upload-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background: linear-gradient(to right, #1a237e, #0d47a1);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 1rem 1rem 0 0;
+        }
+
+        /* Upload Steps */
+        .upload-steps {
+            display: flex;
+            justify-content: space-between;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            color: #666;
+        }
+
+        .step.active {
+            color: #007bff;
+        }
+
+        .step-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            border: 2px solid currentColor;
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed #dee2e6;
+            border-radius: 1rem;
+            padding: 3rem;
+            text-align: center;
+            transition: border-color 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-zone.dragover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+
+        .upload-zone i {
+            font-size: 3rem;
+            color: #007bff;
+            margin-bottom: 1rem;
+        }
+
+        .upload-requirements {
+            margin-top: 2rem;
+            color: #666;
+        }
+
+        /* Upload Progress */
+        .upload-progress {
+            margin-top: 2rem;
+        }
+
+        .progress {
+            height: 0.5rem;
+            border-radius: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Thumbnail Section */
+        .thumbnail-preview {
+            border-radius: 0.5rem;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .thumbnail-preview img {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+        }
+
+        .thumbnail-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Processing Status */
+        .processing-status {
+            padding: 3rem;
+        }
+
+        .processing-tasks {
+            margin-top: 2rem;
+            text-align: left;
+        }
+
+        .task {
+            margin: 1rem 0;
+            color: #666;
+        }
+
+        .task i {
+            margin-right: 0.5rem;
+        }
+
+        /* Form Actions */
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #dee2e6;
+        }
+
+        /* Utilities */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('videoUploadForm');
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.querySelector('input[type="file"]');
+            const progressBar = document.querySelector('.progress-bar');
+            const statusText = document.querySelector('.status-text');
+            const nextBtn = document.getElementById('nextStep');
+            const prevBtn = document.getElementById('prevStep');
+            const publishBtn = document.getElementById('publishBtn');
+
+            // File Upload Handling
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                handleFileSelect(file);
+            });
+
+            document.getElementById('selectFileBtn').addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                handleFileSelect(file);
+            });
+
+            function handleFileSelect(file) {
+                if (file && file.type.startsWith('video/')) {
+                    document.getElementById('uploadProgress').classList.remove('hidden');
+                    simulateUpload();
+                } else {
+                    alert('Please select a valid video file.');
+                }
+            }
+
+            function simulateUpload() {
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 5;
+                    progressBar.style.width = progress + '%';
+                    statusText.textContent = `Uploading: ${progress}%`;
+
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        nextBtn.disabled = false;
+                        statusText.textContent = 'Upload Complete!';
+                    }
+                }, 200);
+            }
+
+            // Thumbnail Handling
+            document.getElementById('customThumbnail').addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        document.getElementById('thumbnailPreview').src = e.target.result;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Step Navigation
+            let currentStep = 0;
+            const steps = ['uploadStep', 'detailsStep', 'processingStep'];
+            const sections = ['uploadSection', 'detailsSection', 'processingSection'];
+
+            nextBtn.addEventListener('click', () => {
+                if (currentStep < steps.length - 1) {
+                    document.getElementById(steps[currentStep]).classList.remove('active');
+                    document.getElementById(sections[currentStep]).classList.add('hidden');
+                    currentStep++;
+                    document.getElementById(steps[currentStep]).classList.add('active');
+                    document.getElementById(sections[currentStep]).classList.remove('hidden');
+
+                    if (currentStep === steps.length - 1) {
+                        nextBtn.classList.add('hidden');
+                        publishBtn.classList.remove('hidden');
+                    }
+
+                    prevBtn.disabled = false;
+                }
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (currentStep > 0) {
+                    document.getElementById(steps[currentStep]).classList.remove('active');
+                    document.getElementById(sections[currentStep]).classList.add('hidden');
+                    currentStep--;
+                    document.getElementById(steps[currentStep]).classList.add('active');
+                    document.getElementById(sections[currentStep]).classList.remove('hidden');
+
+                    if (currentStep === 0) {
+                        prevBtn.disabled = true;
+                    }
+
+                    nextBtn.classList.remove('hidden');
+                    publishBtn.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+{% endblock %}

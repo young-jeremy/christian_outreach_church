@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/plyr/3.7.2/plyr.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1>Gospel Music Library</h1>
+            </div>
+            <div class="col-md-4">
+                <form method="get" class="search-form">
+                    <div class="input-group">
+                        <input type="text" name="q" class="form-control" placeholder="Search songs..."
+                               value="{{ request.GET.q }}">
+                        <select name="genre" class="form-select">
+                            <option value="">All Genres</option>
+                            {% for genre in song_genres %}
+                                <option value="{{ genre.0 }}" {% if request.GET.genre == genre.0 %}selected{% endif %}>
+                                    {{ genre.1 }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary">Search</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="row">
+            {% for song in songs %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        {% if song.album and song.album.cover_image %}
+                            <img src="{{ song.album.cover_image.url }}" class="card-img-top"
+                                 alt="{{ song.album.title }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ song.title }}</h5>
+                            <p class="card-text">
+                                <strong>Artist:</strong> {{ song.artist.name }}<br>
+                                <strong>Genre:</strong> {{ song.get_genre_display }}<br>
+                                <strong>Duration:</strong> {{ song.duration }}
+                            </p>
+
+                            <div class="audio-player">
+                                <audio class="plyr" controls>
+                                    <source src="{{ song.audio_file.url }}" type="audio/mp3">
+                                </audio>
+                            </div>
+
+                            <div class="mt-3">
+                                <a href="{% url 'song-detail' song.slug %}" class="btn btn-primary btn-sm">View
+                                    Details</a>
+                                <button class="btn btn-outline-primary btn-sm add-to-playlist-btn"
+                                        data-song-id="{{ song.id }}"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#playlistModal">
+                                    Add to Playlist
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-footer text-muted">
+                            Views: {{ song.views }}
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <p class="text-center">No songs found.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% include 'includes/pagination.html' %}
+    </div>
+
+    <!-- Playlist Modal -->
+    <div class="modal fade" id="playlistModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add to Playlist</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group">
+                        {% for playlist in user.playlists.all %}
+                            <button type="button"
+                                    class="list-group-item list-group-item-action playlist-select"
+                                    data-playlist-id="{{ playlist.id }}">
+                                {{ playlist.name }}
+                            </button>
+                        {% empty %}
+                            <p>No playlists available. <a href="{% url 'playlist-create' %}">Create one</a>!</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plyr/3.7.2/plyr.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize Plyr audio players
+            const players = Array.from(document.querySelectorAll('.plyr')).map(p => new Plyr(p, {
+                controls: ['play', 'progress', 'current-time', 'mute', 'volume']
+            }));
+
+            // Handle adding songs to playlists
+            let currentSongId = null;
+
+            document.querySelectorAll('.add-to-playlist-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    currentSongId = this.dataset.songId;
+                });
+            });
+
+            document.querySelectorAll('.playlist-select').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const playlistId = this.dataset.playlistId;
+
+                    fetch(`/music/add-to-playlist/${currentSongId}/${playlistId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                alert('Song added to playlist successfully!');
+                                $('#playlistModal').modal('hide');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Failed to add song to playlist');
+                        });
+                });
+            });
+        });
+
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+{% endblock %} 

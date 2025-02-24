@@ -1,0 +1,94 @@
+<div class="comment" id="comment-{{ comment.id }}">
+    <div class="comment-avatar">
+        <img src="{{ comment.user.profile.avatar.url|default:'static/img/default-avatar.png' }}"
+             alt="{{ comment.user.username }}">
+    </div>
+    <div class="comment-content">
+        <div class="comment-header">
+            <span class="comment-author">{{ comment.user.get_full_name|default:comment.user.username }}</span>
+            <span class="comment-time">{{ comment.created_at|timesince }} ago</span>
+        </div>
+        <p class="comment-text">{{ comment.text }}</p>
+        <div class="comment-actions">
+            <button class="action-btn like-btn {% if user in comment.likes.all %}liked{% endif %}"
+                    data-comment-id="{{ comment.id }}">
+                <i class="fas fa-thumbs-up"></i>
+                <span class="like-count">{{ comment.like_count }}</span>
+            </button>
+            <button class="action-btn reply-btn">
+                <i class="fas fa-reply"></i> Reply
+            </button>
+            {% if user == comment.user %}
+                <button class="action-btn delete-btn" data-comment-id="{{ comment.id }}">
+                    <i class="fas fa-trash-alt"></i> Delete
+                </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .comment {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .comment-avatar img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .comment-content {
+        flex: 1;
+    }
+
+    .comment-header {
+        margin-bottom: 0.25rem;
+    }
+
+    .comment-author {
+        font-weight: 500;
+        margin-right: 0.5rem;
+    }
+
+    .comment-time {
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .comment-text {
+        margin-bottom: 0.5rem;
+    }
+
+    .comment-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .action-btn {
+        background: none;
+        border: none;
+        color: #666;
+        font-size: 0.9rem;
+        padding: 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .action-btn:hover {
+        color: #1a73e8;
+    }
+
+    .action-btn.liked {
+        color: #1a73e8;
+    }
+
+    .action-btn.delete-btn:hover {
+        color: #dc3545;
+    }
+</style>

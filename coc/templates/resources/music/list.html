@@ -1,0 +1,92 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Bible Study Materials</h1>
+            <a href="{% url 'resources:bible-study-create' %}" class="btn btn-primary">Add New Material</a>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="mb-4">
+            <form method="get" class="form-inline">
+                <select name="category" class="form-select me-2" onchange="this.form.submit()">
+                    <option value="">All Categories</option>
+                    <option value="OLD_TESTAMENT" {% if request.GET.category == 'OLD_TESTAMENT' %}selected{% endif %}>
+                        Old Testament
+                    </option>
+                    <option value="NEW_TESTAMENT" {% if request.GET.category == 'NEW_TESTAMENT' %}selected{% endif %}>
+                        New Testament
+                    </option>
+                    <option value="THEOLOGY" {% if request.GET.category == 'THEOLOGY' %}selected{% endif %}>Theology
+                    </option>
+                    <option value="DISCIPLESHIP" {% if request.GET.category == 'DISCIPLESHIP' %}selected{% endif %}>
+                        Discipleship
+                    </option>
+                    <option value="COMMENTARY" {% if request.GET.category == 'COMMENTARY' %}selected{% endif %}>
+                        Commentary
+                    </option>
+                </select>
+            </form>
+        </div>
+
+        <div class="row">
+            {% for material in materials %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ material.title }}</h5>
+                            <p class="card-text">{{ material.description|truncatewords:30 }}</p>
+                            <p class="text-muted">Category: {{ material.get_category_display }}</p>
+                            <div class="mt-3">
+                                <a href="{% url 'bible-study-detail' material.pk %}" class="btn btn-info btn-sm">View
+                                    Details</a>
+                                {% if user == material.author %}
+                                    <a href="{% url 'bible-study-update' material.pk %}" class="btn btn-warning btn-sm">Edit</a>
+                                    <a href="{% url 'bible-study-delete' material.pk %}" class="btn btn-danger btn-sm">Delete</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="card-footer text-muted">
+                            Uploaded by {{ material.author }} on {{ material.upload_date|date:"M d, Y" }}
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        No Bible study materials available yet.
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if is_paginated %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=
+                                    {{ page_obj.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">Previous</a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page=
+                                    {{ num }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=
+                                    {{ page_obj.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+{% endblock %}

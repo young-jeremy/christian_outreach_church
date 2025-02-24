@@ -1,0 +1,234 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="song-form-container">
+        <div class="card">
+            <div class="card-header">
+                <h2>
+                    {% if form.instance.pk %}
+                        Edit Song: {{ form.instance.title }}
+                    {% else %}
+                        Add New Song
+                    {% endif %}
+                </h2>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" class="song-form">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-md-6">
+                            <div class="section-title">
+                                <i class="fas fa-info-circle"></i> Basic Information
+                            </div>
+                            {{ form.title|as_crispy_field }}
+                            {{ form.composer|as_crispy_field }}
+                            {{ form.category|as_crispy_field }}
+                        </div>
+
+                        <!-- Musical Properties -->
+                        <div class="col-md-6">
+                            <div class="section-title">
+                                <i class="fas fa-music"></i> Musical Properties
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.key|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.tempo|as_crispy_field }}
+                                </div>
+                            </div>
+                            {{ form.time_signature|as_crispy_field }}
+                        </div>
+
+                        <!-- Lyrics -->
+                        <div class="col-12">
+                            <div class="section-title">
+                                <i class="fas fa-align-left"></i> Lyrics
+                            </div>
+                            {{ form.lyrics|as_crispy_field }}
+                        </div>
+
+                        <!-- Resources -->
+                        <div class="col-md-6">
+                            <div class="section-title">
+                                <i class="fas fa-file-alt"></i> Resources
+                            </div>
+                            {% if form.instance.sheet_music %}
+                                <div class="current-file">
+                                    Current sheet music:
+                                    <a href="{{ form.instance.sheet_music.url }}" target="_blank">
+                                        <i class="fas fa-file-pdf"></i> View
+                                    </a>
+                                </div>
+                            {% endif %}
+                            {{ form.sheet_music|as_crispy_field }}
+
+                            {% if form.instance.chord_chart %}
+                                <div class="current-file">
+                                    Current chord chart:
+                                    <a href="{{ form.instance.chord_chart.url }}" target="_blank">
+                                        <i class="fas fa-file-pdf"></i> View
+                                    </a>
+                                </div>
+                            {% endif %}
+                            {{ form.chord_chart|as_crispy_field }}
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="col-md-6">
+                            <div class="section-title">
+                                <i class="fas fa-cog"></i> Additional Information
+                            </div>
+                            {{ form.ccli_number|as_crispy_field }}
+                            {% if form.is_active %}
+                                {{ form.is_active|as_crispy_field }}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            {% if form.instance.pk %}
+                                Save Changes
+                            {% else %}
+                                Create Song
+                            {% endif %}
+                        </button>
+                        <a href="{% url 'resources:song_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .song-form-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid #eee;
+            padding: 1.5rem;
+        }
+
+        .card-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #333;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .section-title i {
+            margin-right: 0.5rem;
+            color: #6c757d;
+        }
+
+        .current-file {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .current-file a {
+            margin-left: 0.5rem;
+            color: #007bff;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .btn i {
+            margin-right: 0.5rem;
+        }
+
+        /* Custom styling for file inputs */
+        .custom-file-label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Textarea height for lyrics */
+        #id_lyrics {
+            min-height: 200px;
+        }
+
+        @media (max-width: 768px) {
+            .card-body {
+                padding: 1rem;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .form-actions .btn {
+                width: 100%;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // File input enhancement
+            document.querySelectorAll('input[type="file"]').forEach(input => {
+                input.addEventListener('change', function (e) {
+                    const fileName = e.target.files[0]?.name || 'Choose file';
+                    const label = e.target.nextElementSibling;
+                    if (label && label.classList.contains('custom-file-label')) {
+                        label.textContent = fileName;
+                    }
+                });
+            });
+
+            // Form validation enhancement
+            const form = document.querySelector('.song-form');
+            form.addEventListener('submit', function (e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        });
+    </script>
+{% endblock %}

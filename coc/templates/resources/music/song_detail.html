@@ -1,0 +1,374 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="song-detail-container">
+        <!-- Song Header Section -->
+        <div class="song-header">
+            <div class="song-title-section">
+                <h1>{{ song.title }}</h1>
+                <div class="song-meta">
+                <span class="composer">
+                    <i class="fas fa-user"></i> {{ song.composer }}
+                </span>
+                    <span class="year">
+                    <i class="fas fa-calendar"></i> {{ song.year }}
+                </span>
+                    <span class="category">
+                    <i class="fas fa-music"></i> {{ song.get_category_display }}
+                </span>
+                </div>
+            </div>
+
+            {% if song.audio_sample %}
+                <div class="audio-player">
+                    <audio controls>
+                        <source src="{{ song.audio_sample.url }}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="song-content-grid">
+            <!-- Left Column -->
+            <div class="main-content">
+                <!-- Key and Tempo Information -->
+                <div class="musical-info card">
+                    <div class="card-header">
+                        <h3>Musical Information</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label>Key</label>
+                                <span>{{ song.key }}</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Time Signature</label>
+                                <span>{{ song.time_signature }}</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Tempo</label>
+                                <span>{{ song.tempo }} BPM</span>
+                            </div>
+                            <div class="info-item">
+                                <label>CCLI Number</label>
+                                <span>{{ song.ccli_number }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lyrics Section -->
+                <div class="lyrics-section card">
+                    <div class="card-header">
+                        <h3>Lyrics</h3>
+                        {% if song.has_translations %}
+                            <div class="language-selector">
+                                <select class="form-select" id="languageSelect">
+                                    <option value="en">English</option>
+                                    <option value="es">Español</option>
+                                    <option value="fr">Français</option>
+                                </select>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <div class="lyrics-content">
+                            <div class="verse">
+                                <h4>Verse 1</h4>
+                                {{ song.verse_1|linebreaks }}
+                            </div>
+
+                            <div class="chorus">
+                                <h4>Chorus</h4>
+                                {{ song.chorus|linebreaks }}
+                            </div>
+
+                            {% if song.verse_2 %}
+                                <div class="verse">
+                                    <h4>Verse 2</h4>
+                                    {{ song.verse_2|linebreaks }}
+                                </div>
+                            {% endif %}
+
+                            {% if song.bridge %}
+                                <div class="bridge">
+                                    <h4>Bridge</h4>
+                                    {{ song.bridge|linebreaks }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="sidebar-content">
+                <!-- Resources Section -->
+                <div class="resources-section card">
+                    <div class="card-header">
+                        <h3>Resources</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="resource-list">
+                            {% if song.sheet_music %}
+                                <a href="{{ song.sheet_music.url }}" class="resource-item" target="_blank">
+                                    <i class="fas fa-file-pdf"></i>
+                                    <span>Sheet Music (PDF)</span>
+                                </a>
+                            {% endif %}
+
+                            {% if song.chord_chart %}
+                                <a href="{{ song.chord_chart.url }}" class="resource-item" target="_blank">
+                                    <i class="fas fa-guitar"></i>
+                                    <span>Chord Chart</span>
+                                </a>
+                            {% endif %}
+
+                            {% if song.backing_track %}
+                                <a href="{{ song.backing_track.url }}" class="resource-item">
+                                    <i class="fas fa-play-circle"></i>
+                                    <span>Backing Track</span>
+                                </a>
+                            {% endif %}
+
+                            {% if song.tutorial_video %}
+                                <a href="{{ song.tutorial_video }}" class="resource-item" target="_blank">
+                                    <i class="fab fa-youtube"></i>
+                                    <span>Tutorial Video</span>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scripture References -->
+                <div class="scripture-section card">
+                    <div class="card-header">
+                        <h3>Scripture References</h3>
+                    </div>
+                    <div class="card-body">
+                        <ul class="scripture-list">
+                            {% for reference in song.scripture_references.all %}
+                                <li>{{ reference.verse_text }}
+                                    <span class="reference">- {{ reference.reference }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Themes and Tags -->
+                <div class="themes-section card">
+                    <div class="card-header">
+                        <h3>Themes</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="tags">
+                            {% for theme in song.themes.all %}
+                                <span class="tag">{{ theme.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .song-detail-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .song-header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .song-title-section h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .song-meta {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .song-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .audio-player {
+            max-width: 500px;
+            margin: 1rem auto;
+        }
+
+        .audio-player audio {
+            width: 100%;
+        }
+
+        .song-content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .card-header {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
+        .musical-info .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-item label {
+            font-weight: bold;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .lyrics-content {
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .verse, .chorus, .bridge {
+            margin-bottom: 2rem;
+        }
+
+        .chorus {
+            padding-left: 2rem;
+            border-left: 3px solid #007bff;
+        }
+
+        .resource-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .resource-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+            transition: background-color 0.2s;
+        }
+
+        .resource-item:hover {
+            background: #e9ecef;
+        }
+
+        .scripture-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .scripture-list li {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .reference {
+            display: block;
+            color: #666;
+            font-style: italic;
+            margin-top: 0.25rem;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tag {
+            background: #e9ecef;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            color: #495057;
+        }
+
+        @media (max-width: 768px) {
+            .song-content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .song-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Language selector functionality
+            const languageSelect = document.getElementById('languageSelect');
+            if (languageSelect) {
+                languageSelect.addEventListener('change', function () {
+                    // Add language switching logic here
+                });
+            }
+
+            // Add smooth scrolling to verse links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+    </script>
+{% endblock %}

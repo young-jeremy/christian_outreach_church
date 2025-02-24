@@ -1,14 +1,18 @@
 import logging
-from accounts.models import User
-from django.conf import settings
 # from users.models import CustomUser
+import os
+from datetime import timedelta
+
+from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 # from .utils import get_video_duration
 # from like_system.models import LikesTarget
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
-from datetime import timedelta
+
+from accounts.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +39,73 @@ PRIVACY_CHOICES = [
     ]
 
 
+class Theme(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
 
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['name']
+
+
+class Song(models.Model):
+    CATEGORY_CHOICES = (
+        ('HY', 'Hymn'),
+        ('CC', 'Contemporary Christian'),
+        ('GO', 'Gospel'),
+        ('WS', 'Worship Song'),
+        ('CH', 'Children\'s Song'),
+    )
+
+    title = models.CharField(max_length=200)
+    composer = models.CharField(max_length=200)
+    year = models.IntegerField()
+    category = models.CharField(max_length=2, choices=CATEGORY_CHOICES)
+    key = models.CharField(max_length=10)
+    time_signature = models.CharField(max_length=10)
+    tempo = models.IntegerField()
+    ccli_number = models.CharField(max_length=20, blank=True)
+
+    verse_1 = models.TextField()
+    chorus = models.TextField()
+    verse_2 = models.TextField(blank=True)
+    bridge = models.TextField(blank=True)
+
+    audio_sample = models.FileField(upload_to='song_samples/', blank=True)
+    sheet_music = models.FileField(upload_to='sheet_music/', blank=True)
+    chord_chart = models.FileField(upload_to='chord_charts/', blank=True)
+    backing_track = models.FileField(upload_to='backing_tracks/', blank=True)
+    tutorial_video = models.URLField(blank=True)
+
+    has_translations = models.BooleanField(default=False)
+    themes = models.ManyToManyField('Theme', blank=True)
+    scripture_references = models.ManyToManyField('ScriptureReference', blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['title']  # This specifies the default ordering
+        verbose_name = 'Song'
+        verbose_name_plural = 'Songs'
+
+    def __str__(self):
+        return self.title
+
+
+class ScriptureReference(models.Model):
+    book = models.CharField(max_length=50)
+    chapter = models.IntegerField()
+    verse_start = models.IntegerField()
+    verse_end = models.IntegerField(null=True, blank=True)
+    text = models.TextField()
+
+    def __str__(self):
+        if self.verse_end:
+            return f"{self.book} {self.chapter}:{self.verse_start}-{self.verse_end}"
+        return f"{self.book} {self.chapter}:{self.verse_start}"
 
 
 class Category(models.Model):
@@ -94,6 +164,46 @@ class Content(models.Model):
 
     def get_absolute_url(self):
         return reverse('videos:video_details', kwargs={'video_id': self.id})
+
+
+class Playlist(models.Model):
+    title = models.CharField(max_length=200, null=True)
+    description = models.TextField(blank=True)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='playlists', null=True)
+    videos = models.ManyToManyField(Content, through='PlaylistVideo', related_name='in_playlists')
+    thumbnail = models.ImageField(upload_to='playlist_thumbnails/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    slug = models.SlugField(unique=True)
+    is_public = models.BooleanField(default=True)
+    category = models.CharField(max_length=200, null=True)
+
+    def __str__(self):
+        return self.title
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
+    @property
+    def video_count(self):
+        return self.videos.count()
+
+    @property
+    def total_duration(self):
+        return sum((video.video.duration for video in self.videos.all() if video.video.duration), timedelta())
+
+
+class PlaylistSong(models.Model):
+    playlist = models.ForeignKey(Playlist, on_delete=models.CASCADE)
+    song = models.ForeignKey(Song, on_delete=models.CASCADE)
+    order = models.PositiveIntegerField()
+    date_added = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order']
+        unique_together = ['playlist', 'song']
 
 
 class ShortVideo(models.Model):
@@ -326,32 +436,6 @@ class QueueItem(models.Model):
         unique_together = ['queue', 'position']
 
 
-class Playlist(models.Model):
-    title = models.CharField(max_length=200, null=True)
-    description = models.TextField(blank=True)
-    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='playlists', null=True)
-    videos = models.ManyToManyField(Content, through='PlaylistVideo', related_name='in_playlists')
-    thumbnail = models.ImageField(upload_to='playlist_thumbnails/', null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    slug = models.SlugField(unique=True)
-    is_public = models.BooleanField(default=True)
-
-    def __str__(self):
-        return self.title
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.title)
-        super().save(*args, **kwargs)
-
-    @property
-    def video_count(self):
-        return self.videos.count()
-
-    @property
-    def total_duration(self):
-        return sum((video.video.duration for video in self.videos.all() if video.video.duration), timedelta())
 
 
 class PlaylistVideo(models.Model):
@@ -395,3 +479,90 @@ class SearchHistory(models.Model):
     class Meta:
         ordering = ['-created_at']
         verbose_name_plural = 'Search histories'
+
+
+class Video(models.Model):
+    CATEGORY_CHOICES = [
+        ('WO', 'Worship'),
+        ('TE', 'Teaching'),
+        ('SE', 'Sermon'),
+        ('TY', 'Testimony'),
+        ('MU', 'Music'),
+        ('YO', 'Youth'),
+        ('CH', 'Children'),
+        ('MI', 'Missions'),
+        ('OT', 'Other'),
+    ]
+
+    VISIBILITY_CHOICES = [
+        ('PU', 'Public'),
+        ('PR', 'Private'),
+        ('UN', 'Unlisted'),
+    ]
+
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=250, unique=True, blank=True)
+    description = models.TextField()
+    video_file = models.FileField(upload_to='videos/')
+    thumbnail = models.ImageField(upload_to='video_thumbnails/', blank=True)
+    duration = models.DurationField(null=True, blank=True)
+
+    # Metadata
+    category = models.CharField(max_length=2, choices=CATEGORY_CHOICES)
+    tags = models.CharField(max_length=500, blank=True)
+    visibility = models.CharField(max_length=2, choices=VISIBILITY_CHOICES, default='PU')
+    language = models.CharField(max_length=10, default='en')
+    captions = models.JSONField(default=dict, blank=True)
+
+    # Stats
+    view_count = models.PositiveIntegerField(default=0)
+    like_count = models.PositiveIntegerField(default=0)
+    comment_count = models.PositiveIntegerField(default=0)
+
+    # User and timestamps
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+
+    # Status flags
+    is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False)
+    has_profanity = models.BooleanField(default=False)
+    processing_status = models.CharField(max_length=20, default='pending')
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['title']),
+            models.Index(fields=['category']),
+            models.Index(fields=['user']),
+        ]
+
+    def __str__(self):
+        return self.title
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse('videos:video_detail', kwargs={'slug': self.slug})
+
+
+class Comment(models.Model):
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    text = models.TextField()
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    like_count = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Comment by {self.user.username} on {self.video.title}'

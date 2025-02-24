@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base_dashboard.html' %}
 
 {% block content %}
 <div class="container py-5">
@@ -13,7 +13,7 @@
                     <form method="post">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger">Confirm Delete</button>
-                        <a href="{% url 'bible-study-list' %}" class="btn btn-secondary">Cancel</a>
+                        <a href="{% url 'resources:bible-study-list' %}" class="btn btn-secondary">Cancel</a>
                     </form>
                 </div>
             </div>

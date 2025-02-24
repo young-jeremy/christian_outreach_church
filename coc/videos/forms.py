@@ -1,9 +1,10 @@
-from django import forms
+from moviepy.editor import VideoFileClip
 from moviepy.editor import VideoFileClip
 
-from .models import Category, Content, PlaylistVideo, Playlist
+from .models import Category, Content, Playlist
 from .models import LiveStreamEvent
 from .models import ModerationRequest, ShortVideo, Comments
+from .models import Video, Comment
 
 
 class CategoryForm(forms.ModelForm):
@@ -107,4 +108,21 @@ class PlaylistVideoForm(forms.Form):
     position = forms.IntegerField(min_value=1, widget=forms.HiddenInput())
 
 
+class VideoForm(forms.ModelForm):
+    class Meta:
+        model = Video
+        fields = ['title', 'description', 'video_file', 'category',
+                  'tags', 'visibility', 'language']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+            'tags': forms.TextInput(attrs={'placeholder': 'Enter tags separated by commas'}),
+        }
 
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['text']
+        widgets = {
+            'text': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Add a comment...'})
+        }

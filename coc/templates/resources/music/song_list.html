@@ -1,0 +1,232 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block extra_css %}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/plyr/3.7.2/plyr.css" rel="stylesheet">
+    <style>
+        .song-card {
+            transition: transform 0.2s;
+        }
+
+        .song-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .plyr {
+            border-radius: 0.25rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="display-4">Gospel Music Library</h1>
+            </div>
+            <div class="col-md-4 text-end">
+                {% if user.is_staff %}
+                    <a href="{% url 'song-create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>Add New Song
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-5">
+                        <input type="text" name="q" class="form-control"
+                               placeholder="Search songs, artists, or albums..."
+                               value="{{ request.GET.q }}">
+                    </div>
+                    <div class="col-md-3">
+                        <select name="genre" class="form-select">
+                            <option value="">All Genres</option>
+                            {% for genre in genres %}
+                                <option value="{{ genre.0 }}" {% if request.GET.genre == genre.0 %}selected{% endif %}>
+                                    {{ genre.1 }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Search</button>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-outline-secondary w-100" data-bs-toggle="modal"
+                                data-bs-target="#playlistModal">
+                            <i class="fas fa-list me-2"></i>Playlists
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Songs Grid -->
+        <div class="row">
+            {% for song in songs %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 song-card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ song.title }}</h5>
+                            <p class="card-text text-muted">
+                                <i class="fas fa-user me-2"></i>{{ song.artist.name }}
+                                {% if song.album %}
+                                    <br><i class="fas fa-compact-disc me-2"></i>{{ song.album.title }}
+                                {% endif %}
+                            </p>
+
+                            <!-- Audio Player -->
+                            <audio class="player" controls>
+                                <source src="{{ song.audio_file.url }}" type="audio/mp3">
+                                Your browser does not support the audio element.
+                            </audio>
+
+                            <div class="mt-3">
+                                <span class="badge bg-primary">{{ song.get_genre_display }}</span>
+                                <small class="text-muted float-end">
+                                    <i class="fas fa-eye me-1"></i>{{ song.views }}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="btn-group">
+                                    <a href="{% url 'song-detail' song.slug %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-info-circle me-1"></i>Details
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-success add-to-playlist"
+                                            data-song-id="{{ song.id }}">
+                                        <i class="fas fa-plus me-1"></i>Add to Playlist
+                                    </button>
+                                </div>
+                                {% if user.is_staff %}
+                                    <div class="btn-group">
+                                        <a href="{% url 'song-update' song.slug %}"
+                                           class="btn btn-sm btn-outline-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'song-delete' song.slug %}"
+                                           class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle me-2"></i>No songs available yet.
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link"
+                               href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.genre %}&genre={{ request.GET.genre }}{% endif %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page=
+                                    {{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.genre %}&genre={{ request.GET.genre }}{% endif %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=
+                                    {{ page_obj.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.genre %}&genre={{ request.GET.genre }}{% endif %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+
+    <!-- Playlist Modal -->
+    <div class="modal fade" id="playlistModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add to Playlist</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group">
+                        {% for playlist in user.playlists.all %}
+                            <button type="button" class="list-group-item list-group-item-action playlist-item"
+                                    data-playlist-id="{{ playlist.id }}">
+                                {{ playlist.name }}
+                            </button>
+                        {% empty %}
+                            <p class="text-center text-muted">No playlists available. Create one first!</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="{% url 'resources:playlist-create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create New Playlist
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plyr/3.7.2/plyr.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize Plyr for all audio players
+            const players = Plyr.setup('.player', {
+                controls: ['play', 'progress', 'current-time', 'mute', 'volume']
+            });
+
+            // Handle add to playlist
+            let selectedSongId = null;
+
+            $('.add-to-playlist').click(function () {
+                selectedSongId = $(this).data('song-id');
+                $('#playlistModal').modal('show');
+            });
+
+            $('.playlist-item').click(function () {
+                const playlistId = $(this).data('playlist-id');
+                if (!selectedSongId) return;
+
+                $.post(`/music/add-to-playlist/${selectedSongId}/${playlistId}/`, {
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                })
+                    .done(function (response) {
+                        if (response.status === 'success') {
+                            alert('Song added to playlist successfully!');
+                            $('#playlistModal').modal('hide');
+                        }
+                    })
+                    .fail(function () {
+                        alert('Failed to add song to playlist. Please try again.');
+                    });
+            });
+        });
+    </script>
+{% endblock %}

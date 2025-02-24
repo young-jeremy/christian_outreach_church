@@ -1,120 +1,72 @@
 import datetime
 import json
-from .forms import PlaylistForm, PlaylistVideoForm, PlaylistVideo
-from services.forms import SermonForm
-import logging
-import threading
-from services.models import Sermon
-from django.db.models import Max
-
-from datetime import datetime
-from django.http import HttpResponse, FileResponse, Http404
-import matplotlib.pyplot as plt
-import numpy as np
-import cv2
-from accounts.custom_decorators import *
-from accounts.forms import *
-from accounts.models import *
-from accounts.models import UserProfile
-from accounts.signals import *
-from aiohttp.web_urldispatcher import View
-from comments.forms import *
-from comments.forms import CommentForm
-from comments.models import *
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.files.uploadhandler import TemporaryFileUploadHandler
-from django.core.paginator import Paginator
-from django.db.models import Q
-from django.http import StreamingHttpResponse
-from django.shortcuts import get_object_or_404, HttpResponseRedirect
-from django.shortcuts import render, redirect
-from django.utils import timezone
-from django.utils.timesince import timesince
-from django.views.decorators.http import require_POST
-from django.views.generic import ListView
-from google.cloud import speech
-from notifications.models import Notifications
-from notifications.views import send_notification
-from requests import Request
 import os
-import shutil
+import tempfile
+import threading
+from datetime import datetime
+from io import BytesIO
+
+import cv2
+import matplotlib.pyplot as plt
+import pandas as pd
+import speech_recognition as sr
+from aiohttp.web_urldispatcher import View
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.core.files.storage import default_storage
+from django.core.files.uploadhandler import TemporaryFileUploadHandler
 from django.core.paginator import Paginator
-from django.http import JsonResponse
-from django.utils.text import slugify
-from .models import DownloadedVideo
-from .utils import check_for_nudity
-from services.models import Channel, Subscription
+from django.db.models import Q, Max
+from django.http import JsonResponse, HttpResponse
+from django.http import StreamingHttpResponse
+from django.shortcuts import HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404, redirect
+from django.template.loader import render_to_string
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.utils.timesince import timesince
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.views.generic import ListView, DetailView, DeleteView, UpdateView
+from elasticsearch_dsl import Q
+from firebase_admin import auth
+from google.cloud import speech
+from google.cloud import speech_v1 as speech
 from google.cloud import vision
+from google.cloud import vision, videointelligence
 from moviepy.editor import VideoFileClip
+from moviepy.editor import VideoFileClip
+from requests import Request
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics.pairwise import linear_kernel
+from sklearn.model_selection import train_test_split
+
+from accounts.forms import *
+from accounts.signals import *
+from comments.forms import CommentForm
+from notifications.models import Notifications
+from services.models import Channel, Subscription
+from services.models import Sermon
+from .firebase import initialize_firebase
 from .forbidden_content import has_forbidden_content
 from .forms import CategoryForm, ContentForm
 from .forms import ContentModerationForm
+from .forms import PlaylistForm, PlaylistVideoForm, PlaylistVideo
 from .forms import VideoForm, VideoSearchForm, ModerationRequestForm, ShortVideoForm, \
     ContentSubmissionForm, CommentEditForm
 from .models import *
-from .models import Category, Content
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import linear_kernel
-from elasticsearch_dsl import Index
-from .models import WatchLater
-from firebase_admin import auth
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
-import pandas as pd
-import io
-from django.http import HttpResponse
-from .firebase import initialize_firebase
-from .video_queue import VideoQueue
-import os
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from google.cloud import speech_v1 as speech
-from io import BytesIO
-from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-import seaborn as sns
-import os
-from django.conf import settings
-from django.http import FileResponse, Http404
-from django.db.models import Q
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404, redirect
-from wsgiref.util import FileWrapper
-from elasticsearch_dsl import Q as ESQ
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404, redirect
-from wsgiref.util import FileWrapper
-from elasticsearch_dsl import Q as ESQ
-import tempfile
-from .models import SearchHistory
-from elasticsearch_dsl import Q
-from django.shortcuts import render
-from django.core.paginator import Paginator
-from .models import Content
-from django.db.models import Q as DjangoQ
-from django.core.paginator import Paginator
-from django.shortcuts import render
-from django.core.paginator import Paginator
-from django.shortcuts import render
-from .models import Content
-from django.http import JsonResponse
-from .models import Content  # Ensure you import your model
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, HttpResponse
-from django.contrib import messages
-from django.core.paginator import Paginator
-from django.db.models import Q, Max
+from .models import Category
 from .models import (
     Content, Comments, DownloadedVideo, Queue, QueueItem,
     Playlist, PlaylistVideo, ShortVideo, WatchedVideo
 )
+from .models import SearchHistory
+from .models import WatchLater
+from .utils import check_for_nudity
+from .video_queue import VideoQueue
 
 
 def search_videos(request):
@@ -762,7 +714,7 @@ def upload_form(request):
         if form.is_valid():
             title = form.cleaned_data['title']
             description = form.cleaned_data['description']
-            content_file = request.FILES['content']
+            content_file = request.FILES['path']
             content = content_file.read().decode('utf-8')
             video = form.save(commit=False)
             is_nudity = check_for_nudity(video.video_content.read())
@@ -785,7 +737,7 @@ def upload_form(request):
     else:
         form = ContentForm()
 
-    return render(request, 'videos/upload.html', {'form': form})
+    return render(request, 'videos/video_upload.html', {'form': form})
 
 
 def upload_success(request):
@@ -1097,18 +1049,6 @@ def subscription_success(request):
     template_name = 'videos/subscriptions_success.html'
     return render(request, template_name)
 
-
-def create_video(request):
-    template_name = 'videos/create_video.html'
-    if request.method == 'POST':
-        form = VideoForm(request.POST)
-        if form.is_valid():
-            video = form.save(commit=False)
-            video.save()
-            return redirect('videos:videos')
-    else:
-        form = VideoForm()
-        return render(request, template_name, {'form': form})
 
 
 def edit_video(request):
@@ -2149,3 +2089,278 @@ def add_video_comment(request, video_id):
             messages.success(request, 'Comment added successfully!')
         return redirect('videos:video_details', video_id=video.id)
     return redirect('videos:video_details', video_id=video_id)
+
+
+class VideoProcessingMixin:
+    def process_video(self, video_file):
+        """Process video file for inappropriate content and extract metadata"""
+        results = {
+            'duration': 0,
+            'has_inappropriate_content': False,
+            'captions': [],
+            'thumbnail': None
+        }
+
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as temp_video:
+            for chunk in video_file.chunks():
+                temp_video.write(chunk)
+            temp_video_path = temp_video.name
+
+        try:
+            # Get video metadata
+            with VideoFileClip(temp_video_path) as clip:
+                results['duration'] = clip.duration
+
+                # Generate thumbnail
+                thumbnail_time = min(5, clip.duration / 2)  # Get frame at 5 seconds or video midpoint
+                thumbnail = clip.get_frame(thumbnail_time)
+                results['thumbnail'] = self.save_thumbnail(thumbnail)
+
+                # Extract audio for speech-to-text
+                audio_path = self.extract_audio(clip)
+                results['captions'] = self.generate_captions(audio_path)
+
+            # Check for inappropriate content
+            results['has_inappropriate_content'] = self.check_inappropriate_content(temp_video_path)
+
+        finally:
+            # Cleanup temporary files
+            os.unlink(temp_video_path)
+            if 'audio_path' in locals():
+                os.unlink(audio_path)
+
+        return results
+
+    def extract_audio(self, clip):
+        """Extract audio from video for speech recognition"""
+        audio_path = tempfile.mktemp(suffix='.wav')
+        clip.audio.write_audiofile(audio_path)
+        return audio_path
+
+    def generate_captions(self, audio_path):
+        """Generate captions from audio using speech recognition"""
+        recognizer = sr.Recognizer()
+        captions = []
+
+        with sr.AudioFile(audio_path) as source:
+            audio = recognizer.record(source)
+            try:
+                text = recognizer.recognize_google(audio)
+                captions.append({
+                    'text': text,
+                    'start': 0,
+                    'end': 0  # You might want to implement proper timing
+                })
+            except sr.UnknownValueError:
+                print("Speech Recognition could not understand audio")
+            except sr.RequestError as e:
+                print(f"Could not request results from Speech Recognition service; {e}")
+
+        return captions
+
+    def check_profanity(self, captions):
+        """Check for profanity in captions"""
+        text = ' '.join(caption['text'] for caption in captions)
+        return predict_prob([text])[0] > 0.5
+
+    def check_inappropriate_content(self, video_path):
+        """Check for inappropriate content using Google Cloud Video Intelligence"""
+        client = videointelligence.VideoIntelligenceServiceClient(credentials=settings.credentials)
+
+        with open(video_path, 'rb') as file:
+            input_content = file.read()
+
+        features = [
+            videointelligence.Feature.EXPLICIT_CONTENT_DETECTION,
+        ]
+
+        operation = client.annotate_video(
+            request={
+                "features": features,
+                "input_content": input_content,
+            }
+        )
+
+        result = operation.result(timeout=90)
+
+        # Check if any frame has inappropriate content
+        for frame in result.annotation_results[0].explicit_annotation.frames:
+            if frame.pornography_likelihood >= videointelligence.Likelihood.LIKELY:
+                return True
+
+        return False
+
+    def save_thumbnail(self, frame):
+        """Save video thumbnail"""
+        thumbnail_path = tempfile.mktemp(suffix='.jpg')
+        frame.save(thumbnail_path)
+
+        # Save to Django storage
+        with open(thumbnail_path, 'rb') as f:
+            stored_path = default_storage.save(
+                f'video_thumbnails/{os.path.basename(thumbnail_path)}',
+                f
+            )
+
+        os.unlink(thumbnail_path)
+        return stored_path
+
+
+def create_video(request):
+    if request.method == 'POST':
+        form = VideoForm(request.POST, request.FILES)
+        if form.is_valid():
+            video = form.save(commit=False)
+            video.user = request.user
+
+            # Process video
+            processor = VideoProcessingMixin()
+            results = processor.process_video(request.FILES['video'])
+
+            # Check for inappropriate content
+            if results['has_inappropriate_content']:
+                messages.error(request, 'Video contains inappropriate content and cannot be uploaded.')
+                return render(request, 'videos/video_checks/video_upload.html', {'form': form})
+
+            # Save video with processed data
+            video.duration = results['duration']
+            video.thumbnail = results['thumbnail']
+            video.captions = results['captions']
+            video.save()
+
+            # Create notification
+            Notification.objects.create(
+                user=request.user,
+                message="Your video has been published successfully!",
+                notification_type="video",
+                content_object=video
+            )
+
+            messages.success(request, 'Video uploaded successfully!')
+            return redirect('videos:video_detail', pk=video.pk)
+    else:
+        form = VideoForm()
+
+    return render(request, 'videos/video_checks/video_upload.html', {'form': form})
+
+
+class VideoListView(ListView):
+    model = Video
+    template_name = 'videos/video_checks/video_list.html'
+    context_object_name = 'videos'
+    paginate_by = 12
+
+    def get_queryset(self):
+        queryset = Video.objects.filter(is_active=True)
+        search = self.request.GET.get('search')
+        category = self.request.GET.get('category')
+        sort = self.request.GET.get('sort', 'recent')
+
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(description__icontains=search) |
+                Q(tags__icontains=search)
+            )
+        if category:
+            queryset = queryset.filter(category=category)
+
+        if sort == 'popular':
+            queryset = queryset.order_by('-view_count')
+        elif sort == 'liked':
+            queryset = queryset.order_by('-like_count')
+        else:
+            queryset = queryset.order_by('-created_at')
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = Video.CATEGORY_CHOICES
+        context['selected_category'] = self.request.GET.get('category', '')
+        context['sort'] = self.request.GET.get('sort', 'recent')
+        return context
+
+
+class VideoDetailView(DetailView):
+    model = Video
+    template_name = 'videos/video_checks/video_detail.html'
+    context_object_name = 'video'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['comment_form'] = CommentForm()
+        context['related_videos'] = Video.objects.filter(
+            category=self.object.category,
+            is_active=True
+        ).exclude(id=self.object.id)[:6]
+        return context
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+        # Increment view count
+        self.object.view_count += 1
+        self.object.save()
+        return response
+
+
+class VideoUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Video
+    template_name = 'videos/video_checks/video_form.html'
+    fields = ['title', 'description', 'category', 'tags', 'visibility', 'language']
+
+    def test_func(self):
+        video = self.get_object()
+        return self.request.user == video.user
+
+
+class VideoDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Video
+    template_name = 'videos/video_checks/video_confirm_delete.html'
+    success_url = reverse_lazy('videos:video_list')
+
+    def test_func(self):
+        video = self.get_object()
+        return self.request.user == video.user
+
+
+def video_like(request, slug):
+    if request.method == 'POST' and request.is_ajax():
+        video = get_object_or_404(Video, slug=slug)
+        if request.user in video.likes.all():
+            video.likes.remove(request.user)
+            liked = False
+        else:
+            video.likes.add(request.user)
+            liked = True
+        return JsonResponse({
+            'liked': liked,
+            'like_count': video.likes.count()
+        })
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+def add_comment(request, slug):
+    if request.method == 'POST':
+        video = get_object_or_404(Video, slug=slug)
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.video = video
+            comment.user = request.user
+            comment.save()
+            return JsonResponse({
+                'success': True,
+                'comment_html': render_to_string('videos/video_checks/comment.html',
+                                                 {'comment': comment}, request=request)
+            })
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+def check_processing_status(request, video_id):
+    video = get_object_or_404(Video, id=video_id)
+    return JsonResponse({
+        'status': video.processing_status,
+        'progress': video.processing_progress
+    })
