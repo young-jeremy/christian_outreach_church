@@ -283,6 +283,9 @@ urlpatterns = [
     path('api/singles/events/<int:event_id>/attendees/',
          views.get_event_attendees, name='singles_event_attendees'),
 
+    # Add this to your urlpatterns
+    path('sermon-resources/', views.SermonResourcesView.as_view(), name='sermon_resources'),
+
 
 
 

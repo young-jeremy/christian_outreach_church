@@ -1,0 +1,57 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="delete-container">
+        <div class="delete-card">
+            <div class="delete-header">
+                <h1>Delete Project</h1>
+                <p class="lead">Are you sure you want to delete "{{ object.title }}"?</p>
+            </div>
+
+            <div class="warning-box">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div class="warning-content">
+                    <h3>Warning!</h3>
+                    <p>This action cannot be undone. All project updates and associated data will be deleted.</p>
+                </div>
+            </div>
+
+            <div class="project-info">
+                <p><strong>Mission:</strong> {{ object.mission.title }}</p>
+                <p><strong>Status:</strong> {{ object.get_status_display }}</p>
+                <p><strong>Project Lead:</strong> {{ object.project_lead }}</p>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete Project
+                    </button>
+                    <a href="{% url 'outreach:project_detail' object.slug %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        /* Same styles as mission_confirm_delete.html plus: */
+        .project-info {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+
+        .project-info p {
+            margin-bottom: 0.5rem;
+        }
+
+        .project-info p:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+{% endblock %}

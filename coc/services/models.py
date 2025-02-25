@@ -8,6 +8,8 @@ from django.core.validators import (
 from django.shortcuts import redirect, get_object_or_404
 from django_summernote.fields import SummernoteTextField
 
+from dashboard.views import blank
+
 # Optional but recommended for type hints
 
 # Get the User model
@@ -2403,45 +2405,67 @@ class Category(models.Model):
         super().save(*args, **kwargs)
 
 
+from django.db import models
+
+
 class CounselingRequest(models.Model):
-    REASON_CHOICES = [
-        ('PREMARITAL', 'Premarital Counseling'),
-        ('MARRIAGE', 'Marriage Counseling'),
-        ('CONFLICT', 'Conflict Resolution'),
-        ('SPIRITUAL', 'Spiritual Growth'),
-        ('OTHER', 'Other'),
+    CONTACT_CHOICES = [
+        ('email', 'Email'),
+        ('phone', 'Phone'),
     ]
 
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('approved', 'Approved'),
-        ('scheduled', 'Scheduled'),
-        ('completed', 'Completed'),
-        ('cancelled', 'Cancelled'),
+    TIME_CHOICES = [
+        ('morning', 'Morning (9AM - 12PM)'),
+        ('afternoon', 'Afternoon (12PM - 5PM)'),
+        ('evening', 'Evening (5PM - 8PM)'),
     ]
 
-    couple = models.ForeignKey('CoupleProfile', on_delete=models.CASCADE)
-    preferred_date = models.DateField()
-    preferred_time = models.TimeField()
-    reason = models.CharField(max_length=20, choices=REASON_CHOICES)
-    additional_notes = models.TextField(blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    counselor = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
+    URGENCY_CHOICES = [
+        ('normal', 'Normal'),
+        ('urgent', 'Urgent'),
+        ('emergency', 'Emergency'),
+    ]
+
+    COUNSELING_CATEGORY_CHOICES = [
+        ('marriage', 'Marriage Counseling'),
+        ('premarital', 'Premarital Counseling'),
+        ('couples', 'Couples Therapy'),
+        ('family', 'Family Counseling'),
+        ('children', 'Children & Adolescent Counseling'),
+        ('individual', 'Individual Counseling'),
+        ('grief', 'Grief & Loss Counseling'),
+        ('addiction', 'Addiction Recovery'),
+        ('mental_health', 'Mental Health Counseling'),
+        ('career', 'Career Counseling'),
+        ('spiritual', 'Spiritual Counseling'),
+        ('trauma', 'Trauma & PTSD'),
+        ('other', 'Other'),
+    ]
+
+    first_name = models.CharField(max_length=100, null=True, blank=True)
+    last_name = models.CharField(max_length=100, null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
+    phone = models.CharField(max_length=20, null=True, blank=True)
+    preferred_contact = models.CharField(max_length=10, choices=CONTACT_CHOICES, default='email')
+    counseling_category = models.CharField(null=True, blank=True,
+                                           max_length=20,
+                                           choices=COUNSELING_CATEGORY_CHOICES,
+                                           default='individual'
+                                           )
+    other_category = models.CharField(
+        max_length=100,
         blank=True,
-        related_name='counseling_sessions'
+        help_text="Please specify if you selected 'Other' as category"
     )
-    scheduled_date = models.DateTimeField(null=True, blank=True)
+    reason_for_counseling = models.TextField(null=True, blank=True)
+    preferred_days = models.JSONField(default=list)  # Will store list of selected days
+    preferred_time = models.CharField(max_length=20, choices=TIME_CHOICES, null=True, blank=True)
+    urgency = models.CharField(max_length=20, choices=URGENCY_CHOICES, default='normal')
+    previous_counseling = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Counseling Request - {self.couple.get_couple_name()}"
-
-    class Meta:
-        ordering = ['-created_at']
+        return f"{self.first_name} {self.last_name} - {self.counseling_category} - {self.created_at.strftime('%Y-%m-%d')}"
 
 
 class MensMinistry(models.Model):

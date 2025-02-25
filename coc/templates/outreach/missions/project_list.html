@@ -1,0 +1,188 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="project-list-container">
+        <div class="page-header">
+            <div class="header-content">
+                <h1>Mission Projects</h1>
+                <p class="lead">Our ongoing and completed mission projects</p>
+            </div>
+            {% if user.is_staff %}
+                <div class="header-actions">
+                    <a href="{% url 'outreach:project_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> New Project
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="filter-section">
+            <form method="get" class="filter-form">
+                <div class="filter-group">
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for code, name in categories.items %}
+                            <option value="{{ code }}" {% if request.GET.category == code %}selected{% endif %}>
+                                {{ name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <select name="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="planning" {% if request.GET.status == 'planning' %}selected{% endif %}>Planning
+                        </option>
+                        <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>In
+                            Progress
+                        </option>
+                        <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>
+                            Completed
+                        </option>
+                        <option value="on_hold" {% if request.GET.status == 'on_hold' %}selected{% endif %}>On Hold
+                        </option>
+                    </select>
+                </div>
+                <div class="search-box">
+                    <input type="text" name="q" placeholder="Search projects..."
+                           value="{{ request.GET.q|default:'' }}">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="projects-grid">
+            {% for project in projects %}
+                <div class="project-card">
+                    {% if project.featured_image %}
+                        <div class="project-image">
+                            <img src="{{ project.featured_image.url }}" alt="{{ project.title }}">
+                        </div>
+                    {% endif %}
+                    <div class="project-content">
+                        <div class="project-header">
+                            <span class="category-badge">{{ project.get_category_display }}</span>
+                            <span class="status-badge {{ project.status }}">{{ project.get_status_display }}</span>
+                        </div>
+                        <h3>{{ project.title }}</h3>
+                        <p class="location"><i class="fas fa-map-marker-alt"></i> {{ project.location }}</p>
+                        <p class="description">{{ project.description|truncatewords:30 }}</p>
+                        <div class="project-meta">
+                            <span><i class="fas fa-user"></i> {{ project.project_lead }}</span>
+                            <span><i class="fas fa-calendar"></i> {{ project.start_date|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="project-actions">
+                            <a href="{{ project.get_absolute_url }}" class="btn btn-primary">View Details</a>
+                            {% if user.is_staff %}
+                                <a href="{% url 'outreach:project_edit' project.slug %}"
+                                   class="btn btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="no-projects">
+                    <i class="fas fa-folder-open"></i>
+                    <h3>No Projects Found</h3>
+                    <p>Try adjusting your search criteria</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if is_paginated %}
+            <nav class="pagination-nav">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+
+    <style>
+        .project-list-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .filter-section {
+            margin-bottom: 2rem;
+        }
+
+        .filter-form {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .form-select {
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .search-box input {
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            min-width: 200px;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .project-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* ... Rest of the styles from previous templates ... */
+    </style>
+{% endblock %}

@@ -1,0 +1,340 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="teaching-resources-container">
+        <div class="resources-header">
+            <h1>Teaching Resources</h1>
+            <p>Access materials for teaching, training, and discipleship</p>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="filter-section">
+            <form method="get" class="resource-filters">
+                <div class="search-box">
+                    <input type="text" name="q" placeholder="Search resources..."
+                           value="{{ request.GET.q|default:'' }}">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+
+                <div class="filter-options">
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for code, name in categories.items %}
+                            <option value="{{ code }}"
+                                    {% if request.GET.category == code %}selected{% endif %}>
+                                {{ name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <select name="type" class="form-select">
+                        <option value="">All Types</option>
+                        {% for code, name in resource_types.items %}
+                            <option value="{{ code }}"
+                                    {% if request.GET.type == code %}selected{% endif %}>
+                                {{ name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <!-- Featured Resources Section -->
+        {% if featured_resources and not request.GET.q %}
+            <section class="featured-resources">
+                <h2>Featured Resources</h2>
+                <div class="featured-grid">
+                    {% for resource in featured_resources %}
+                        <div class="featured-card">
+                            <div class="resource-icon">
+                                {% if resource.resource_type == 'PDF' %}
+                                    <i class="fas fa-file-pdf"></i>
+                                {% elif resource.resource_type == 'DOC' %}
+                                    <i class="fas fa-file-word"></i>
+                                {% elif resource.resource_type == 'PPT' %}
+                                    <i class="fas fa-file-powerpoint"></i>
+                                {% elif resource.resource_type == 'VID' %}
+                                    <i class="fas fa-video"></i>
+                                {% elif resource.resource_type == 'AUD' %}
+                                    <i class="fas fa-headphones"></i>
+                                {% else %}
+                                    <i class="fas fa-link"></i>
+                                {% endif %}
+                            </div>
+                            <h3>{{ resource.title }}</h3>
+                            <p class="resource-meta">
+                                <span><i class="fas fa-user"></i> {{ resource.author }}</span>
+                                <span><i class="fas fa-download"></i> {{ resource.download_count }}</span>
+                            </p>
+                            <a href="{{ resource.get_absolute_url }}" class="btn btn-primary">View Resource</a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        <!-- Main Resources Grid -->
+        <div class="resources-grid">
+            {% for resource in resources %}
+                <div class="resource-card">
+                    <div class="resource-type-badge {{ resource.resource_type|lower }}">
+                        {{ resource.get_resource_type_display }}
+                    </div>
+
+                    <h3>{{ resource.title }}</h3>
+                    <p class="description">{{ resource.description|truncatewords:20 }}</p>
+
+                    <div class="resource-meta">
+                        <span><i class="fas fa-user"></i> {{ resource.author }}</span>
+                        <span><i class="fas fa-folder"></i> {{ resource.get_category_display }}</span>
+                        <span><i class="fas fa-calendar"></i> {{ resource.upload_date|date:"M d, Y" }}</span>
+                    </div>
+
+                    <div class="resource-actions">
+                        {% if resource.file %}
+                            <a href="{{ resource.file.url }}" class="btn btn-primary btn-sm" download>
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        {% endif %}
+                        {% if resource.external_link %}
+                            <a href="{{ resource.external_link }}" class="btn btn-outline-primary btn-sm"
+                               target="_blank">
+                                <i class="fas fa-external-link-alt"></i> Visit Resource
+                            </a>
+                        {% endif %}
+                        <a href="{{ resource.get_absolute_url }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-info-circle"></i> Details
+                        </a>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="no-resources">
+                    <p>No teaching resources found matching your criteria.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <nav class="pagination-container">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li>
+                            <a href="?page=
+                                    {{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}"
+                               class="btn btn-outline-primary">Previous</a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        <li>
+                            <a href="?page=
+                                    {{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}"
+                               class="btn {% if page_obj.number == num %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li>
+                            <a href="?page=
+                                    {{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}"
+                               class="btn btn-outline-primary">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .teaching-resources-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .resources-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .filter-section {
+            margin-bottom: 2rem;
+        }
+
+        .resource-filters {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .filter-options {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .form-select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-width: 150px;
+        }
+
+        .featured-resources {
+            margin-bottom: 3rem;
+        }
+
+        .featured-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .featured-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .resource-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #007bff;
+        }
+
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .resource-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .resource-type-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: white;
+        }
+
+        .resource-type-badge.pdf {
+            background: #dc3545;
+        }
+
+        .resource-type-badge.doc {
+            background: #007bff;
+        }
+
+        .resource-type-badge.ppt {
+            background: #fd7e14;
+        }
+
+        .resource-type-badge.vid {
+            background: #6f42c1;
+        }
+
+        .resource-type-badge.aud {
+            background: #28a745;
+        }
+
+        .resource-type-badge.web {
+            background: #17a2b8;
+        }
+
+        .resource-meta {
+            color: #666;
+            font-size: 0.9rem;
+            margin: 1rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .resource-meta i {
+            margin-right: 0.5rem;
+        }
+
+        .resource-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            border: none;
+        }
+
+        .btn-outline-primary {
+            background: white;
+            color: #007bff;
+            border: 1px solid #007bff;
+        }
+
+        .btn-outline-secondary {
+            background: white;
+            color: #6c757d;
+            border: 1px solid #6c757d;
+        }
+
+        .no-resources {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+    </style>
+{% endblock %}

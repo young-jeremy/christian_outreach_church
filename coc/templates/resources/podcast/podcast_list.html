@@ -1,0 +1,382 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="podcast-list-container">
+        <div class="page-header">
+            <h1>Church Podcasts</h1>
+            <p class="lead">Listen to sermons, teachings, and inspirational content</p>
+        </div>
+
+        {% if featured_episodes %}
+            <section class="featured-episodes">
+                <h2>Featured Episodes</h2>
+                <div class="featured-grid">
+                    {% for episode in featured_episodes %}
+                        <div class="featured-card">
+                            <div class="card-image">
+                                <img src="{{ episode.cover_image.url }}" alt="{{ episode.title }}">
+                                <div class="play-overlay">
+                                    <a href="{{ episode.get_absolute_url }}" class="play-button">
+                                        <i class="fas fa-play"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="card-content">
+                                <span class="category-badge">{{ episode.get_category_display }}</span>
+                                <h3>{{ episode.title }}</h3>
+                                <p class="meta">
+                                    <span><i class="fas fa-user"></i> {{ episode.host }}</span>
+                                    <span><i class="fas fa-clock"></i> {{ episode.duration }}</span>
+                                </p>
+                                <p class="description">{{ episode.description|truncatewords:25 }}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        <div class="filter-section">
+            <form method="get" class="filter-form">
+                <div class="search-box">
+                    <input type="text" name="q" placeholder="Search episodes..."
+                           value="{{ request.GET.q|default:'' }}">
+                    <button type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <select name="category" class="category-filter">
+                    <option value="">All Categories</option>
+                    {% for code, name in categories.items %}
+                        <option value="{{ code }}"
+                                {% if request.GET.category == code %}selected{% endif %}>
+                            {{ name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+
+        <div class="episodes-grid">
+            {% for episode in episodes %}
+                <div class="episode-card">
+                    <div class="card-image">
+                        <img src="{{ episode.cover_image.url }}" alt="{{ episode.title }}">
+                        <div class="play-overlay">
+                            <a href="{{ episode.get_absolute_url }}" class="play-button">
+                                <i class="fas fa-play"></i>
+                            </a>
+                        </div>
+                        {% if episode.is_featured %}
+                            <span class="featured-badge">
+                    <i class="fas fa-star"></i> Featured
+                </span>
+                        {% endif %}
+                    </div>
+                    <div class="card-content">
+                        <span class="category-badge">{{ episode.get_category_display }}</span>
+                        <h3>{{ episode.title }}</h3>
+                        <div class="meta">
+                            <span><i class="fas fa-user"></i> {{ episode.host }}</span>
+                            <span><i class="fas fa-calendar"></i> {{ episode.publish_date|date:"M d, Y" }}</span>
+                            <span><i class="fas fa-clock"></i> {{ episode.duration }}</span>
+                        </div>
+                        <p class="description">{{ episode.description|truncatewords:20 }}</p>
+                        <div class="card-actions">
+                            <a href="{{ episode.get_absolute_url }}" class="btn btn-primary">
+                                <i class="fas fa-headphones"></i> Listen Now
+                            </a>
+                            {% if episode.transcript %}
+                                <a href="{{ episode.get_absolute_url }}#transcript" class="btn btn-outline">
+                                    <i class="fas fa-file-alt"></i> Transcript
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="no-episodes">
+                    <i class="fas fa-podcast"></i>
+                    <h3>No Episodes Found</h3>
+                    <p>Try adjusting your search or filter criteria</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if is_paginated %}
+            <nav class="pagination">
+                <ul>
+                    {% if page_obj.has_previous %}
+                        <li>
+                            <a href="?page=
+                                    {{ page_obj.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+                               class="btn btn-outline">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        <li>
+                            <a href="?page=
+                                    {{ num }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+                               class="btn {% if page_obj.number == num %}btn-primary{% else %}btn-outline{% endif %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li>
+                            <a href="?page=
+                                    {{ page_obj.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+                               class="btn btn-outline">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+
+    <style>
+        .podcast-list-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .featured-episodes {
+            margin-bottom: 3rem;
+        }
+
+        .featured-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .filter-section {
+            margin-bottom: 2rem;
+        }
+
+        .filter-form {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .search-box button {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .category-filter {
+            padding: 0.75rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-width: 200px;
+        }
+
+        .episodes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .episode-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .episode-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-image {
+            position: relative;
+            padding-top: 56.25%; /* 16:9 aspect ratio */
+        }
+
+        .card-image img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .play-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .card-image:hover .play-overlay {
+            opacity: 1;
+        }
+
+        .play-button {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #007bff;
+            font-size: 1.5rem;
+            transition: transform 0.2s;
+        }
+
+        .play-button:hover {
+            transform: scale(1.1);
+        }
+
+        .featured-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #ffd700;
+            color: #000;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        .card-content {
+            padding: 1.5rem;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: #e9ecef;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            color: #666;
+            font-size: 0.875rem;
+            margin: 0.5rem 0;
+        }
+
+        .meta i {
+            margin-right: 0.25rem;
+        }
+
+        .description {
+            color: #666;
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            border: none;
+        }
+
+        .btn-outline {
+            background: white;
+            color: #007bff;
+            border: 1px solid #007bff;
+        }
+
+        .no-episodes {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .no-episodes i {
+            font-size: 3rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+        }
+
+        .pagination ul {
+            display: flex;
+            gap: 0.5rem;
+            list-style: none;
+            padding: 0;
+        }
+
+        @media (max-width: 768px) {
+            .filter-form {
+                flex-direction: column;
+            }
+
+            .category-filter {
+                width: 100%;
+            }
+        }
+    </style>
+{% endblock %}

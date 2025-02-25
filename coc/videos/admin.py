@@ -1,4 +1,4 @@
-import admin
+from django.contrib import admin
 from .models import (
     Content, ContentGuidelines, Moderation, ModerationRequest, FavoriteVideo, Advertisement, WatchedVideo, Category
 

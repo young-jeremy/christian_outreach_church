@@ -124,7 +124,87 @@ from videos.models import (
     ShortVideo, Comments,
     Playlist, PlaylistVideo, Queue, QueueItem
 )
+from django import forms
+from django.utils import timezone
+from datetime import datetime
 
+from .models import Event  # Ensure you import your Event model
+
+from django import forms
+from .models import CounselingRequest
+
+from django import forms
+from .models import CounselingRequest
+
+
+class CounselingRequestForm(forms.ModelForm):
+    preferred_days = forms.MultipleChoiceField(
+        choices=[
+            ('Monday', 'Monday'),
+            ('Tuesday', 'Tuesday'),
+            ('Wednesday', 'Wednesday'),
+            ('Thursday', 'Thursday'),
+            ('Friday', 'Friday'),
+        ],
+        widget=forms.CheckboxSelectMultiple,
+        required=False
+    )
+
+    class Meta:
+        model = CounselingRequest
+        fields = [
+            'first_name',
+            'last_name',
+            'email',
+            'phone',
+            'preferred_contact',
+            'counseling_category',
+            'other_category',
+            'reason_for_counseling',
+            'preferred_days',
+            'preferred_time',
+            'urgency',
+            'previous_counseling',
+        ]
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'w-full p-2 border rounded'}),
+            'last_name': forms.TextInput(attrs={'class': 'w-full p-2 border rounded'}),
+            'email': forms.EmailInput(attrs={'class': 'w-full p-2 border rounded'}),
+            'phone': forms.TextInput(attrs={'class': 'w-full p-2 border rounded'}),
+            'preferred_contact': forms.Select(attrs={'class': 'w-full p-2 border rounded'}),
+            'counseling_category': forms.Select(attrs={'class': 'w-full p-2 border rounded'}),
+            'other_category': forms.TextInput(attrs={
+                'class': 'w-full p-2 border rounded',
+                'placeholder': 'Please specify if you selected Other'
+            }),
+            'reason_for_counseling': forms.Textarea(attrs={
+                'class': 'w-full p-2 border rounded h-32',
+                'rows': 4
+            }),
+            'preferred_time': forms.Select(attrs={'class': 'w-full p-2 border rounded'}),
+            'urgency': forms.Select(attrs={'class': 'w-full p-2 border rounded'}),
+            'previous_counseling': forms.CheckboxInput(attrs={'class': 'mr-2'}),
+        }
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        # Remove any non-digit characters
+        phone = ''.join(filter(str.isdigit, phone))
+
+        if len(phone) < 10:
+            raise forms.ValidationError("Please enter a valid phone number")
+        return phone
+
+    def clean(self):
+        cleaned_data = super().clean()
+        category = cleaned_data.get('counseling_category')
+        other_category = cleaned_data.get('other_category')
+
+        if category == 'other' and not other_category:
+            raise forms.ValidationError({
+                'other_category': "Please specify the counseling category"
+            })
+        return cleaned_data
 
 class TopicForm(forms.ModelForm):
     class Meta:
@@ -200,11 +280,7 @@ class VolunteerSignupForm(forms.ModelForm):
         )
 
 
-from django import forms
-from django.utils import timezone
-from datetime import datetime
 
-from .models import Event  # Ensure you import your Event model
 
 class EventForm(forms.ModelForm):
     class Meta:

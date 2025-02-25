@@ -1,0 +1,68 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="delete-container">
+        <div class="delete-card">
+            <div class="delete-header">
+                <h1>Delete Project Update</h1>
+                <p class="lead">Are you sure you want to delete this update?</p>
+            </div>
+
+            <div class="update-info">
+                <h3>{{ object.title }}</h3>
+                <p><strong>Project:</strong> {{ object.project.title }}</p>
+                <p><strong>Date:</strong> {{ object.date|date:"F j, Y" }}</p>
+                {% if object.image %}
+                    <div class="update-image">
+                        <img src="{{ object.image.url }}" alt="{{ object.title }}">
+                    </div>
+                {% endif %}
+                <div class="update-content">
+                    {{ object.content|linebreaks }}
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete Update
+                    </button>
+                    <a href="{% url 'outreach:project_detail' object.project.slug %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        /* Same base styles as other delete templates plus: */
+        .update-info {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+
+        .update-image {
+            margin: 1rem 0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .update-image img {
+            width: 100%;
+            height: auto;
+            max-height: 300px;
+            object-fit: cover;
+        }
+
+        .update-content {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #dee2e6;
+        }
+    </style>
+{% endblock %}

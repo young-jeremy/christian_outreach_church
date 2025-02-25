@@ -1,0 +1,174 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block extra_css %}
+    <style>
+        .podcast-player {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin: 2rem 0;
+        }
+
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .progress-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .time-display {
+            font-size: 0.9rem;
+            color: #666;
+            margin-left: 1rem;
+        }
+
+        .playback-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .speed-control, .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-play {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="podcast-container">
+        <div class="podcast-header">
+            <img src="{{ episode.cover_image.url }}" alt="{{ episode.title }}" class="cover-image">
+            <div class="episode-info">
+                <h1>{{ episode.title }}</h1>
+                <p class="meta">
+                    <span><i class="fas fa-user"></i> {{ episode.host }}</span>
+                    <span><i class="fas fa-calendar"></i> {{ episode.publish_date|date:"F j, Y" }}</span>
+                    <span><i class="fas fa-clock"></i> {{ episode.duration }}</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="podcast-player">
+            <audio id="audio-player" src="{{ episode.audio_file.url }}" preload="metadata"></audio>
+
+            <div class="player-controls">
+                <button class="btn-play" id="play-button">
+                    <i class="fas fa-play"></i>
+                </button>
+
+                <div class="progress-container">
+                    <input type="range" class="progress-bar" id="progress-bar" value="0" min="0" max="100">
+                    <span class="time-display" id="time-display">0:00 / 0:00</span>
+                </div>
+
+                <div class="playback-controls">
+                    <div class="speed-control">
+                        <label>Speed</label>
+                        <select id="speed-control">
+                            <option value="0.5">0.5x</option>
+                            <option value="1" selected>1x</option>
+                            <option value="1.5">1.5x</option>
+                            <option value="2">2x</option>
+                        </select>
+                    </div>
+
+                    <div class="volume-control">
+                        <i class="fas fa-volume-up"></i>
+                        <input type="range" id="volume-control" min="0" max="1" step="0.1" value="1">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="episode-content">
+            <section class="description">
+                <h2>Episode Description</h2>
+                {{ episode.description|linebreaks }}
+            </section>
+
+            {% if episode.show_notes %}
+                <section class="show-notes">
+                    <h2>Show Notes</h2>
+                    {{ episode.show_notes|linebreaks }}
+                </section>
+            {% endif %}
+
+            {% if episode.transcript %}
+                <section class="transcript">
+                    <h2>Transcript</h2>
+                    {{ episode.transcript|linebreaks }}
+                </section>
+            {% endif %}
+        </div>
+
+        {% if related_episodes %}
+            <section class="related-episodes">
+                <h2>Related Episodes</h2>
+                <div class="episodes-grid">
+                    {% for related in related_episodes %}
+                        <div class="episode-card">
+                            <img src="{{ related.cover_image.url }}" alt="{{ related.title }}">
+                            <div class="episode-info">
+                                <h3>{{ related.title }}</h3>
+                                <p>{{ related.description|truncatewords:20 }}</p>
+                                <a href="{{ related.get_absolute_url }}" class="btn btn-outline-primary">
+                                    Listen Now
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/podcast-player.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const player = new PodcastPlayer(
+                document.getElementById('audio-player'),
+                {
+                    episodeId: "{{ episode.id }}",
+                    progressBar: document.getElementById('progress-bar'),
+                    playButton: document.getElementById('play-button'),
+                    timeDisplay: document.getElementById('time-display'),
+                    speedControl: document.getElementById('speed-control'),
+                    volumeControl: document.getElementById('volume-control')
+                }
+            );
+        });
+    </script>
+{% endblock %}

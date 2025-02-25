@@ -1,0 +1,157 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="counseling-resources-container">
+        <div class="page-header">
+            <div class="header-content">
+                <h1>Counseling Resources</h1>
+                <p class="lead">Access materials for pastoral counseling, mental health, and spiritual guidance</p>
+            </div>
+            {% if user.is_staff %}
+                <div class="header-actions">
+                    <a href="{% url 'counseling:request_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list"></i> View Counseling Requests
+                    </a>
+                    <a href="{% url 'resources:upload_resource' %}" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Upload New Resource
+                    </a>
+                </div>
+            {% else %}
+                <div class="header-actions">
+                    <a href="{% url 'counseling:request_counseling' %}" class="btn btn-primary">
+                        <i class="fas fa-hands-helping"></i> Request Counseling Session
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Resource Categories Quick Links -->
+        <div class="category-links">
+            <a href="?type=PDF" class="category-link {% if request.GET.type == 'PDF' %}active{% endif %}">
+                <i class="fas fa-file-pdf"></i> Study Materials
+            </a>
+            <a href="?type=VID" class="category-link {% if request.GET.type == 'VID' %}active{% endif %}">
+                <i class="fas fa-video"></i> Video Resources
+            </a>
+            <a href="?type=AUD" class="category-link {% if request.GET.type == 'AUD' %}active{% endif %}">
+                <i class="fas fa-headphones"></i> Audio Sessions
+            </a>
+            <a href="?type=DOC" class="category-link {% if request.GET.type == 'DOC' %}active{% endif %}">
+                <i class="fas fa-file-word"></i> Worksheets
+            </a>
+        </div>
+
+        {% if featured_resources %}
+            <!-- Rest of featured resources section remains the same -->
+        {% endif %}
+
+        <div class="filter-section">
+            <form method="get" class="filter-form">
+                <div class="search-box">
+                    <input type="text" name="q" placeholder="Search counseling resources..."
+                           value="{{ request.GET.q|default:'' }}">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div class="filter-options">
+                    <select name="type" class="form-select">
+                        <option value="">All Types</option>
+                        {% for code, name in resource_types.items %}
+                            <option value="{{ code }}"
+                                    {% if request.GET.type == code %}selected{% endif %}>
+                                {{ name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <select name="audience" class="form-select">
+                        <option value="">All Audiences</option>
+                        <option value="youth">Youth</option>
+                        <option value="adults">Adults</option>
+                        <option value="couples">Couples</option>
+                        <option value="families">Families</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <!-- Rest of the resources grid remains the same -->
+
+        {% include 'includes/pagination.html' %}
+    </div>
+
+    <style>
+        /* Existing styles remain */
+
+        .header-content {
+            text-align: left;
+            margin-bottom: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .category-links {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .category-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: white;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            border: 1px solid #ddd;
+            transition: all 0.3s ease;
+        }
+
+        .category-link:hover,
+        .category-link.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .filter-options {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .resource-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .resource-card:hover {
+            transform: translateY(-5px);
+        }
+
+        @media (max-width: 768px) {
+            .header-actions {
+                flex-direction: column;
+            }
+
+            .category-links {
+                flex-direction: column;
+            }
+
+            .category-link {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+{% endblock %}

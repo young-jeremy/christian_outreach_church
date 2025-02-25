@@ -2,8 +2,253 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.urls import reverse
+from accounts.models import *
 
-from accounts.models import User
+
+class DownloadableResource(models.Model):
+    RESOURCE_TYPES = [
+        ('PDF', 'PDF Document'),
+        ('DOC', 'Word Document'),
+        ('PPT', 'PowerPoint'),
+        ('XLS', 'Excel Spreadsheet'),
+        ('ZIP', 'ZIP Archive'),
+        ('IMG', 'Image'),
+        ('VID', 'Video'),
+        ('AUD', 'Audio'),
+    ]
+
+    CATEGORIES = [
+        ('BIB', 'Bible Study'),
+        ('SER', 'Sermon Notes'),
+        ('WOR', 'Worship Resources'),
+        ('CHI', 'Children Ministry'),
+        ('YTH', 'Youth Ministry'),
+        ('EVA', 'Evangelism'),
+        ('DIS', 'Discipleship'),
+        ('LEA', 'Leadership'),
+        ('PRA', 'Prayer'),
+        ('OTH', 'Other'),
+    ]
+
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    file = models.FileField(upload_to='downloads/')
+    thumbnail = models.ImageField(upload_to='downloads/thumbnails/', blank=True, null=True)
+    resource_type = models.CharField(max_length=3, choices=RESOURCE_TYPES)
+    category = models.CharField(max_length=3, choices=CATEGORIES)
+    author = models.CharField(max_length=100)
+    version = models.CharField(max_length=20, blank=True)
+
+    # File metadata
+    file_size = models.BigIntegerField(editable=False, null=True)
+    file_type = models.CharField(max_length=50, editable=False)
+
+    # Access control
+    is_public = models.BooleanField(default=True)
+    requires_login = models.BooleanField(default=False)
+    allowed_groups = models.ManyToManyField('auth.Group', blank=True)
+
+    # Analytics
+    download_count = models.IntegerField(default=0)
+    last_downloaded = models.DateTimeField(null=True, blank=True)
+
+    # Organization
+    tags = models.CharField(max_length=200, blank=True, help_text="Comma-separated tags")
+    featured = models.BooleanField(default=False)
+
+    # Timestamps
+    upload_date = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-upload_date']
+        verbose_name = 'Downloadable Resource'
+        verbose_name_plural = 'Downloadable Resources'
+
+    def __str__(self):
+        return self.title
+
+    def save(self, *args, **kwargs):
+        if self.file:
+            self.file_size = self.file.size
+            self.file_type = self.file.name.split('.')[-1].lower()
+        super().save(*args, **kwargs)
+
+    def get_download_url(self):
+        return reverse('resources:download_file', args=[str(self.id)])
+
+    def increment_downloads(self):
+        self.download_count += 1
+        self.last_downloaded = timezone.now()
+        self.save()
+
+    def can_user_download(self, user):
+        if self.is_public and not self.requires_login:
+            return True
+        if not user.is_authenticated:
+            return False
+        if user.is_staff:
+            return True
+        if self.allowed_groups.exists():
+            return user.groups.filter(id__in=self.allowed_groups.all()).exists()
+        return self.requires_login
+
+
+class Podcast(models.Model):
+    PODCAST_CATEGORIES = [
+        ('SER', 'Sermons'),
+        ('BIB', 'Bible Study'),
+        ('DEV', 'Devotional'),
+        ('YOU', 'Youth'),
+        ('WOR', 'Worship'),
+        ('LEA', 'Leadership'),
+        ('EVA', 'Evangelism'),
+        ('TES', 'Testimonies'),
+    ]
+
+    title = models.CharField(max_length=200)
+    host = models.CharField(max_length=100)
+    description = models.TextField()
+    category = models.CharField(max_length=3, choices=PODCAST_CATEGORIES)
+    cover_image = models.ImageField(upload_to='podcasts/covers/', help_text="Square image recommended (1400x1400px)")
+    audio_file = models.FileField(upload_to='podcasts/audio/')
+    duration = models.DurationField(help_text="Duration in HH:MM:SS format")
+    publish_date = models.DateTimeField()
+    is_featured = models.BooleanField(default=False)
+    is_published = models.BooleanField(default=True)
+
+    # RSS Feed and SEO fields
+    subtitle = models.CharField(max_length=255, blank=True)
+    keywords = models.CharField(max_length=500, help_text="Comma-separated keywords")
+    explicit_content = models.BooleanField(default=False)
+
+    # Analytics fields
+    play_count = models.IntegerField(default=0)
+    download_count = models.IntegerField(default=0)
+
+    # Technical fields
+    audio_type = models.CharField(max_length=50, default='audio/mpeg')
+    file_size = models.BigIntegerField(help_text="File size in bytes", null=True, blank=True)
+
+    # Transcript and accessibility
+    transcript = models.TextField(blank=True)
+    show_notes = models.TextField(blank=True)
+
+    # Social sharing
+    share_url = models.URLField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-publish_date']
+        verbose_name = 'Podcast Episode'
+        verbose_name_plural = 'Podcast Episodes'
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse('resources:podcast_detail', args=[str(self.id)])
+
+    def increment_play_count(self):
+        self.play_count += 1
+        self.save()
+
+    def increment_download_count(self):
+        self.download_count += 1
+        self.save()
+
+    def save(self, *args, **kwargs):
+        if not self.file_size and self.audio_file:
+            self.file_size = self.audio_file.size
+        super().save(*args, **kwargs)
+
+
+class TeachingResource(models.Model):
+    RESOURCE_TYPES = [
+        ('PDF', 'PDF Document'),
+        ('DOC', 'Word Document'),
+        ('PPT', 'PowerPoint'),
+        ('VID', 'Video'),
+        ('AUD', 'Audio'),
+        ('WEB', 'Web Resource'),
+    ]
+
+    CATEGORIES = [
+        ('BIB', 'Bible Study'),
+        ('THE', 'Theology'),
+        ('DIS', 'Discipleship'),
+        ('EVA', 'Evangelism'),
+        ('LEA', 'Leadership'),
+        ('YOU', 'Youth Ministry'),
+        ('CHI', 'Children Ministry'),
+        ('WOR', 'Worship'),
+        ('OTH', 'Other'),
+    ]
+
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    resource_type = models.CharField(max_length=3, choices=RESOURCE_TYPES)
+    category = models.CharField(max_length=3, choices=CATEGORIES)
+    file = models.FileField(upload_to='teaching_resources/', null=True, blank=True)
+    external_link = models.URLField(null=True, blank=True)
+    author = models.CharField(max_length=100)
+    upload_date = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
+    is_featured = models.BooleanField(default=False)
+    download_count = models.IntegerField(default=0)
+    tags = models.CharField(max_length=200, blank=True, help_text="Comma-separated tags")
+
+    class Meta:
+        ordering = ['-upload_date']
+        verbose_name = 'Teaching Resource'
+        verbose_name_plural = 'Teaching Resources'
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse('resources:teaching_resource_detail', args=[str(self.id)])
+
+    def increment_downloads(self):
+        self.download_count += 1
+        self.save()
+
+
+class SermonNotes(models.Model):
+    SERMON_CATEGORIES = [
+        ('SUN', 'Sunday Service'),
+        ('MID', 'Midweek Service'),
+        ('SPE', 'Special Service'),
+        ('YTH', 'Youth Service'),
+        ('CON', 'Conference'),
+        ('REV', 'Revival'),
+    ]
+
+    title = models.CharField(max_length=200)
+    preacher = models.CharField(max_length=100)
+    date_preached = models.DateField()
+    bible_reference = models.CharField(max_length=200)
+    category = models.CharField(max_length=3, choices=SERMON_CATEGORIES)
+    main_points = models.TextField(help_text="Enter the main points of the sermon")
+    key_scriptures = models.TextField(help_text="Enter key scripture references")
+    summary = models.TextField()
+    application_points = models.TextField(help_text="Practical application points from the sermon")
+    additional_notes = models.TextField(blank=True)
+    audio_recording = models.FileField(upload_to='sermon_recordings/', blank=True, null=True)
+    slides = models.FileField(upload_to='sermon_slides/', blank=True, null=True)
+    is_featured = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date_preached']
+        verbose_name = 'Sermon Note'
+        verbose_name_plural = 'Sermon Notes'
+
+    def __str__(self):
+        return f"{self.title} - {self.preacher} ({self.date_preached})"
 
 
 class ReviewableMixin(models.Model):
@@ -218,7 +463,7 @@ class Album(models.Model):
     def __str__(self):
         return f"{self.title} - {self.artist.name}"
 
-        ordering = ['order']
+    ordering = ['order']
 
 
 class BibleStudy(models.Model):

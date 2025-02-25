@@ -23,6 +23,7 @@ urlpatterns = [
     path("summernote/", include("django_summernote.urls")),
     path("volunteers/", include("volunteers.urls", namespace="volunteers")),
     path('resources/', include('resources.urls')),
+    path('outreach/', include('outreach.urls')),
 ]
 
 if settings.DEBUG:

@@ -1,0 +1,288 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="tools-container">
+        <!-- Header Section -->
+        <div class="tools-header">
+            <div class="header-content">
+                <h1>Evangelism Tools</h1>
+                <p class="lead">Access and download resources for effective evangelism</p>
+            </div>
+            {% if user.is_staff %}
+                <div class="header-actions">
+                    <a href="{% url 'outreach:tool_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Tool
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Featured Tools Section -->
+        {% if featured_tools %}
+            <div class="featured-tools">
+                <h2>Featured Resources</h2>
+                <div class="tools-grid">
+                    {% for tool in featured_tools %}
+                        <div class="tool-card featured">
+                            <div class="tool-thumbnail">
+                                {% if tool.thumbnail %}
+                                    <img src="{{ tool.thumbnail.url }}" alt="{{ tool.title }}">
+                                {% else %}
+                                    <div class="placeholder-thumbnail">
+                                        <i class="fas fa-book"></i>
+                                    </div>
+                                {% endif %}
+                                <span class="category-badge">{{ tool.get_category_display }}</span>
+                            </div>
+                            <div class="tool-content">
+                                <h3>{{ tool.title }}</h3>
+                                <p>{{ tool.description|truncatewords:20 }}</p>
+                                <div class="tool-meta">
+                                    <span><i class="fas fa-language"></i> {{ tool.get_language_display }}</span>
+                                    <span><i class="fas fa-download"></i> {{ tool.download_count }}</span>
+                                </div>
+                                <div class="tool-actions">
+                                    <a href="{% url 'outreach:tool_detail' tool.slug %}"
+                                       class="btn btn-outline-primary">
+                                        Learn More
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Filters and Search -->
+        <div class="tools-filters">
+            <form method="get" class="filter-form">
+                <div class="filter-group">
+                    <select name="category" class="form-control">
+                        <option value="">All Categories</option>
+                        {% for value, label in categories.items %}
+                            <option value="{{ value }}" {% if request.GET.category == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <select name="language" class="form-control">
+                        <option value="">All Languages</option>
+                        {% for code, lang in tool.LANGUAGE_CHOICES %}
+                            <option value="{{ code }}" {% if request.GET.language == code %}selected{% endif %}>
+                                {{ lang }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group search-group">
+                    <input type="text" name="search" class="form-control"
+                           placeholder="Search tools..." value="{{ request.GET.search }}">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tools Grid -->
+        <div class="tools-grid">
+            {% for tool in tools %}
+                <div class="tool-card">
+                    <div class="tool-thumbnail">
+                        {% if tool.thumbnail %}
+                            <img src="{{ tool.thumbnail.url }}" alt="{{ tool.title }}">
+                        {% else %}
+                            <div class="placeholder-thumbnail">
+                                <i class="fas fa-book"></i>
+                            </div>
+                        {% endif %}
+                        <span class="category-badge">{{ tool.get_category_display }}</span>
+                    </div>
+                    <div class="tool-content">
+                        <h3>{{ tool.title }}</h3>
+                        <p>{{ tool.description|truncatewords:15 }}</p>
+                        <div class="tool-meta">
+                            <span><i class="fas fa-language"></i> {{ tool.get_language_display }}</span>
+                            <span><i class="fas fa-download"></i> {{ tool.download_count }}</span>
+                        </div>
+                        <div class="tool-actions">
+                            <a href="{% url 'outreach:tool_detail' tool.slug %}" class="btn btn-outline-primary">
+                                Learn More
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="no-results">
+                    <i class="fas fa-search"></i>
+                    <p>No tools found matching your criteria</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline-primary">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                {% endif %}
+
+                <span class="current-page">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline-primary">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <style>
+        .tools-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .tools-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .tools-filters {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-form {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .filter-group {
+            flex: 1;
+        }
+
+        .search-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .tool-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .tool-thumbnail {
+            position: relative;
+            height: 200px;
+            background: #f8f9fa;
+        }
+
+        .tool-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .placeholder-thumbnail {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: #dee2e6;
+        }
+
+        .category-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        .tool-content {
+            padding: 1.5rem;
+        }
+
+        .tool-meta {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        .tool-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .featured-tools {
+            margin-bottom: 3rem;
+        }
+
+        .featured-tools h2 {
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-card.featured {
+            border: 2px solid #007bff;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .current-page {
+            padding: 0.5rem 1rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .filter-form {
+                flex-direction: column;
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %} 

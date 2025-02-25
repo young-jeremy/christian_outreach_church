@@ -1,0 +1,173 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="form-container">
+        <div class="form-header">
+            <div class="header-content">
+                <h1>{% if form.instance.pk %}Edit Resource{% else %}Add New Resource{% endif %}</h1>
+                <p class="lead">{% if form.instance.pk %}Update resource details{% else %}Share a new evangelism
+                    resource{% endif %}</p>
+            </div>
+            {% if form.instance.pk %}
+                <div class="header-actions">
+                    <a href="{% url 'outreach:tool_detail' form.instance.slug %}" class="btn btn-outline-primary">
+                        <i class="fas fa-eye"></i> View Resource
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="form-card">
+            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+
+                <div class="form-section">
+                    <h3>Basic Information</h3>
+                    <div class="form-row">
+                        <div class="form-group col-md-8">
+                            <label for="{{ form.title.id_for_label }}">Title*</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="error-feedback">{{ form.title.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="{{ form.category.id_for_label }}">Category*</label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                                <div class="error-feedback">{{ form.category.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.description.id_for_label }}">Description*</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="error-feedback">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="{{ form.language.id_for_label }}">Language*</label>
+                            {{ form.language }}
+                            {% if form.language.errors %}
+                                <div class="error-feedback">{{ form.language.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="{{ form.publication_date.id_for_label }}">Publication Date</label>
+                            {{ form.publication_date }}
+                            {% if form.publication_date.errors %}
+                                <div class="error-feedback">{{ form.publication_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Resource Details</h3>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="{{ form.author.id_for_label }}">Author</label>
+                            {{ form.author }}
+                            {% if form.author.errors %}
+                                <div class="error-feedback">{{ form.author.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="{{ form.publisher.id_for_label }}">Publisher</label>
+                            {{ form.publisher }}
+                            {% if form.publisher.errors %}
+                                <div class="error-feedback">{{ form.publisher.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Resource Files</h3>
+                    <div class="form-group">
+                        <label for="{{ form.file.id_for_label }}">Resource File</label>
+                        {{ form.file }}
+                        {% if form.file.errors %}
+                            <div class="error-feedback">{{ form.file.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Upload the resource file (PDF, DOC, MP3, etc.)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.external_link.id_for_label }}">External Link</label>
+                        {{ form.external_link }}
+                        {% if form.external_link.errors %}
+                            <div class="error-feedback">{{ form.external_link.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Or provide a link to the resource</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.thumbnail.id_for_label }}">Thumbnail Image</label>
+                        {% if form.instance.thumbnail %}
+                            <div class="current-image">
+                                <img src="{{ form.instance.thumbnail.url }}" alt="Current thumbnail">
+                                <p>Current thumbnail</p>
+                            </div>
+                        {% endif %}
+                        {{ form.thumbnail }}
+                        {% if form.thumbnail.errors %}
+                            <div class="error-feedback">{{ form.thumbnail.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Settings</h3>
+                    <div class="form-check">
+                        {{ form.is_featured }}
+                        <label class="form-check-label" for="{{ form.is_featured.id_for_label }}">
+                            Feature this resource
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> {% if form.instance.pk %}Save Changes{% else %}Create
+                        Resource{% endif %}
+                    </button>
+                    <a href="
+                            {% if form.instance.pk %}{% url 'outreach:tool_detail' form.instance.slug %}{% else %}{% url 'outreach:tool_list' %}{% endif %}"
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        /* Same base styles as mission_form.html */
+        .form-check {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .form-check-label {
+            margin-left: 0.5rem;
+        }
+
+        .current-image {
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .current-image img {
+            max-width: 200px;
+            height: auto;
+            border-radius: 4px;
+        }
+    </style>
+{% endblock %}

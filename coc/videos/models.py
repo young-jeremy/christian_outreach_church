@@ -12,7 +12,6 @@ from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
 
-from accounts.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +138,7 @@ class Content(models.Model):
     status = models.CharField(max_length=100, null=True, blank=True, choices=MODERATION_CHOICES, default='PENDING')
     privacy = models.CharField(max_length=100, choices=PRIVACY_CHOICES, default='PUBLIC')
     is_blocked = models.BooleanField(default=False)
-    likes = models.ManyToManyField(User, related_name='liked_videos', blank=True)
+    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='liked_videos', blank=True)
     duration = models.IntegerField(default=0)
     shares = models.IntegerField(default=0)
     promoted = models.BooleanField(default=False)
@@ -169,7 +168,7 @@ class Content(models.Model):
 class Playlist(models.Model):
     title = models.CharField(max_length=200, null=True)
     description = models.TextField(blank=True)
-    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='playlists', null=True)
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='playlists', null=True)
     videos = models.ManyToManyField(Content, through='PlaylistVideo', related_name='in_playlists')
     thumbnail = models.ImageField(upload_to='playlist_thumbnails/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -215,8 +214,9 @@ class ShortVideo(models.Model):
     thumbnail = models.ImageField(upload_to='short_video_thumbnails/', default='short_video.jpg')
     duration = models.DurationField(blank=True, null=True)
     views = models.PositiveIntegerField(default=0)
-    likes = models.ManyToManyField(User, related_name='liked_shorts', blank=True)
-    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_shorts', null=True)
+    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='liked_shorts', blank=True)
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_shorts',
+                                null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_featured = models.BooleanField(default=False)
 
@@ -349,7 +349,7 @@ class VideoLikes(models.Model):
 
 
 class WatchedVideo(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='watched_videos')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='watched_videos')
     video = models.ForeignKey(ShortVideo, on_delete=models.CASCADE, related_name='watched_by')
     watched_at = models.DateTimeField(auto_now_add=True)
     watch_duration = models.DurationField(null=True, blank=True)  # How long they watched
@@ -412,7 +412,7 @@ class VideoQueue:
 
 
 class Queue(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='queues')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='queues')
     videos = models.ManyToManyField(Content, through='QueueItem')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -450,7 +450,7 @@ class PlaylistVideo(models.Model):
 
 
 class DownloadedVideo(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='downloaded_videos')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='downloaded_videos')
     video = models.ForeignKey(Content, on_delete=models.CASCADE)
     local_path = models.CharField(max_length=255)  # Path where video is stored locally
     file_size = models.BigIntegerField()  # Size in bytes
@@ -520,7 +520,7 @@ class Video(models.Model):
     comment_count = models.PositiveIntegerField(default=0)
 
     # User and timestamps
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     published_at = models.DateTimeField(null=True, blank=True)
@@ -553,7 +553,7 @@ class Video(models.Model):
 
 class Comment(models.Model):
     video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='comments')
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     text = models.TextField()
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -1,0 +1,438 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="downloads-container">
+        <div class="page-header">
+            <h1>Downloadable Resources</h1>
+            <p class="lead">Access and download church resources, materials, and documents</p>
+        </div>
+
+        {% if featured_resources %}
+            <section class="featured-section">
+                <h2>Featured Resources</h2>
+                <div class="featured-grid">
+                    {% for resource in featured_resources %}
+                        <div class="featured-card">
+                            <div class="resource-icon">
+                                {% if resource.resource_type == 'PDF' %}
+                                    <i class="fas fa-file-pdf"></i>
+                                {% elif resource.resource_type == 'DOC' %}
+                                    <i class="fas fa-file-word"></i>
+                                {% elif resource.resource_type == 'PPT' %}
+                                    <i class="fas fa-file-powerpoint"></i>
+                                {% elif resource.resource_type == 'XLS' %}
+                                    <i class="fas fa-file-excel"></i>
+                                {% elif resource.resource_type == 'ZIP' %}
+                                    <i class="fas fa-file-archive"></i>
+                                {% elif resource.resource_type == 'IMG' %}
+                                    <i class="fas fa-file-image"></i>
+                                {% elif resource.resource_type == 'VID' %}
+                                    <i class="fas fa-file-video"></i>
+                                {% elif resource.resource_type == 'AUD' %}
+                                    <i class="fas fa-file-audio"></i>
+                                {% endif %}
+                            </div>
+                            <div class="resource-info">
+                                <h3>{{ resource.title }}</h3>
+                                <span class="category-badge">{{ resource.get_category_display }}</span>
+                                <p>{{ resource.description|truncatewords:20 }}</p>
+                                <div class="resource-meta">
+                                    <span><i class="fas fa-download"></i> {{ resource.download_count }} downloads</span>
+                                    <span><i class="fas fa-clock"></i> {{ resource.upload_date|date:"M d, Y" }}</span>
+                                </div>
+                                <a href="{{ resource.get_download_url }}" class="btn btn-primary">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        <div class="filter-section">
+            <form method="get" class="filter-form">
+                <div class="search-box">
+                    <input type="text" name="q" placeholder="Search resources..."
+                           value="{{ request.GET.q|default:'' }}">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div class="filter-options">
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for code, name in categories.items %}
+                            <option value="{{ code }}"
+                                    {% if request.GET.category == code %}selected{% endif %}>
+                                {{ name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <select name="type" class="form-select">
+                        <option value="">All Types</option>
+                        {% for code, name in resource_types.items %}
+                            <option value="{{ code }}"
+                                    {% if request.GET.type == code %}selected{% endif %}>
+                                {{ name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <div class="resources-grid">
+            {% for resource in resources %}
+                <div class="resource-card">
+                    <div class="resource-type-icon {{ resource.resource_type|lower }}">
+                        {% if resource.resource_type == 'PDF' %}
+                            <i class="fas fa-file-pdf"></i>
+                        {% elif resource.resource_type == 'DOC' %}
+                            <i class="fas fa-file-word"></i>
+                        {% elif resource.resource_type == 'PPT' %}
+                            <i class="fas fa-file-powerpoint"></i>
+                        {% elif resource.resource_type == 'XLS' %}
+                            <i class="fas fa-file-excel"></i>
+                        {% elif resource.resource_type == 'ZIP' %}
+                            <i class="fas fa-file-archive"></i>
+                        {% elif resource.resource_type == 'IMG' %}
+                            <i class="fas fa-file-image"></i>
+                        {% elif resource.resource_type == 'VID' %}
+                            <i class="fas fa-file-video"></i>
+                        {% elif resource.resource_type == 'AUD' %}
+                            <i class="fas fa-file-audio"></i>
+                        {% endif %}
+                    </div>
+                    <div class="resource-content">
+                        <div class="resource-header">
+                            <h3>{{ resource.title }}</h3>
+                            {% if resource.featured %}
+                                <span class="featured-badge">
+                        <i class="fas fa-star"></i> Featured
+                    </span>
+                            {% endif %}
+                        </div>
+                        <span class="category-badge">{{ resource.get_category_display }}</span>
+                        <p class="description">{{ resource.description|truncatewords:20 }}</p>
+                        <div class="resource-meta">
+                            <span><i class="fas fa-user"></i> {{ resource.author }}</span>
+                            <span><i class="fas fa-download"></i> {{ resource.download_count }} downloads</span>
+                            <span><i class="fas fa-clock"></i> {{ resource.upload_date|date:"M d, Y" }}</span>
+                            {% if resource.file_size %}
+                                <span><i class="fas fa-hdd"></i> {{ resource.file_size|filesizeformat }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="resource-actions">
+                            <a href="{{ resource.get_download_url }}" class="btn btn-primary">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                            {% if resource.requires_login and not user.is_authenticated %}
+                                <span class="login-required">
+                        <i class="fas fa-lock"></i> Login required
+                    </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="no-resources">
+                    <i class="fas fa-folder-open"></i>
+                    <h3>No Resources Found</h3>
+                    <p>Try adjusting your search or filter criteria</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if is_paginated %}
+            <nav class="pagination">
+                <ul>
+                    {% if page_obj.has_previous %}
+                        <li>
+                            <a href="?page=
+                                    {{ page_obj.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+                               class="btn btn-outline">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        <li>
+                            <a href="?page=
+                                    {{ num }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+                               class="btn {% if page_obj.number == num %}btn-primary{% else %}btn-outline{% endif %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li>
+                            <a href="?page=
+                                    {{ page_obj.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+                               class="btn btn-outline">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+
+    <style>
+        .downloads-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .featured-section {
+            margin-bottom: 3rem;
+        }
+
+        .featured-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .filter-section {
+            margin-bottom: 2rem;
+        }
+
+        .filter-form {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .filter-options {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .form-select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-width: 150px;
+        }
+
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .resource-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            padding: 1.5rem;
+        }
+
+        .resource-type-icon {
+            font-size: 2rem;
+            margin-right: 1.5rem;
+        }
+
+        .resource-type-icon.pdf {
+            color: #dc3545;
+        }
+
+        .resource-type-icon.doc {
+            color: #007bff;
+        }
+
+        .resource-type-icon.ppt {
+            color: #fd7e14;
+        }
+
+        .resource-type-icon.xls {
+            color: #28a745;
+        }
+
+        .resource-type-icon.zip {
+            color: #6c757d;
+        }
+
+        .resource-type-icon.img {
+            color: #20c997;
+        }
+
+        .resource-type-icon.vid {
+            color: #6f42c1;
+        }
+
+        .resource-type-icon.aud {
+            color: #17a2b8;
+        }
+
+        .resource-content {
+            flex: 1;
+        }
+
+        .resource-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .featured-badge {
+            background: #ffd700;
+            color: #000;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: #e9ecef;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .description {
+            color: #666;
+            margin: 0.5rem 0;
+        }
+
+        .resource-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            color: #666;
+            font-size: 0.875rem;
+            margin: 1rem 0;
+        }
+
+        .resource-meta i {
+            margin-right: 0.25rem;
+        }
+
+        .resource-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            border: none;
+        }
+
+        .btn-outline {
+            background: white;
+            color: #007bff;
+            border: 1px solid #007bff;
+        }
+
+        .login-required {
+            color: #dc3545;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .no-resources {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .no-resources i {
+            font-size: 3rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .pagination ul {
+            display: flex;
+            gap: 0.5rem;
+            list-style: none;
+            padding: 0;
+        }
+
+        @media (max-width: 768px) {
+            .filter-form {
+                flex-direction: column;
+            }
+
+            .filter-options {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .form-select {
+                width: 100%;
+            }
+
+            .resource-card {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .resource-type-icon {
+                margin: 0 0 1rem 0;
+            }
+
+            .resource-meta {
+                justify-content: center;
+            }
+
+            .resource-actions {
+                justify-content: center;
+            }
+        }
+    </style>
+{% endblock %}

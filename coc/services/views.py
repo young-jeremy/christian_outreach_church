@@ -9,7 +9,7 @@ from .models import (
     SinglesMinistry,
     SinglesEvent,
     MentorshipRequest,
-    SinglesResource
+    SinglesResource, SermonNote
 )
 from .forms import (
     SinglesMinistryForm,
@@ -121,7 +121,7 @@ from .forms import (
     ChildrenProgramForm, ChildRegistrationForm,
     CounselingSessionForm, JournalEntryForm,
     SongRequestForm,
-    TestimonyForm, SermonForm, PrayerRequestForm, SmallGroupForm, CounselingRequest
+    TestimonyForm, SermonForm, PrayerRequestForm, SmallGroupForm, CounselingRequestForm
 )
 # Local integrations
 from .integrations import (
@@ -174,6 +174,23 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import WomensMinistry, MinistryEvent
 from .forms import WomensMinistryForm, MinistryEventForm
+
+
+class SermonResourcesView(ListView):
+    template_name = 'services/sermons/sermon_resources.html'
+    context_object_name = 'sermon_resources'
+    paginate_by = 12
+
+    def get_queryset(self):
+        # Get only sermons that have either audio recordings or slides
+        return SermonNote.objects.filter(
+            Q(audio_recording__isnull=False) | Q(presentation_file__isnull=False)
+        ).order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = dict(SermonNote.CATEGORY_CHOICES)
+        return context
 
 
 def add_sermon_view(request):

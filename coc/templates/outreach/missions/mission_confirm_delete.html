@@ -1,0 +1,90 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="delete-container">
+        <div class="delete-card">
+            <div class="delete-header">
+                <h1>Delete Mission</h1>
+                <p class="lead">Are you sure you want to delete "{{ object.title }}"?</p>
+            </div>
+
+            <div class="warning-box">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div class="warning-content">
+                    <h3>Warning!</h3>
+                    <p>This action cannot be undone. All associated projects and updates will also be deleted.</p>
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete Mission
+                    </button>
+                    <a href="{% url 'outreach:mission_detail' object.slug %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        .delete-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .delete-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .delete-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .warning-box {
+            display: flex;
+            align-items: start;
+            gap: 1rem;
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .warning-box i {
+            font-size: 2rem;
+            color: #856404;
+        }
+
+        .warning-content h3 {
+            color: #856404;
+            margin-bottom: 0.5rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+{% endblock %}

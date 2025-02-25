@@ -1,0 +1,168 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="missions-container">
+        <div class="page-header">
+            <h1>Our Missions</h1>
+            <p class="lead">Making a difference in communities around the world</p>
+        </div>
+
+        {% if active_missions %}
+            <section class="active-missions">
+                <h2>Active Missions</h2>
+                <div class="missions-grid">
+                    {% for mission in active_missions %}
+                        <div class="mission-card">
+                            {% if mission.featured_image %}
+                                <div class="mission-image">
+                                    <img src="{{ mission.featured_image.url }}" alt="{{ mission.title }}">
+                                </div>
+                            {% endif %}
+                            <div class="mission-content">
+                                <span class="status-badge active">Active</span>
+                                <h3>{{ mission.title }}</h3>
+                                <p class="location"><i class="fas fa-map-marker-alt"></i> {{ mission.location }}</p>
+                                <p class="description">{{ mission.description|truncatewords:30 }}</p>
+                                <div class="mission-meta">
+                                    <span><i
+                                            class="fas fa-calendar"></i> Started: {{ mission.start_date|date:"M d, Y" }}</span>
+                                    <span><i class="fas fa-users"></i> Team: {{ mission.team_size }} members</span>
+                                </div>
+                                <a href="{{ mission.get_absolute_url }}" class="btn btn-primary">Learn More</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        {% if planned_missions %}
+            <section class="planned-missions">
+                <h2>Upcoming Missions</h2>
+                <div class="missions-grid">
+                    {% for mission in planned_missions %}
+                        <div class="mission-card">
+                            {% if mission.featured_image %}
+                                <div class="mission-image">
+                                    <img src="{{ mission.featured_image.url }}" alt="{{ mission.title }}">
+                                </div>
+                            {% endif %}
+                            <div class="mission-content">
+                                <span class="status-badge planned">Planned</span>
+                                <h3>{{ mission.title }}</h3>
+                                <p class="location"><i class="fas fa-map-marker-alt"></i> {{ mission.location }}</p>
+                                <p class="description">{{ mission.description|truncatewords:30 }}</p>
+                                <div class="mission-meta">
+                                    <span><i
+                                            class="fas fa-calendar"></i> Starting: {{ mission.start_date|date:"M d, Y" }}</span>
+                                    <span><i class="fas fa-users"></i> Team: {{ mission.team_size }} members</span>
+                                </div>
+                                <a href="{{ mission.get_absolute_url }}" class="btn btn-outline-primary">Learn More</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+    </div>
+
+    <style>
+        .missions-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .missions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .mission-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .mission-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .mission-image {
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .mission-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .mission-content {
+            padding: 1.5rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-badge.active {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-badge.planned {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .mission-meta {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            border: none;
+        }
+
+        .btn-outline-primary {
+            background: white;
+            color: #007bff;
+            border: 1px solid #007bff;
+        }
+
+        @media (max-width: 768px) {
+            .missions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %}

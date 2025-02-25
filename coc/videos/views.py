@@ -54,7 +54,7 @@ from .firebase import initialize_firebase
 from .forbidden_content import has_forbidden_content
 from .forms import CategoryForm, ContentForm
 from .forms import ContentModerationForm
-from .forms import PlaylistForm, PlaylistVideoForm, PlaylistVideo
+from .forms import PlaylistForm, PlaylistVideoForm, PlaylistVideoForm
 from .forms import VideoForm, VideoSearchForm, ModerationRequestForm, ShortVideoForm, \
     ContentSubmissionForm, CommentEditForm
 from .models import *
