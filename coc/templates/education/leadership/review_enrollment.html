@@ -1,0 +1,140 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Review Enrollment - {{ enrollment.participant.get_full_name }}{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'leadership:training_list' %}">Training Programs</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'leadership:training_detail' enrollment.training.slug %}">
+                        {{ enrollment.training.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'leadership:training_enrollments' enrollment.training.slug %}">
+                        Enrollments
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">Review Enrollment</li>
+            </ol>
+        </nav>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Review Enrollment Application</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h6>Participant Information</h6>
+                            <div class="d-flex align-items-center mb-3">
+                                {% if enrollment.participant.profile_image %}
+                                    <img src="{{ enrollment.participant.profile_image.url }}"
+                                         class="rounded-circle me-3"
+                                         width="64" height="64"
+                                         alt="{{ enrollment.participant.get_full_name }}">
+                                {% endif %}
+                                <div>
+                                    <h5 class="mb-1">{{ enrollment.participant.get_full_name }}</h5>
+                                    <p class="text-muted mb-0">{{ enrollment.participant.email }}</p>
+                                </div>
+                            </div>
+
+                            <div class="card bg-light mb-4">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Application Notes</h6>
+                                    {{ enrollment.notes|linebreaks|default:"No notes provided." }}
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Enrolled Date:</strong></p>
+                                    <p class="text-muted">{{ enrollment.enrolled_date|date:"F j, Y" }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Current Status:</strong></p>
+                                    <span class="badge bg-{{ enrollment.status }}">
+                                    {{ enrollment.get_status_display }}
+                                </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="mb-4">
+                                <label for="{{ form.status.id_for_label }}" class="form-label">
+                                    Update Status
+                                </label>
+                                {{ form.status|add_class:"form-select" }}
+                                {% if form.status.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {{ form.status.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                    Review Notes
+                                </label>
+                                {{ form.notes|add_class:"form-control" }}
+                                {% if form.notes.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {{ form.notes.errors }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Add any notes about this enrollment decision.
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{% url 'leadership:training_enrollments' enrollment.training.slug %}"
+                                   class="btn btn-outline-secondary me-md-2">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to List
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Update Enrollment
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .badge.bg-pending {
+            background-color: #ffc107;
+        }
+
+        .badge.bg-active {
+            background-color: #28a745;
+        }
+
+        .badge.bg-completed {
+            background-color: #17a2b8;
+        }
+
+        .badge.bg-withdrawn {
+            background-color: #dc3545;
+        }
+
+        .badge.bg-on_hold {
+            background-color: #6c757d;
+        }
+    </style>
+{% endblock %}

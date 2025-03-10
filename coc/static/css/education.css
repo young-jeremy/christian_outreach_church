@@ -1,0 +1,78 @@
+
+.course-card {
+    transition: transform 0.2s ease-in-out;
+    border: none;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+}
+
+.course-card:hover {
+    transform: translateY(-5px);
+}
+
+.course-card .card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+.badge.bg-beginner {
+    background-color: #28a745;
+}
+
+.badge.bg-intermediate {
+    background-color: #ffc107;
+}
+
+.badge.bg-advanced {
+    background-color: #dc3545;
+}
+
+/* Rich Text Editor Styles */
+.rich-text-editor {
+    min-height: 200px;
+    border-radius: 0.25rem;
+}
+
+/* Discussion Thread Styles */
+.discussion-thread {
+    border-left: 3px solid #007bff;
+    padding-left: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.discussion-reply {
+    margin-left: 2rem;
+    border-left: 2px solid #6c757d;
+    padding-left: 1rem;
+}
+
+/* Progress Indicators */
+.progress-circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.progress-complete {
+    background-color: #28a745;
+}
+
+.progress-incomplete {
+    background-color: #dc3545;
+}
+
+/* Assignment Status Badges */
+.status-submitted {
+    background-color: #17a2b8;
+}
+
+.status-graded {
+    background-color: #28a745;
+}
+
+.status-revision {
+    background-color: #ffc107;
+}

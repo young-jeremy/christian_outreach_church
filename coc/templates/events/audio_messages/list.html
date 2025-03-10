@@ -1,0 +1,98 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2>Audio Messages</h2>
+            </div>
+            {% if perms.coc.add_audiomessage %}
+                <div class="col-md-4 text-end">
+                    <a href="{% url 'events:audio_message_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Upload New Message
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Filters -->
+        <div class="row mb-4">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <form method="get" class="row g-3">
+                            <div class="col-md-4">
+                                <select name="category" class="form-select">
+                                    <option value="">All Categories</option>
+                                    {% for cat in categories %}
+                                        <option value="{{ cat.0 }}"
+                                                {% if request.GET.category == cat.0 %}selected{% endif %}>
+                                            {{ cat.1 }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="q" class="form-control" placeholder="Search messages..."
+                                       value="{{ request.GET.q }}">
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-primary">Filter</button>
+                                <a href="{% url 'events:audio_message_list' %}"
+                                   class="btn btn-outline-secondary">Reset</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages Grid -->
+        <div class="row">
+            {% for message in messages %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ message.title }}</h5>
+                            <p class="text-muted mb-2">
+                                <small>
+                                    <i class="fas fa-user"></i> {{ message.speaker.get_full_name }}
+                                    <br>
+                                    <i class="fas fa-calendar"></i> {{ message.recorded_date|date }}
+                                    <br>
+                                    <i class="fas fa-tag"></i> {{ message.get_category_display }}
+                                    {% if message.duration %}
+                                        <br>
+                                        <i class="fas fa-clock"></i> {{ message.duration }}
+                                    {% endif %}
+                                </small>
+                            </p>
+                            <p class="card-text">{{ message.description|truncatewords:30 }}</p>
+                            <audio controls class="w-100 mb-3">
+                                <source src="{{ message.audio_file.url }}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                            <div class="d-grid">
+                                <a href="{% url 'events:audio_message_detail' message.slug %}"
+                                   class="btn btn-outline-primary">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col">
+                    <div class="alert alert-info">
+                        No audio messages available.
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% include 'includes/pagination.html' with page_obj=messages %}
+    </div>
+{% endblock %}

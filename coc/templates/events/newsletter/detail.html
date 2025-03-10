@@ -1,0 +1,78 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'events:newsletter_list' %}">Newsletters</a>
+                        </li>
+                        <li class="breadcrumb-item active">Issue #{{ newsletter.issue_number }}</li>
+                    </ol>
+                </nav>
+
+                <div class="card shadow">
+                    {% if newsletter.cover_image %}
+                        <img src="{{ newsletter.cover_image.url }}"
+                             class="card-img-top"
+                             alt="{{ newsletter.title }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h1 class="card-title">{{ newsletter.title }}</h1>
+                        <div class="text-muted mb-4">
+                            <p>
+                                Issue #{{ newsletter.issue_number }}
+                                <br>
+                                <i class="fas fa-calendar"></i> Published on {{ newsletter.publication_date|date }}
+                                {% if newsletter.updated_at != newsletter.created_at %}
+                                    <br>
+                                    <i class="fas fa-edit"></i> Updated on {{ newsletter.updated_at|date }}
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div class="description mb-4">
+                            {{ newsletter.description|linebreaks }}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <a href="{{ newsletter.pdf_file.url }}"
+                               class="btn btn-primary btn-lg" target="_blank">
+                                <i class="fas fa-download"></i> Download Newsletter PDF
+                            </a>
+                            {% if perms.education.change_newsletter %}
+                                <a href="{% url 'events:newsletter_edit' newsletter.issue_number %}"
+                                   class="btn btn-outline-primary">
+                                    <i class="fas fa-edit"></i> Edit Newsletter
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation between issues -->
+                <div class="row mt-4">
+                    <div class="col">
+                        {% if previous_issue %}
+                            <a href="{% url 'events:newsletter_detail' previous_issue.issue_number %}"
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-chevron-left"></i> Previous Issue
+                            </a>
+                        {% endif %}
+                    </div>
+                    <div class="col text-end">
+                        {% if next_issue %}
+                            <a href="{% url 'events:newsletter_detail' next_issue.issue_number %}"
+                               class="btn btn-outline-secondary">
+                                Next Issue <i class="fas fa-chevron-right"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

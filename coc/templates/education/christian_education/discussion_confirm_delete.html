@@ -1,0 +1,46 @@
+{% extends 'base_christian_education.html' %}
+
+{% block content %}
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:course_detail' object.module.course.slug %}">
+                        {{ object.module.course.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:module_detail' object.module.course.slug object.module.pk %}">
+                        {{ object.module.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">Delete Discussion</li>
+            </ol>
+        </nav>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>Delete Discussion</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <h4 class="alert-heading">Warning!</h4>
+                    <p>You are about to delete the discussion "{{ object.title }}". This action cannot be undone.</p>
+                    <hr>
+                    <p class="mb-0">All posts and responses in this discussion will also be deleted.</p>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Confirm Delete
+                    </button>
+                    <a href="{% url 'education:discussion_detail' object.pk %}"
+                       class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

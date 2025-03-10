@@ -1,0 +1,57 @@
+{% extends 'base_christian_education.html' %}
+{% load crispy_forms_filters %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:course_detail' course.slug %}">
+                        {{ course.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">
+                    {% if form.instance.pk %}Edit{% else %}Add{% endif %} Module
+                </li>
+            </ol>
+        </nav>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>{% if form.instance.pk %}Edit{% else %}Add{% endif %} Module</h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-8">
+                            {{ form|crispy }}
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5>Module Guidelines</h5>
+                                    <ul class="small">
+                                        <li>Keep module titles clear and concise</li>
+                                        <li>Include specific learning objectives</li>
+                                        <li>Provide relevant scripture references</li>
+                                        <li>List all required resources</li>
+                                        <li>Include practical learning activities</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Module
+                    </button>
+                    <a href="{% url 'education:module_list' course.slug %}"
+                       class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

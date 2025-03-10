@@ -1,0 +1,133 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2>Christian Mentorship Sessions</h2>
+                <p class="text-muted">Connect with experienced Christian mentors for spiritual growth and guidance</p>
+            </div>
+            {% if perms.education.add_christianmentorshipsession %}
+                <div class="col-md-4 text-end">
+                    <a href="{% url 'education:create_mentorship_session' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Session
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Upcoming Sessions -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Upcoming Sessions</h4>
+                    </div>
+                    <div class="card-body">
+                        {% for session in upcoming_sessions %}
+                            <div class="session-item mb-4">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="mb-1">{{ session.topic }}</h5>
+                                        <p class="text-muted mb-2">
+                                            <i class="fas fa-bible"></i> Scripture Focus: {{ session.scripture_focus }}
+                                            <br>
+                                            <i class="fas fa-user"></i> Mentor: {{ session.mentor.user.get_full_name }}
+                                            <br>
+                                            <i class="fas fa-calendar"></i> {{ session.date|date:"l, F j, Y" }}
+                                            <br>
+                                            <i class="fas fa-clock"></i> {{ session.start_time|time:"g:i A" }}
+                                            - {{ session.end_time|time:"g:i A" }}
+                                        </p>
+                                        <p>{{ session.description|truncatewords:50 }}</p>
+                                        <p class="text-muted">
+                                            <i class="fas fa-users"></i> {{ session.participants.count }}/{{ session.max_participants }}
+                                            participants
+                                        </p>
+                                    </div>
+                                    <div>
+                                        {% if request.user in session.participants.all %}
+                                            <span class="badge bg-success mb-2">Registered</span>
+                                        {% elif not session.is_full %}
+                                            <form method="post"
+                                                  action="{% url 'education:register_mentorship_session' session.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-user-plus"></i> Register
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <span class="badge bg-warning">Session Full</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="text-center text-muted">No upcoming sessions scheduled.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-md-4">
+                <!-- Featured Mentors -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Featured Mentors</h4>
+                    </div>
+                    <div class="card-body">
+                        {% for mentor in featured_mentors %}
+                            <div class="mentor-item mb-3">
+                                <div class="d-flex align-items-center">
+                                    {% if mentor.profile_image %}
+                                        <img src="{{ mentor.profile_image.url }}"
+                                             class="rounded-circle me-3"
+                                             style="width: 50px; height: 50px; object-fit: cover;"
+                                             alt="{{ mentor.user.get_full_name }}">
+                                    {% endif %}
+                                    <div>
+                                        <h6 class="mb-1">{{ mentor.user.get_full_name }}</h6>
+                                        <p class="text-muted small mb-0">{{ mentor.ministry_focus }}</p>
+                                        <a href="{% url 'education:apply_mentorship' mentor.id %}"
+                                           class="btn btn-sm btn-outline-primary mt-2">
+                                            Apply for Mentorship
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="text-center text-muted">No mentors available at the moment.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Program Information -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4>About Christian Mentorship</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Our Christian mentorship program focuses on:</p>
+                        <ul>
+                            <li>Spiritual growth and discipleship</li>
+                            <li>Biblical understanding</li>
+                            <li>Ministry development</li>
+                            <li>Personal faith journey</li>
+                        </ul>
+                        <hr>
+                        <h5>Program Guidelines</h5>
+                        <ul class="small">
+                            <li>Sessions are typically 60-90 minutes</li>
+                            <li>Limited to {{ max_participants }} participants per session</li>
+                            <li>Come prepared with questions</li>
+                            <li>Maintain confidentiality</li>
+                            <li>Be respectful of others' faith journeys</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

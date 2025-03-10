@@ -1,0 +1,169 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Review Assessment - {{ submission.assessment.title }}{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'leadership:training_list' %}">Training Programs</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'leadership:training_detail' submission.assessment.session.module.training.slug %}">
+                        {{ submission.assessment.session.module.training.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'leadership:session_detail' submission.assessment.session.pk %}">
+                        {{ submission.assessment.session.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">Review Assessment</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Assessment Submission</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h6>Participant Information</h6>
+                            <div class="d-flex align-items-center mb-3">
+                                {% if submission.participant.profile_image %}
+                                    <img src="{{ submission.participant.profile_image.url }}"
+                                         class="rounded-circle me-3"
+                                         width="64" height="64"
+                                         alt="{{ submission.participant.get_full_name }}">
+                                {% endif %}
+                                <div>
+                                    <h5 class="mb-1">{{ submission.participant.get_full_name }}</h5>
+                                    <p class="text-muted mb-0">{{ submission.participant.email }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h6>Assessment Details</h6>
+                            <div class="card bg-light mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2">{{ assessment.title }}</h6>
+                                    <p class="mb-2">{{ assessment.description }}</p>
+                                    <div class="mb-0">
+                                        <span class="badge bg-info">{{ assessment.get_assessment_type_display }}</span>
+                                        <span class="badge bg-secondary">Passing Score: {{ assessment.passing_score }}%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card bg-light mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2">Assessment Criteria</h6>
+                                    {{ assessment.criteria|linebreaks }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h6>Submission</h6>
+                            <div class="card bg-light mb-3">
+                                <div class="card-body">
+                                    {{ submission.submission_text|linebreaks }}
+                                </div>
+                            </div>
+
+                            {% if submission.evidence_file %}
+                                <div class="mb-3">
+                                    <h6>Attached Evidence</h6>
+                                    <a href="{{ submission.evidence_file.url }}"
+                                       class="btn btn-outline-primary"
+                                       target="_blank">
+                                        <i class="fas fa-file me-2"></i>View Attachment
+                                    </a>
+                                </div>
+                            {% endif %}
+
+                            <div class="text-muted">
+                                <small>Submitted on {{ submission.submitted_date|date:"F j, Y, g:i a" }}</small>
+                            </div>
+                        </div>
+
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="mb-4">
+                                <label for="{{ form.status.id_for_label }}" class="form-label">Review Status</label>
+                                {{ form.status|add_class:"form-select" }}
+                                {% if form.status.errors %}
+                                    <div class="alert alert-danger mt-2">{{ form.status.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="{{ form.score.id_for_label }}" class="form-label">Score (0-100)</label>
+                                {{ form.score|add_class:"form-control" }}
+                                {% if form.score.errors %}
+                                    <div class="alert alert-danger mt-2">{{ form.score.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="{{ form.feedback.id_for_label }}" class="form-label">Feedback</label>
+                                {{ form.feedback|add_class:"form-control" }}
+                                {% if form.feedback.errors %}
+                                    <div class="alert alert-danger mt-2">{{ form.feedback.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Provide constructive feedback about the submission.
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{% url 'leadership:session_detail' submission.assessment.session.pk %}"
+                                   class="btn btn-outline-secondary me-md-2">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Submit Review
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Review Guidelines</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Review against assessment criteria
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Provide specific examples in feedback
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Include both strengths and areas for improvement
+                            </li>
+                            <li>
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Be constructive and encouraging
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

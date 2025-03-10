@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:course_detail' course.slug %}">{{ course.title }}</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:discussion_list' course.slug %}">Discussions</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:discussion_detail' course.slug discussion.pk %}">{{ discussion.title }}</a>
+                </li>
+                <li class="breadcrumb-item active">Reply</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Original Post -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Original Post</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="d-flex align-items-center">
+                                {% if discussion.author.profile_image %}
+                                    <img src="{{ discussion.author.profile_image.url }}"
+                                         class="rounded-circle me-2"
+                                         style="width: 40px; height: 40px; object-fit: cover;"
+                                         alt="{{ discussion.author.get_full_name }}">
+                                {% endif %}
+                                <div>
+                                    <h5 class="mb-0">{{ discussion.title }}</h5>
+                                    <p class="text-muted small mb-0">
+                                        Posted by {{ discussion.author.get_full_name }}
+                                        on {{ discussion.created_at|date:"M d, Y" }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="discussion-content">
+                            {{ discussion.content|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reply Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Your Reply</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if parent_reply %}
+                            <div class="alert alert-info">
+                                <p class="mb-1"><strong>Replying to {{ parent_reply.author.get_full_name }}:</strong>
+                                </p>
+                                <p class="mb-0">{{ parent_reply.content|truncatewords:50 }}</p>
+                            </div>
+                        {% endif %}
+
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ form|crispy }}
+                            <div class="mt-3">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane"></i> Post Reply
+                                </button>
+                                <a href="{% url 'education:discussion_detail' course.slug discussion.pk %}"
+                                   class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Discussion Guidelines -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Discussion Guidelines</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success"></i> Be respectful and constructive
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success"></i> Stay on topic
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success"></i> Support claims with evidence
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success"></i> Use appropriate language
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-times text-danger"></i> No personal attacks
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Formatting Help -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Formatting Help</h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="small">You can use Markdown formatting:</p>
+                        <ul class="small list-unstyled">
+                            <li><code>**bold**</code> for <strong>bold text</strong></li>
+                            <li><code>*italic*</code> for <em>italic text</em></li>
+                            <li><code>[link](url)</code> for <a href="#">links</a></li>
+                            <li><code>- item</code> for bullet points</li>
+                            <li><code>1. item</code> for numbered lists</li>
+                            <li><code>> quote</code> for blockquotes</li>
+                        </ul>
+                        <button class="btn btn-sm btn-outline-secondary" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#formattingPreview">
+                            <i class="fas fa-eye"></i> Show Preview
+                        </button>
+                        <div class="collapse mt-2" id="formattingPreview">
+                            <div class="card card-body bg-light">
+                                <div id="preview-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block extra_js %}
+        <script>
+            // Live preview functionality
+            const contentField = document.getElementById('id_content');
+            const previewContent = document.getElementById('preview-content');
+
+            if (contentField && previewContent) {
+                contentField.addEventListener('input', function () {
+                    // You would need to implement or include a Markdown parser
+                    // This is just a basic example
+                    previewContent.innerHTML = markdownToHtml(this.value);
+                });
+            }
+        </script>
+    {% endblock %}
+{% endblock %}

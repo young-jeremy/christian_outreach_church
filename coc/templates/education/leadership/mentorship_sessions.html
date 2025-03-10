@@ -1,0 +1,187 @@
+{% extends 'base_dashboard.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'education:training_list' %}">Leadership</a></li>
+                <li class="breadcrumb-item active">Mentorship Sessions</li>
+            </ol>
+        </nav>
+
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2>Mentorship Sessions</h2>
+                <p class="text-muted">Connect with experienced leaders for guidance and growth</p>
+            </div>
+            <div class="col-md-4 text-end">
+                {% if perms.education.add_mentorshipsession %}
+                    <a href="{% url 'education:mentorship_session_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Schedule New Session
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Upcoming Sessions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Upcoming Sessions</h4>
+                    </div>
+                    <div class="card-body">
+                        {% for session in upcoming_sessions %}
+                            <div class="session-item mb-4">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="mb-1">{{ session.topic }}</h5>
+                                        <p class="text-muted mb-2">
+                                            <i class="fas fa-user"></i> Mentor: {{ session.mentor.get_full_name }}
+                                            <br>
+                                            <i class="fas fa-calendar"></i> {{ session.date|date:"l, F j, Y" }}
+                                            <br>
+                                            <i class="fas fa-clock"></i> {{ session.start_time|time:"g:i A" }}
+                                            - {{ session.end_time|time:"g:i A" }}
+                                            <br>
+                                            <i class="fas fa-users"></i> {{ session.participants.count }}/{{ session.max_participants }}
+                                            participants
+                                        </p>
+                                        <p>{{ session.description|truncatewords:50 }}</p>
+                                    </div>
+                                    <div class="text-end">
+                                        {% if request.user in session.participants.all %}
+                                            <span class="badge bg-success mb-2">Registered</span>
+                                            <br>
+                                            <form method="post"
+                                                  action="{% url 'education:mentorship_session_withdraw' session.pk %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-times"></i> Withdraw
+                                                </button>
+                                            </form>
+                                        {% elif not session.is_full %}
+                                            <form method="post"
+                                                  action="{% url 'education:mentorship_session_register' session.pk %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-user-plus"></i> Register
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Session Full</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="text-center text-muted">No upcoming sessions scheduled</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Past Sessions -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4>Past Sessions</h4>
+                        <button class="btn btn-sm btn-outline-secondary" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#pastSessions">
+                            <i class="fas fa-history"></i> View History
+                        </button>
+                    </div>
+                    <div class="collapse" id="pastSessions">
+                        <div class="card-body">
+                            {% for session in past_sessions %}
+                                <div class="session-item mb-3">
+                                    <h5 class="mb-1">{{ session.topic }}</h5>
+                                    <p class="text-muted small">
+                                        Mentor: {{ session.mentor.get_full_name }}
+                                        | {{ session.date|date:"M d, Y" }}
+                                        | {{ session.participants.count }} participants
+                                    </p>
+                                    {% if request.user in session.participants.all %}
+                                        <div class="mt-2">
+                                            {% if session.recording_url %}
+                                                <a href="{{ session.recording_url }}"
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-play-circle"></i> Watch Recording
+                                                </a>
+                                            {% endif %}
+                                            {% if session.resources %}
+                                                <a href="{{ session.resources.url }}"
+                                                   class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fas fa-download"></i> Download Resources
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% empty %}
+                                <p class="text-center text-muted">No past sessions</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Mentor Profiles -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Featured Mentors</h4>
+                    </div>
+                    <div class="card-body">
+                        {% for mentor in featured_mentors %}
+                            <div class="mentor-item mb-3">
+                                <div class="d-flex align-items-center">
+                                    {% if mentor.profile_image %}
+                                        <img src="{{ mentor.profile_image.url }}"
+                                             class="rounded-circle me-3"
+                                             style="width: 50px; height: 50px; object-fit: cover;"
+                                             alt="{{ mentor.get_full_name }}">
+                                    {% endif %}
+                                    <div>
+                                        <h6 class="mb-1">{{ mentor.get_full_name }}</h6>
+                                        <p class="text-muted small mb-0">{{ mentor.expertise }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="text-center text-muted">No mentors available</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Program Information -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4>About the Mentorship Program</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Our mentorship program connects emerging leaders with experienced mentors for:</p>
+                        <ul>
+                            <li>Leadership development</li>
+                            <li>Spiritual growth</li>
+                            <li>Ministry guidance</li>
+                            <li>Personal development</li>
+                        </ul>
+                        <hr>
+                        <h5>Program Guidelines</h5>
+                        <ul class="small">
+                            <li>Sessions are 60-90 minutes long</li>
+                            <li>Limited to {{ max_participants }} participants per session</li>
+                            <li>Please arrive 5 minutes early</li>
+                            <li>Come prepared with questions</li>
+                            <li>Respect confidentiality</li>
+                        </ul>
+                        <a href="{% url 'education:mentorship_guidelines' %}"
+                           class="btn btn-outline-primary btn-block mt-3">
+                            <i class="fas fa-info-circle"></i> Learn More
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

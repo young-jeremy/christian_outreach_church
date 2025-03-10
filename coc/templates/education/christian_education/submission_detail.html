@@ -1,0 +1,92 @@
+{% extends 'base_christian_education.html' %}
+
+{% block content %}
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:course_detail' submission.assignment.module.course.slug %}">
+                        {{ submission.assignment.module.course.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:module_detail' submission.assignment.module.course.slug submission.assignment.module.pk %}">
+                        {{ submission.assignment.module.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:assignment_detail' submission.assignment.pk %}">
+                        {{ submission.assignment.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">Submission Details</li>
+            </ol>
+        </nav>
+
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3>Assignment Submission</h3>
+                {% if perms.coc.grade_christianassignmentsubmission and not submission.score %}
+                    <a href="{% url 'education:grade_submission' submission.pk %}"
+                       class="btn btn-primary">
+                        <i class="fas fa-check"></i> Grade Submission
+                    </a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h4>Submission Content</h4>
+                        <div class="submission-content">
+                            {{ submission.content|linebreaks }}
+                        </div>
+
+                        {% if submission.file %}
+                            <h4>Attached File</h4>
+                            <p>
+                                <a href="{{ submission.file.url }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-download"></i> Download Submission File
+                                </a>
+                            </p>
+                        {% endif %}
+
+                        {% if submission.score %}
+                            <div class="mt-4">
+                                <h4>Feedback</h4>
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5>Score: {{ submission.score }}/{{ submission.assignment.points }}</h5>
+                                        <div class="feedback-content">
+                                            {{ submission.feedback|linebreaks|default:"No feedback provided." }}
+                                        </div>
+                                        <small class="text-muted">
+                                            Graded on: {{ submission.graded_date }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5>Submission Details</h5>
+                                <ul class="list-unstyled">
+                                    <li><strong>Student:</strong> {{ submission.student.get_full_name }}</li>
+                                    <li><strong>Submitted:</strong> {{ submission.submission_date }}</li>
+                                    <li><strong>Status:</strong>
+                                        {% if submission.score %}
+                                            <span class="badge bg-success">Graded</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% endif %}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

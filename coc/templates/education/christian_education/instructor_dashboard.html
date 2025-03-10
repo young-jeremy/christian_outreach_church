@@ -1,0 +1,146 @@
+{% extends 'base_christian_education.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2>Instructor Dashboard</h2>
+                <p class="text-muted">Manage your courses and students</p>
+            </div>
+            <div class="col-md-4 text-end">
+                {% if perms.coc.add_christiancourse %}
+                    <a href="{% url 'education:course_add' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create New Course
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Your Courses</h4>
+                    </div>
+                    <div class="card-body">
+                        {% for course in instructor_courses %}
+                            <div class="course-item mb-4">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5>{{ course.title }}</h5>
+                                    <span class="badge {% if course.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                {{ course.get_status_display }}
+                            </span>
+                                </div>
+                                <p class="text-muted small mb-2">
+                                    {{ course.enrolled_students.count }} students enrolled
+                                    | {{ course.modules.count }} modules
+                                    | Level: {{ course.level.name }}
+                                </p>
+                                <div class="btn-group">
+                                    <a href="{% url 'education:course_detail' course.slug %}"
+                                       class="btn btn-sm btn-outline-primary">View Course</a>
+                                    <a href="{% url 'education:course_edit' course.slug %}"
+                                       class="btn btn-sm btn-outline-secondary">Edit</a>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="text-center text-muted">You haven't created any courses yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Recent Submissions</h4>
+                    </div>
+                    <div class="card-body">
+                        {% for submission in recent_submissions %}
+                            <div class="submission-item mb-3">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ submission.assignment.title }}</h6>
+                                    <small class="text-muted">{{ submission.submitted_at|timesince }} ago</small>
+                                </div>
+                                <p class="mb-1">
+                                    Student: {{ submission.student.get_full_name }}
+                                    <br>
+                                    Course: {{ submission.assignment.module.course.title }}
+                                </p>
+                                <a href="{% url 'education:submission_detail' submission.pk %}"
+                                   class="btn btn-sm btn-outline-primary">Review</a>
+                            </div>
+                        {% empty %}
+                            <p class="text-center text-muted">No recent submissions to review</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Course Statistics</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <strong>Total Courses:</strong> {{ instructor_courses.count }}
+                            </li>
+                            <li class="mb-2">
+                                <strong>Active Students:</strong> {{ active_students_count }}
+                            </li>
+                            <li class="mb-2">
+                                <strong>Pending Reviews:</strong> {{ pending_reviews_count }}
+                            </li>
+                            <li class="mb-2">
+                                <strong>Average Course Rating:</strong>
+                                {{ average_course_rating|floatformat:1 }}/5.0
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Recent Course Activity</h4>
+                    </div>
+                    <div class="card-body">
+                        {% for activity in recent_course_activities %}
+                            <div class="activity-item mb-3">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ activity.course.title }}</h6>
+                                    <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                                </div>
+                                <p class="mb-1">{{ activity.description }}</p>
+                            </div>
+                        {% empty %}
+                            <p class="text-center text-muted">No recent activity</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Quick Actions</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <a href="{% url 'education:course_add' %}"
+                               class="list-group-item list-group-item-action">
+                                <i class="fas fa-plus"></i> Create New Course
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <i class="fas fa-tasks"></i> Review Submissions
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <i class="fas fa-comments"></i> Moderate Discussions
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <i class="fas fa-chart-bar"></i> View Analytics
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends 'base_christian_education.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3>{{ level.name }}</h3>
+                {% if perms.coc.change_christianeducationlevel %}
+                    <div>
+                        <a href="{% url 'education:education_level_edit' level.pk %}"
+                           class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        {% if perms.coc.delete_christianeducationlevel %}
+                            <a href="{% url 'education:education_level_delete' level.pk %}"
+                               class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Delete
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="card-text">{{ level.description }}</p>
+
+                <h4 class="mt-4">Courses in this Level</h4>
+                <div class="row">
+                    {% for course in level.courses.all %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ course.title }}</h5>
+                                    <p class="card-text">{{ course.description|truncatewords:20 }}</p>
+                                    <a href="{% url 'education:course_detail' course.slug %}"
+                                       class="btn btn-outline-primary">View Course</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="col-12">
+                            <p>No courses available for this level yet.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends 'base_theological.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    {% if is_update %}Edit{% else %}Write{% endif %} Review - {{ resource.title }}
+{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:resource_list' %}">Resources</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:resource_detail' resource.slug %}">
+                        {{ resource.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">
+                    {% if is_update %}Edit{% else %}Write{% endif %} Review
+                </li>
+            </ol>
+        </nav>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-star me-2"></i>
+                            {% if is_update %}Edit{% else %}Write{% endif %} Your Review
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="mb-4">
+                                <label class="form-label">Overall Rating</label>
+                                <div class="rating-input">
+                                    {{ form.rating|add_class:"form-select" }}
+                                </div>
+                                {% if form.rating.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {{ form.rating.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">Review Text</label>
+                                {{ form.review_text|add_class:"form-control" }}
+                                {% if form.review_text.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {{ form.review_text.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <label class="form-label">Theological Accuracy</label>
+                                    {{ form.theological_accuracy|add_class:"form-select" }}
+                                    {% if form.theological_accuracy.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.theological_accuracy.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Clarity</label>
+                                    {{ form.clarity|add_class:"form-select" }}
+                                    {% if form.clarity.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.clarity.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Practicality</label>
+                                    {{ form.practicality|add_class:"form-select" }}
+                                    {% if form.practicality.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.practicality.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{% url 'education:resource_detail' resource.slug %}"
+                                   class="btn btn-outline-secondary me-md-2">
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-2"></i>
+                                    {% if is_update %}Update{% else %}Submit{% endif %} Review
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block extra_js %}
+        <script>
+            // Add star rating visual enhancement if needed
+            document.addEventListener('DOMContentLoaded', function () {
+                const ratingSelects = document.querySelectorAll('select[name$="rating"], select[name$="accuracy"], select[name$="clarity"], select[name$="practicality"]');
+                ratingSelects.forEach(select => {
+                    select.addEventListener('change', function () {
+                        const stars = this.closest('.rating-input').querySelectorAll('.star');
+                        stars.forEach((star, index) => {
+                            star.classList.toggle('active', index < this.value);
+                        });
+                    });
+                });
+            });
+        </script>
+    {% endblock %}
+
+    {% block extra_css %}
+        <style>
+            .rating-input {
+                display: flex;
+                align-items: center;
+            }
+
+            .star {
+                color: #ddd;
+                cursor: pointer;
+                font-size: 1.5rem;
+                padding: 0 2px;
+            }
+
+            .star.active {
+                color: #ffc107;
+            }
+        </style>
+    {% endblock %}
+{% endblock %}

@@ -1,15 +1,13 @@
-from django.conf import settings
 # from videos.models import *
+from django.conf import settings
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from services.models import Channel
-from django.utils.text import slugify
-from django.db import models
-from django.conf import settings
 from django.utils.text import slugify
 from phonenumber_field.modelfields import PhoneNumberField
+
+from services.models import Channel
 
 
 class MemberProfile(models.Model):
@@ -151,6 +149,9 @@ class User(AbstractBaseUser):
         # Simplest possible answer: Yes, always
         return True
 
+    def has_perms(self, perm, obj=None):
+        return True
+
     def has_module_perms(self, app_label):
         "Does the user have permissions to view the app `app_label`?"
         # Simplest possible answer: Yes, always
@@ -167,6 +168,9 @@ class User(AbstractBaseUser):
 
     def last_name(self):
         return self.last_name()
+
+    def get_full_name(self):
+        return self.first_name() + " " + self.last_name()
 
 
 class UserProfile(models.Model):

@@ -1,0 +1,238 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit Course{% else %}Create New Course{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+    {{ block.super }}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.css" rel="stylesheet">
+
+
+{% endblock %}
+
+
+{% block content %}
+    <div class="container py-5">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'education:course_list' %}">Courses</a></li>
+                <li class="breadcrumb-item active">
+                    {% if form.instance.pk %}Edit Course{% else %}Create New Course{% endif %}
+                </li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            {% if form.instance.pk %}Edit Course{% else %}Create New Course{% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data" id="courseForm">
+                            {% csrf_token %}
+
+                            <div class="mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label">Course Title</label>
+                                {% if form.title.errors %}
+                                    <div class="alert alert-danger">{{ form.title.errors }}</div>
+                                {% endif %}
+                                {{ form.title|add_class:"form-control" }}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                                {% if form.description.errors %}
+                                    <div class="alert alert-danger">{{ form.description.errors }}</div>
+                                {% endif %}
+                                {{ form.description|add_class:"form-control rich-text-editor" }}
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="{{ form.level.id_for_label }}" class="form-label">Level</label>
+                                    {% if form.level.errors %}
+                                        <div class="alert alert-danger">{{ form.level.errors }}</div>
+                                    {% endif %}
+                                    {{ form.level|add_class:"form-select" }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.duration_weeks.id_for_label }}" class="form-label">Duration
+                                        (weeks)</label>
+                                    {% if form.duration_weeks.errors %}
+                                        <div class="alert alert-danger">{{ form.duration_weeks.errors }}</div>
+                                    {% endif %}
+                                    {{ form.duration_weeks|add_class:"form-control" }}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.prerequisites.id_for_label }}"
+                                       class="form-label">Prerequisites</label>
+                                {% if form.prerequisites.errors %}
+                                    <div class="alert alert-danger">{{ form.prerequisites.errors }}</div>
+                                {% endif %}
+                                {{ form.prerequisites|add_class:"form-control" }}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.image.id_for_label }}" class="form-label">Course Image</label>
+                                {% if form.image.errors %}
+                                    <div class="alert alert-danger">{{ form.image.errors }}</div>
+                                {% endif %}
+                                <div class="input-group">
+                                    {{ form.image|add_class:"form-control" }}
+                                    <label class="input-group-text" for="{{ form.image.id_for_label }}">
+                                        <i class="fas fa-upload"></i>
+                                    </label>
+                                </div>
+                                {% if form.instance.image %}
+                                    <div class="mt-2">
+                                        <img src="{{ form.instance.image.url }}" alt="Current image"
+                                             class="img-thumbnail" style="height: 100px;">
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="{{ form.syllabus.id_for_label }}" class="form-label">Syllabus (PDF)</label>
+                                {% if form.syllabus.errors %}
+                                    <div class="alert alert-danger">{{ form.syllabus.errors }}</div>
+                                {% endif %}
+                                <div class="input-group">
+                                    {{ form.syllabus|add_class:"form-control" }}
+                                    <label class="input-group-text" for="{{ form.syllabus.id_for_label }}">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </label>
+                                </div>
+                                {% if form.instance.syllabus %}
+                                    <div class="mt-2">
+                                        <a href="{{ form.instance.syllabus.url }}" target="_blank"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-file-pdf me-2"></i>View Current Syllabus
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-check mb-4">
+                                {{ form.is_active|add_class:"form-check-input" }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Make this course active and visible to students
+                                </label>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>
+                                    {% if form.instance.pk %}Update Course{% else %}Create Course{% endif %}
+                                </button>
+                                <a href="{% url 'education:course_list' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">Course Creation Tips</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Use clear, descriptive titles
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Include learning objectives
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                List any prerequisites
+                            </li>
+                            <li>
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Add engaging images
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="card-title mb-0">Next Steps</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">After creating the course:</p>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-arrow-right me-2"></i>
+                                Add course modules
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-arrow-right me-2"></i>
+                                Create lessons
+                            </li>
+                            <li>
+                                <i class="fas fa-arrow-right me-2"></i>
+                                Set up assignments
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    {{ block.super }}
+    <script src="{% static 'js/education.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
+    <script>
+        // Form change warning
+        let formChanged = false;
+        document.getElementById('courseForm').addEventListener('change', function () {
+            formChanged = true;
+        });
+
+        window.addEventListener('beforeunload', function (e) {
+            if (formChanged) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        // Image preview
+        document.querySelector('input[type="file"][accept="image/*"]').addEventListener('change', function (e) {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                const preview = document.querySelector('.img-thumbnail');
+
+                reader.onload = function (e) {
+                    if (preview) {
+                        preview.src = e.target.result;
+                    } else {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.classList.add('img-thumbnail');
+                        img.style.height = '100px';
+                        this.parentElement.appendChild(img);
+                    }
+                }.bind(this);
+
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    </script>
+{% endblock %}

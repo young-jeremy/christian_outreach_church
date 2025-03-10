@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     # E
     "events",
+    'education',
     # H
     "home",
     "crispy_bootstrap5",
@@ -88,6 +89,10 @@ INSTALLED_APPS = [
     "rest_framework",  # For API
     # v
     "volunteers",
+
+    # W
+    'widget_tweaks',  # Add this line
+
 ]
 
 MIDDLEWARE = [
@@ -451,3 +456,9 @@ FILE_UPLOAD_HANDLERS = [
 
 # Maximum file upload size (5MB)
 MAX_UPLOAD_SIZE = 5242880
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}

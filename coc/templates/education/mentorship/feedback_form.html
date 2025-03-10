@@ -1,0 +1,67 @@
+{% extends 'base_dashboard.html' %}
+{% load crispy_forms_filters %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:mentorship_session_list' %}">Mentorship</a>
+                </li>
+                <li class="breadcrumb-item active">Apply for Mentorship</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Mentorship Application</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="mentor-info mb-4">
+                            <h4>Mentor: {{ mentor.user.get_full_name }}</h4>
+                            <p class="text-muted">{{ mentor.ministry_focus }}</p>
+                            <p>{{ mentor.spiritual_journey|truncatewords:50 }}</p>
+                        </div>
+
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ form|crispy }}
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Submit Application
+                            </button>
+                            <a href="{% url 'education:mentorship_session_list' %}"
+                               class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Application Guidelines</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Please provide detailed information about:</p>
+                        <ul>
+                            <li>Your spiritual journey</li>
+                            <li>Areas you want to grow in</li>
+                            <li>Ministry experience</li>
+                            <li>Time commitment</li>
+                        </ul>
+                        <hr>
+                        <p class="small text-muted">
+                            Your application will be reviewed by the mentor, and you'll receive
+                            a response within 5-7 business days.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

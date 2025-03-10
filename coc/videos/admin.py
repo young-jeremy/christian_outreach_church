@@ -1,8 +1,4 @@
 from django.contrib import admin
-from .models import (
-    Content, ContentGuidelines, Moderation, ModerationRequest, FavoriteVideo, Advertisement, WatchedVideo, Category
-
-)
 from django.contrib import messages
 from django.utils.translation import ngettext
 
@@ -17,11 +13,10 @@ from .models import Video, Comment
 
 @admin.register(Video)
 class VideoAdmin(admin.ModelAdmin):
-    list_display = ['title', 'user', 'category', 'view_count', 'created_at', 'is_active']
+    list_display = ['title', 'user', 'category', 'view_count', 'is_active']
     list_filter = ['category', 'is_active', 'is_featured', 'has_profanity']
     search_fields = ['title', 'description', 'user__username']
     prepopulated_fields = {'slug': ('title',)}
-    date_hierarchy = 'created_at'
     readonly_fields = ['view_count', 'like_count', 'comment_count', 'processing_status']
 
     fieldsets = (
@@ -42,7 +37,7 @@ class VideoAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
         ('Metadata', {
-            'fields': ('user', 'created_at', 'updated_at', 'published_at'),
+            'fields': ('user', 'published_at'),
             'classes': ('collapse',)
         }),
     )

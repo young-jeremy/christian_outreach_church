@@ -1849,6 +1849,7 @@ def leave_small_group(request, pk):
         messages.success(request, f'You have left {group.name}.')
     return redirect('services:small_groups')
 
+
 @login_required
 def add_sermon(request):
     if not request.user.is_staff:

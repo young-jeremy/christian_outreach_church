@@ -1,0 +1,123 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h4 class="mb-0">{% if form.instance.pk %}Edit{% else %}Upload{% endif %} Audio Message</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data" id="audioMessageForm">
+                            {% csrf_token %}
+                            {{ form|crispy }}
+
+                            <div class="alert alert-info">
+                                <h5>Guidelines:</h5>
+                                <ul>
+                                    <li>Audio file should be in MP3 format</li>
+                                    <li>Maximum file size: 100MB</li>
+                                    <li>Include clear title and description</li>
+                                    <li>Add speaker information</li>
+                                    <li>Select appropriate category</li>
+                                </ul>
+                            </div>
+
+                            <!-- Audio Preview -->
+                            <div class="preview-container mb-3" id="audioPreview" style="display: none;">
+                                <h5>Audio Preview</h5>
+                                <audio controls class="w-100">
+                                    <source src="" type="audio/mpeg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                                <div class="text-muted mt-2">
+                                    <small>Duration: <span id="audioDuration">--:--</span></small>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary" id="submitButton">
+                                    {% if form.instance.pk %}Update{% else %}Upload{% endif %} Message
+                                </button>
+                                <a href="{% url 'events:audio_message_list' %}" class="btn btn-outline-secondary">
+                                    Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // Audio preview and duration calculation
+        document.querySelector('input[name="audio_file"]').addEventListener('change', function (e) {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                const audio = document.querySelector('#audioPreview audio');
+                const container = document.querySelector('#audioPreview');
+                const durationDisplay = document.querySelector('#audioDuration');
+
+                // Create object URL for preview
+                audio.src = URL.createObjectURL(file);
+                container.style.display = 'block';
+
+                // Get audio duration once metadata is loaded
+                audio.addEventListener('loadedmetadata', function () {
+                    const minutes = Math.floor(audio.duration / 60);
+                    const seconds = Math.floor(audio.duration % 60);
+                    durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+                    // Update duration field if it exists
+                    const durationField = document.querySelector('input[name="duration"]');
+                    if (durationField) {
+                        durationField.value = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    }
+                });
+            }
+        });
+
+        // Form submission handling
+        document.getElementById('audioMessageForm').addEventListener('submit', function (e) {
+            const submitButton = document.getElementById('submitButton');
+            const audioFile = document.querySelector('input[name="audio_file"]');
+
+            if (audioFile.files.length > 0) {
+                const fileSize = audioFile.files[0].size / 1024 / 1024; // Convert to MB
+                if (fileSize > 100) {
+                    e.preventDefault();
+                    alert('File size exceeds 100MB limit. Please choose a smaller file.');
+                    return;
+                }
+            }
+
+            submitButton.disabled = true;
+            submitButton.innerHTML = `
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        Uploading...
+    `;
+        });
+
+        // Category dependent fields
+        document.querySelector('select[name="category"]').addEventListener('change', function (e) {
+            const seriesFields = document.querySelector('#div_id_series_number');
+            if (seriesFields) {
+                seriesFields.style.display = this.value === 'SER' ? 'block' : 'none';
+            }
+        });
+
+        // Initialize category dependent fields
+        document.addEventListener('DOMContentLoaded', function () {
+            const categorySelect = document.querySelector('select[name="category"]');
+            if (categorySelect) {
+                categorySelect.dispatchEvent(new Event('change'));
+            }
+        });
+    </script>
+{% endblock extra_js %}

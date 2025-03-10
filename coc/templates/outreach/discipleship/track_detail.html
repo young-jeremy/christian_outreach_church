@@ -1,0 +1,78 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}{{ track.title }} - Discipleship Track{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row">
+            <div class="col-md-8">
+                {% if track.featured_image %}
+                    <img src="{{ track.featured_image.url }}" class="img-fluid rounded mb-4" alt="{{ track.title }}">
+                {% endif %}
+
+                <h1 class="mb-3">{{ track.title }}</h1>
+
+                <div class="mb-4">
+                    <span class="badge bg-primary">{{ track.get_level_display }}</span>
+                    <span class="ms-2"><i class="fas fa-calendar"></i> {{ track.duration_weeks }} weeks</span>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">About this Track</h5>
+                        <p class="card-text">{{ track.description }}</p>
+
+                        {% if track.prerequisites %}
+                            <h6 class="mt-4">Prerequisites</h6>
+                            <p class="card-text">{{ track.prerequisites|linebreaks }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Modules</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for module in track.modules.all %}
+                            <div class="list-group-item">
+                                <h6 class="mb-1">Module {{ module.order }}: {{ module.title }}</h6>
+                                <p class="mb-1">{{ module.description|truncatewords:30 }}</p>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock"></i> Estimated: {{ module.estimated_hours }} hours
+                                </small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% if user.is_authenticated %}
+                    {% if not is_enrolled %}
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'request_mentor' track.slug %}" class="btn btn-primary">
+                                Request a Mentor to Start
+                            </a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="alert alert-info">
+                        Please <a href="{% url 'account_login' %}">login</a> to enroll in this track.
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Track Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Level:</strong> {{ track.get_level_display }}</p>
+                        <p><strong>Duration:</strong> {{ track.duration_weeks }} weeks</p>
+                        <p><strong>Total Modules:</strong> {{ track.modules.count }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

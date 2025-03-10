@@ -1,0 +1,58 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h4 class="mb-0">Bible College Registration</h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-4">
+                            Please complete the form below to register for the Bible College program.
+                            Your application will be reviewed by our academic team.
+                        </p>
+
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+
+                            <div class="mb-4">
+                                <h5>Program Selection</h5>
+                                {{ form.program|as_crispy_field }}
+                            </div>
+
+                            <div class="mb-4">
+                                <h5>Personal Testimony</h5>
+                                <p class="text-muted small">
+                                    Share your testimony and explain why you want to study at our Bible College
+                                </p>
+                                {{ form.testimony|as_crispy_field }}
+                            </div>
+
+                            <div class="mb-4">
+                                <h5>Spiritual Reference</h5>
+                                <p class="text-muted small">
+                                    Please upload a reference letter from your pastor or spiritual mentor
+                                </p>
+                                {{ form.spiritual_reference|as_crispy_field }}
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    Submit Application
+                                </button>
+                                <a href="{% url 'education:bible_college_program_list' %}"
+                                   class="btn btn-outline-secondary">
+                                    View Available Programs
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

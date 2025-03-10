@@ -1,0 +1,153 @@
+{% extends 'base_dashboard.html' %}
+{% load rest_framework %}
+
+{% block title %}{{ campaign.title }} - Charity Campaign{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row">
+            <div class="col-md-8">
+                {% if campaign.featured_image %}
+                    <img src="{{ campaign.featured_image.url }}" class="img-fluid rounded mb-4"
+                         alt="{{ campaign.title }}">
+                {% endif %}
+
+                <h1 class="mb-3">{{ campaign.title }}</h1>
+
+                <div class="mb-4">
+                    <span class="badge bg-{{ campaign.status }}">{{ campaign.get_status_display }}</span>
+                    <span class="ms-2"><i class="fas fa-heart"></i> {{ campaign.cause }}</span>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">About this Campaign</h5>
+                        <p class="card-text">{{ campaign.description }}</p>
+
+                        <div class="progress mb-3">
+                            <div class="progress-bar" role="progressbar"
+                                 style="width: {{ campaign.get_progress_percentage }}%"
+                                 aria-valuenow="{{ campaign.get_progress_percentage }}"
+                                 aria-valuemin="0" aria-valuemax="100">
+                                {{ campaign.get_progress_percentage }}%
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="mb-0">${{ campaign.raised_amount }}</h3>
+                                <small class="text-muted">raised of ${{ campaign.target_amount }} goal</small>
+                            </div>
+                            <div>
+                                <p class="mb-0">Campaign ends on</p>
+                                <strong>{{ campaign.end_date }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if user.is_authenticated %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Make a Donation</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" action="{% url 'outreach:make_donation' campaign.slug %}">
+                                {% csrf_token %}
+                                {% for field in donation_form %}
+                                    <div class="mb-3">
+                                        <label for="{{ field.id_for_label }}" class="form-label">
+                                            {{ field.label }}
+                                        </label>
+                                        {{ field.errors }}
+                                        {{ field|add_class:"form-control" }}
+                                        {% if field.help_text %}
+                                            <div class="form-text">{{ field.help_text }}</div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                                <button type="submit" class="btn btn-primary">Donate Now</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if recent_donations %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Recent Donations</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group list-group-flush">
+                                {% for donation in recent_donations %}
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-0">
+                                                    {% if donation.anonymous %}
+                                                        Anonymous Donor
+                                                    {% else %}
+                                                        {{ donation.donor.username|default:donation.donor.username }}
+                                                    {% endif %}
+                                                </h6>
+                                                {% if donation.message %}
+                                                    <small class="text-muted">{{ donation.message }}</small>
+                                                {% endif %}
+                                            </div>
+                                            <span class="badge bg-success rounded-pill">${{ donation.amount }}</span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Campaign Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Beneficiary:</strong> {{ campaign.beneficiary }}</p>
+                        <p><strong>Contact Person:</strong> {{ campaign.contact_person }}</p>
+                        <p><strong>Email:</strong> {{ campaign.contact_email }}</p>
+                        <p><strong>Campaign Period:</strong><br>
+                            Start: {{ campaign.start_date }}<br>
+                            End: {{ campaign.end_date }}
+                        </p>
+                    </div>
+                </div>
+
+                {% if upcoming_events %}
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Upcoming Events</h5>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for event in upcoming_events %}
+                                <div class="list-group-item">
+                                    <h6 class="mb-1">{{ event.title }}</h6>
+                                    <p class="mb-1"><small><i class="fas fa-map-marker-alt"></i> {{ event.location }}
+                                    </small></p>
+                                    <p class="mb-1"><small><i class="fas fa-calendar"></i> {{ event.date }}</small></p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">{{ event.current_participants }}/{{ event.max_participants }}
+                                            participants</small>
+                                        {% if event.current_participants < event.max_participants %}
+                                            <a href="{% url 'register_event' event.id %}"
+                                               class="btn btn-sm btn-outline-primary">Register</a>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Full</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends 'base_theological.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit{% else %}Create{% endif %} Theological Resource
+{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:resource_list' %}">Resources</a>
+                </li>
+                <li class="breadcrumb-item active">
+                    {% if form.instance.pk %}Edit{% else %}Create{% endif %} Resource
+                </li>
+            </ol>
+        </nav>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            {% if form.instance.pk %}
+                                Edit Resource
+                            {% else %}
+                                Create New Resource
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <label class="form-label">Title</label>
+                                    {{ form.title|add_class:"form-control" }}
+                                    {% if form.title.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.title.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Author</label>
+                                    {{ form.author|add_class:"form-control" }}
+                                    {% if form.author.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.author.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Category</label>
+                                    {{ form.category|add_class:"form-select" }}
+                                    {% if form.category.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.category.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Resource Type</label>
+                                    {{ form.resource_type|add_class:"form-select" }}
+                                    {% if form.resource_type.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.resource_type.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Level</label>
+                                    {{ form.level|add_class:"form-select" }}
+                                    {% if form.level.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.level.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                {{ form.description|add_class:"form-control" }}
+                                {% if form.description.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {{ form.description.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Content</label>
+                                {{ form.content|add_class:"form-control" }}
+                                {% if form.content.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {{ form.content.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Scripture References</label>
+                                {{ form.scripture_references|add_class:"form-control" }}
+                                <small class="text-muted">Enter Bible references separated by commas</small>
+                                {% if form.scripture_references.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {{ form.scripture_references.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Key Points</label>
+                                {{ form.key_points|add_class:"form-control" }}
+                                {% if form.key_points.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {{ form.key_points.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Publication Date</label>
+                                    {{ form.publication_date|add_class:"form-control" }}
+                                    {% if form.publication_date.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.publication_date.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">External Link</label>
+                                    {{ form.external_link|add_class:"form-control" }}
+                                    {% if form.external_link.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.external_link.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Resource File</label>
+                                    {{ form.file|add_class:"form-control" }}
+                                    {% if form.file.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.file.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Thumbnail</label>
+                                    {{ form.thumbnail|add_class:"form-control" }}
+                                    {% if form.thumbnail.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.thumbnail.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        {{ form.is_featured|add_class:"form-check-input" }}
+                                        <label class="form-check-label">Featured Resource</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        {{ form.is_public|add_class:"form-check-input" }}
+                                        <label class="form-check-label">Public Resource</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        {{ form.requires_permission|add_class:"form-check-input" }}
+                                        <label class="form-check-label">Requires Permission</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{% url 'education:resource_list' %}"
+                                   class="btn btn-outline-secondary me-md-2">
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    {% if form.instance.pk %}Update{% else %}Create{% endif %} Resource
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends 'base_theological.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit{% else %}Add{% endif %} Bibliography Entry
+{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:resource_list' %}">Resources</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:resource_detail' resource.slug %}">
+                        {{ resource.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">
+                    {% if form.instance.pk %}Edit{% else %}Add{% endif %} Bibliography Entry
+                </li>
+            </ol>
+        </nav>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-book me-2"></i>
+                            {% if form.instance.pk %}Edit{% else %}Add{% endif %} Bibliography Entry
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="mb-3">
+                                <label class="form-label">Title</label>
+                                {{ form.title|add_class:"form-control" }}
+                                {% if form.title.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {{ form.title.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Authors</label>
+                                {{ form.authors|add_class:"form-control" }}
+                                {% if form.authors.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {{ form.authors.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Publication</label>
+                                {{ form.publication|add_class:"form-control" }}
+                                {% if form.publication.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {{ form.publication.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Year</label>
+                                    {{ form.year|add_class:"form-control" }}
+                                    {% if form.year.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.year.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Pages</label>
+                                    {{ form.pages|add_class:"form-control" }}
+                                    {% if form.pages.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.pages.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">URL</label>
+                                {{ form.url|add_class:"form-control" }}
+                                {% if form.url.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {{ form.url.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{% url 'education:resource_detail' resource.slug %}"
+                                   class="btn btn-outline-secondary me-md-2">
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>
+                                    {% if form.instance.pk %}Update{% else %}Add{% endif %} Entry
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

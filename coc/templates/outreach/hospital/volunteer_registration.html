@@ -1,0 +1,61 @@
+{% extends 'base_dashboard.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Hospital Ministry Volunteer Registration{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <h1 class="mb-4">Hospital Ministry Volunteer Registration</h1>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Volunteer Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+
+                            {% for field in form %}
+                                <div class="mb-3">
+                                    <label for="{{ field.id_for_label }}" class="form-label">
+                                        {{ field.label }}
+                                    </label>
+                                    {% if field.errors %}
+                                        <div class="alert alert-danger">
+                                            {{ field.errors }}
+                                        </div>
+                                    {% endif %}
+                                    {{ field|add_class:"form-control" }}
+                                    {% if field.help_text %}
+                                        <div class="form-text">{{ field.help_text }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+
+                            <div class="alert alert-info mb-4">
+                                <h6>Important Information</h6>
+                                <ul class="mb-0">
+                                    <li>All volunteers must complete orientation before serving</li>
+                                    <li>Please provide accurate contact information</li>
+                                    <li>You may be required to undergo health screening</li>
+                                </ul>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    {% if volunteer %}Update{% else %}Submit{% endif %} Registration
+                                </button>
+                                <a href="{% url 'outreach:dashboard' %}"
+                                   class="btn btn-outline-secondary">
+                                    Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

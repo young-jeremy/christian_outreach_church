@@ -1,0 +1,88 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h4 class="mb-0">Submit Assignment</h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Assignment Details -->
+                        <div class="mb-4">
+                            <h5>{{ assignment.title }}</h5>
+                            <p class="text-muted mb-2">{{ assignment.course.code }} - {{ assignment.course.title }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-info">
+                                Worth: {{ assignment.weight_percentage }}%
+                            </span>
+                                <span class="text-muted">
+                                Due: {{ assignment.due_date|date:"M d, Y h:i A" }}
+                            </span>
+                            </div>
+                            <hr>
+                            <p>{{ assignment.description }}</p>
+                        </div>
+
+                        {% if submission %}
+                            <!-- Previous Submission -->
+                            <div class="alert alert-info mb-4">
+                                <h6 class="alert-heading">Previous Submission</h6>
+                                <p class="mb-0">
+                                    Submitted on: {{ submission.submission_date|date:"M d, Y h:i A" }}
+                                </p>
+                                {% if submission.marks_obtained %}
+                                    <hr>
+                                    <p class="mb-0">
+                                        Grade: {{ submission.marks_obtained }}/{{ assignment.total_marks }}
+                                        ({{ submission.marks_obtained|div:assignment.total_marks|mul:100|floatformat:1 }}%)
+                                    </p>
+                                    {% if submission.feedback %}
+                                        <p class="mb-0 mt-2">
+                                            <strong>Feedback:</strong><br>
+                                            {{ submission.feedback }}
+                                        </p>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Submission Form -->
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {{ form|crispy }}
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    {% if submission %}Update Submission{% else %}Submit Assignment{% endif %}
+                                </button>
+                                <a href="{% url 'education:bible_college_course_detail' assignment.course.id %}"
+                                   class="btn btn-outline-secondary">
+                                    Back to Course
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // Add file input validation if needed
+        document.querySelector('input[type="file"]').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            const maxSize = 10 * 1024 * 1024; // 10MB
+
+            if (file && file.size > maxSize) {
+                alert('File size must be less than 10MB');
+                e.target.value = '';
+            }
+        });
+    </script>
+{% endblock %}

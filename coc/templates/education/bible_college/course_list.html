@@ -1,0 +1,108 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h2>My Courses</h2>
+                <p class="text-muted">Manage your course enrollments and academic progress</p>
+            </div>
+        </div>
+
+        <!-- Current Enrollments -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Current Enrollments</h5>
+            </div>
+            <div class="card-body">
+                {% if enrollments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Course</th>
+                                <th>Credits</th>
+                                <th>Semester</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for enrollment in enrollments %}
+                                <tr>
+                                    <td>{{ enrollment.course.code }}</td>
+                                    <td>{{ enrollment.course.title }}</td>
+                                    <td>{{ enrollment.course.credits }}</td>
+                                    <td>{{ enrollment.get_semester_display }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">In Progress</span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'education:bible_college_course_detail' enrollment.course.id %}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            View Details
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">You are not enrolled in any courses.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Available Courses -->
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">Available Courses</h5>
+            </div>
+            <div class="card-body">
+                {% if available_courses %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Course</th>
+                                <th>Credits</th>
+                                <th>Prerequisites</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for course in available_courses %}
+                                <tr>
+                                    <td>{{ course.code }}</td>
+                                    <td>{{ course.title }}</td>
+                                    <td>{{ course.credits }}</td>
+                                    <td>
+                                        {% for prereq in course.prerequisites.all %}
+                                            <span class="badge bg-secondary">{{ prereq.code }}</span>
+                                        {% empty %}
+                                            <span class="text-muted">None</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        <form method="post"
+                                              action="{% url 'education:bible_college_enroll_course' course.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-primary">Enroll</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No courses available for enrollment.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

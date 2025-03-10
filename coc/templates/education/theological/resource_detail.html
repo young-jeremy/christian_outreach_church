@@ -1,0 +1,237 @@
+{% extends 'base_theological.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}{{ resource.title }} - Theological Resource{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:resource_list' %}">Resources</a>
+                </li>
+                <li class="breadcrumb-item active">{{ resource.title }}</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <!-- Main Content Column -->
+            <div class="col-lg-8">
+                <!-- Resource Details -->
+                <div class="card mb-4">
+                    {% if resource.thumbnail %}
+                        <img src="{{ resource.thumbnail.url }}" class="card-img-top" alt="{{ resource.title }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h1 class="h2 mb-3">{{ resource.title }}</h1>
+
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="me-4">
+                                <i class="fas fa-user me-1"></i>
+                                <span>{{ resource.author }}</span>
+                            </div>
+                            <div class="me-4">
+                                <i class="fas fa-calendar me-1"></i>
+                                <span>{{ resource.publication_date|date:"F j, Y" }}</span>
+                            </div>
+                            <div>
+                                <i class="fas fa-download me-1"></i>
+                                <span>{{ resource.download_count }} downloads</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h5>Description</h5>
+                            {{ resource.description|linebreaks }}
+                        </div>
+
+                        <div class="mb-4">
+                            <h5>Key Points</h5>
+                            {{ resource.key_points|linebreaks }}
+                        </div>
+
+                        <div class="mb-4">
+                            <h5>Scripture References</h5>
+                            <p>{{ resource.scripture_references }}</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <h5>Content</h5>
+                            {{ resource.content|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews Section -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Reviews</h5>
+                        {% if user.is_authenticated and not user_review %}
+                            <a href="{% url 'education:add_review' resource.slug %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-star me-1"></i>Write Review
+                            </a>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        {% if ratings.review_count > 0 %}
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h6>Overall Rating: {{ ratings.avg_rating }}/5</h6>
+                                    <div class="text-warning mb-2">
+                                        {% for i in "12345"|make_list %}
+                                            <i class="fas fa-star {% if forloop.counter <= ratings.avg_rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                                        {% endfor %}
+                                        <small class="text-muted ms-2">({{ ratings.review_count }} reviews)</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="small">
+                                        <div class="mb-1">
+                                            <strong>Theological Accuracy:</strong> {{ ratings.avg_accuracy }}/5
+                                        </div>
+                                        <div class="mb-1">
+                                            <strong>Clarity:</strong> {{ ratings.avg_clarity }}/5
+                                        </div>
+                                        <div>
+                                            <strong>Practicality:</strong> {{ ratings.avg_practicality }}/5
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% for review in reviews %}
+                                <div class="border-bottom mb-3 pb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div>
+                                            <strong>{{ review.user.get_full_name|default:review.user.username }}</strong>
+                                            <div class="text-warning">
+                                                {% for i in "12345"|make_list %}
+                                                    <i class="fas fa-star {% if forloop.counter <= review.rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">{{ review.created_at|date:"F j, Y" }}</small>
+                                    </div>
+                                    <p class="mb-2">{{ review.review_text }}</p>
+                                    <div class="small text-muted">
+                                        <span class="me-3">Accuracy: {{ review.theological_accuracy }}/5</span>
+                                        <span class="me-3">Clarity: {{ review.clarity }}/5</span>
+                                        <span>Practicality: {{ review.practicality }}/5</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-center text-muted mb-0">No reviews yet. Be the first to review!</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Study Notes -->
+                {% if user.is_authenticated %}
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Your Study Notes</h5>
+                            <a href="{% url 'education:add_study_note' resource.slug %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i>Add Note
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            {% if study_notes %}
+                                {% for note in study_notes %}
+                                    <div class="border-bottom mb-3 pb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="mb-0">{{ note.title }}</h6>
+                                            <small class="text-muted">{{ note.created_at|date:"F j, Y" }}</small>
+                                        </div>
+                                        <p class="mb-0">{{ note.content }}</p>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted text-center mb-0">You haven't added any notes yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar Column -->
+            <div class="col-lg-4">
+                <!-- Resource Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Resource Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-folder me-2"></i>
+                                <strong>Category:</strong> {{ resource.category.name }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-layer-group me-2"></i>
+                                <strong>Level:</strong> {{ resource.get_level_display }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-file-alt me-2"></i>
+                                <strong>Type:</strong> {{ resource.get_resource_type_display }}
+                            </li>
+                            {% if resource.requires_permission %}
+                                <li class="text-warning">
+                                    <i class="fas fa-lock me-2"></i>
+                                    <strong>Restricted Access</strong>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Download/Access -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        {% if resource.file %}
+                            <a href="{{ resource.file.url }}" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-download me-2"></i>Download Resource
+                            </a>
+                        {% endif %}
+                        {% if resource.external_link %}
+                            <a href="{{ resource.external_link }}" class="btn btn-outline-primary w-100"
+                               target="_blank">
+                                <i class="fas fa-external-link-alt me-2"></i>Visit External Link
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Bibliography -->
+                {% if resource.bibliography_set.exists %}
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Bibliography</h5>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for reference in resource.bibliography_set.all %}
+                                <div class="list-group-item">
+                                    <h6 class="mb-1">{{ reference.title }}</h6>
+                                    <p class="mb-1 text-muted">{{ reference.authors }}</p>
+                                    <small>
+                                        {{ reference.publication }}, {{ reference.year }}
+                                        {% if reference.pages %}
+                                            <br>Pages: {{ reference.pages }}
+                                        {% endif %}
+                                    </small>
+                                    {% if reference.url %}
+                                        <br>
+                                        <a href="{{ reference.url }}" target="_blank" class="small">
+                                            <i class="fas fa-external-link-alt me-1"></i>View Source
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

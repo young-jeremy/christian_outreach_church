@@ -1,0 +1,77 @@
+{% extends 'base_theological.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Add Study Note - {{ resource.title }}{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:resource_list' %}">Resources</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:resource_detail' resource.slug %}">
+                        {{ resource.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">Add Study Note</li>
+            </ol>
+        </nav>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-pencil-alt me-2"></i>Add Study Note
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="mb-3">
+                                <label class="form-label">Title</label>
+                                {{ form.title|add_class:"form-control" }}
+                                {% if form.title.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {{ form.title.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Content</label>
+                                {{ form.content|add_class:"form-control" }}
+                                {% if form.content.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {{ form.content.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.is_private|add_class:"form-check-input" }}
+                                    <label class="form-check-label">Keep this note private</label>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{% url 'education:resource_detail' resource.slug %}"
+                                   class="btn btn-outline-secondary me-md-2">
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Save Note
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Biblical Courses{% endblock %}
+
+{% block extra_css %}
+    <link href="{% static 'css/education.css' %}" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="display-4">Biblical Courses</h1>
+                <p class="lead">Deepen your understanding of God's Word through our comprehensive courses</p>
+            </div>
+            {% if user.is_staff %}
+                <div class="col-md-4 text-end">
+                    <a href="{% url 'education:course_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create New Course
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="row">
+            {% for course in courses %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 course-card">
+                        {% if course.image %}
+                            <img src="{{ course.image.url }}" class="card-img-top" alt="{{ course.title }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <span class="badge bg-{{ course.level }} mb-2">{{ course.get_level_display }}</span>
+                            <h5 class="card-title">{{ course.title }}</h5>
+                            <p class="card-text">{{ course.description|truncatewords:30 }}</p>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock"></i> {{ course.duration_weeks }} weeks
+                                </small>
+                                <a href="{% url 'education:course_detail' course.slug %}"
+                                   class="btn btn-outline-primary btn-sm">
+                                    Learn More
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col">
+                    <div class="alert alert-info">
+                        No courses available at this time.
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/education.js' %}"></script>
+{% endblock %}

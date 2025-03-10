@@ -11,7 +11,6 @@ urlpatterns = [
     path('short_videos/', views.short_videos, name='short_videos'),
     path('short_video_details/<int:video_id>/', views.short_video_details, name='short_video_details'),
     path('video/<int:video_id>/', views.video_details, name='video_details'),
-    path('create_video/', views.create_video, name='create_video'),
     path('video/', views.admin_dashboard, name='video'),
     path('admin_panel', views.admin_panel, name='admin_panel'),
     path('upload_video/', views.upload_form, name='upload_video'),

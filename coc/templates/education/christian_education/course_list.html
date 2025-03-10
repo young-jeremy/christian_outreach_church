@@ -1,0 +1,47 @@
+{% extends 'base_christian_education.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Christian Courses</h2>
+            {% if perms.coc.add_christiancourse %}
+                <a href="{% url 'education:course_add' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Course
+                </a>
+            {% endif %}
+        </div>
+
+        <div class="row">
+            {% for course in courses %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        {% if course.image %}
+                            <img src="{{ course.image.url }}" class="card-img-top" alt="{{ course.title }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ course.title }}</h5>
+                            <p class="card-text">{{ course.description|truncatewords:30 }}</p>
+                            <div class="mb-2">
+                                <span class="badge bg-primary">{{ course.get_category_display }}</span>
+                                <span class="badge bg-secondary">{{ course.level.name }}</span>
+                            </div>
+                            <p class="small text-muted">
+                                Duration: {{ course.duration_weeks }} weeks
+                                <br>
+                                Instructor: {{ course.instructor.get_full_name }}
+                            </p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{% url 'education:course_detail' course.slug %}"
+                               class="btn btn-outline-primary">View Course</a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <p class="text-center">No courses available.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

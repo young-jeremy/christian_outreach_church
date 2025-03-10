@@ -1,0 +1,108 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2>Church Newsletters</h2>
+            </div>
+            {% if perms.education.add_newsletter %}
+                <div class="col-md-4 text-end">
+                    <a href="{% url 'events:newsletter_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Newsletter
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Latest Newsletter -->
+        {% if latest_newsletter %}
+            <div class="row mb-5">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                {% if latest_newsletter.cover_image %}
+                                    <img src="{{ latest_newsletter.cover_image.url }}"
+                                         class="img-fluid rounded-start h-100"
+                                         alt="Latest Newsletter"
+                                         style="object-fit: cover;">
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <div class="badge bg-primary mb-2">Latest Issue</div>
+                                    <h3 class="card-title">{{ latest_newsletter.title }}</h3>
+                                    <p class="text-muted">
+                                        Issue #{{ latest_newsletter.issue_number }} -
+                                        {{ latest_newsletter.publication_date|date }}
+                                    </p>
+                                    <p class="card-text">{{ latest_newsletter.description|truncatewords:50 }}</p>
+                                    <a href="{{ latest_newsletter.pdf_file.url }}"
+                                       class="btn btn-primary" target="_blank">
+                                        <i class="fas fa-download"></i> Download PDF
+                                    </a>
+                                    <a href="{% url 'events:newsletter_detail' latest_newsletter.issue_number %}"
+                                       class="btn btn-outline-primary">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Newsletter Archive -->
+        <div class="row">
+            <div class="col-12 mb-4">
+                <h4>Newsletter Archive</h4>
+            </div>
+            {% for newsletter in newsletters %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        {% if newsletter.cover_image %}
+                            <img src="{{ newsletter.cover_image.url }}"
+                                 class="card-img-top"
+                                 alt="{{ newsletter.title }}"
+                                 style="height: 200px; object-fit: cover;">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ newsletter.title }}</h5>
+                            <p class="text-muted">
+                                <small>
+                                    Issue #{{ newsletter.issue_number }}
+                                    <br>
+                                    <i class="fas fa-calendar"></i> {{ newsletter.publication_date|date }}
+                                </small>
+                            </p>
+                            <p class="card-text">{{ newsletter.description|truncatewords:20 }}</p>
+                            <div class="d-grid gap-2">
+                                <a href="{{ newsletter.pdf_file.url }}"
+                                   class="btn btn-primary" target="_blank">
+                                    <i class="fas fa-download"></i> Download PDF
+                                </a>
+                                <a href="{% url 'events:newsletter_detail' newsletter.issue_number %}"
+                                   class="btn btn-outline-primary">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col">
+                    <div class="alert alert-info">
+                        No newsletters available yet.
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% include 'includes/pagination.html' with page_obj=newsletters %}
+    </div>
+{% endblock %}

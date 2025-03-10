@@ -1,0 +1,154 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block title %}{{ session.title }}{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:training_list' %}">Training Programs</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:training_detail' session.module.training.slug %}">
+                        {{ session.module.training.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">{{ session.title }}</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h1 class="h2 mb-4">{{ session.title }}</h1>
+
+                        <div class="mb-4">
+                            <h5>Session Content</h5>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    {{ session.content|linebreaks }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h5>Practical Exercise</h5>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    {{ session.practical_exercise|linebreaks }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h5>Reflection Questions</h5>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    {{ session.reflection_questions|linebreaks }}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if session.resources %}
+                            <div class="mb-4">
+                                <h5>Additional Resources</h5>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        {{ session.resources|linebreaks }}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if assessments %}
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Assessments</h5>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for assessment in assessments %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ assessment.title }}</h6>
+                                            <p class="mb-1 text-muted small">
+                                                {{ assessment.get_assessment_type_display }}
+                                            </p>
+                                        </div>
+                                        {% with submission=submissions|get_item:assessment.id %}
+                                            {% if submission %}
+                                                <span class="badge bg-{{ submission.status }}">
+                                {{ submission.get_status_display }}
+                            </span>
+                                            {% else %}
+                                                <a href="{% url 'education:submit_assessment' assessment.pk %}"
+                                                   class="btn btn-primary btn-sm">
+                                                    Start Assessment
+                                                </a>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Session Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-3">
+                                <i class="fas fa-clock me-2"></i>
+                                <strong>Duration:</strong> {{ session.duration_minutes }} minutes
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-layer-group me-2"></i>
+                                <strong>Module:</strong> {{ session.module.title }}
+                            </li>
+                            <li>
+                                <i class="fas fa-tasks me-2"></i>
+                                <strong>Assessments:</strong> {{ assessments.count }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Navigation</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% if prev_session %}
+                            <a href="{% url 'education:session_detail' prev_session.pk %}"
+                               class="list-group-item list-group-item-action">
+                                <i class="fas fa-arrow-left me-2"></i>Previous Session
+                            </a>
+                        {% endif %}
+
+                        <a href="{% url 'education:training_detail' session.module.training.slug %}"
+                           class="list-group-item list-group-item-action">
+                            <i class="fas fa-th-list me-2"></i>Module Overview
+                        </a>
+
+                        {% if next_session %}
+                            <a href="{% url 'education:session_detail' next_session.pk %}"
+                               class="list-group-item list-group-item-action">
+                                Next Session<i class="fas fa-arrow-right ms-2"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

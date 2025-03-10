@@ -1,0 +1,79 @@
+{% extends 'base_christian_education.html' %}
+
+{% block content %}
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:discussion_detail' post.discussion.pk %}">
+                        {{ post.discussion.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">Post Details</li>
+            </ol>
+        </nav>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3>Post by {{ post.author.get_full_name }}</h3>
+                {% if user == post.author or perms.coc.change_christiandiscussionpost %}
+                    <div class="btn-group">
+                        <a href="{% url 'education:edit_post' post.pk %}"
+                           class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <a href="{% url 'education:delete_post' post.pk %}"
+                           class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Delete
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="post-metadata text-muted mb-3">
+                    <i class="fas fa-clock"></i> Posted {{ post.created_at|timesince }} ago
+                    {% if post.modified_at %}
+                        <br>
+                        <i class="fas fa-edit"></i> Last edited {{ post.modified_at|timesince }} ago
+                    {% endif %}
+                </div>
+
+                <div class="post-content">
+                    {{ post.content|linebreaks }}
+                </div>
+
+                {% if post.parent %}
+                    <div class="mt-4">
+                        <h5>In Reply To:</h5>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6>{{ post.parent.author.get_full_name }}</h6>
+                                {{ post.parent.content|truncatewords:50 }}
+                                <a href="{% url 'education:post_detail' post.parent.pk %}">View full post</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if post.replies.exists %}
+                    <div class="mt-4">
+                        <h5>Replies:</h5>
+                        {% for reply in post.replies.all %}
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <h6>{{ reply.author.get_full_name }}</h6>
+                                        <small class="text-muted">
+                                            {{ reply.created_at|timesince }} ago
+                                        </small>
+                                    </div>
+                                    {{ reply.content|linebreaks }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

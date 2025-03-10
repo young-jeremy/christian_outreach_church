@@ -1,0 +1,43 @@
+{% extends 'base_christian_education.html' %}
+{% load crispy_forms_filters %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h3>{% if form.instance.pk %}Edit{% else %}Add{% endif %} Course</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-8">
+                            {{ form|crispy }}
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5>Tips</h5>
+                                    <ul class="small">
+                                        <li>Course title should be clear and descriptive</li>
+                                        <li>Description should outline what students will learn</li>
+                                        <li>Objectives should be measurable</li>
+                                        <li>Prerequisites help students understand requirements</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Course
+                    </button>
+                    <a href="{% url 'education:course_list' %}"
+                       class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

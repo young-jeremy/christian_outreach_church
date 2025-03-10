@@ -1,0 +1,153 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Leadership Training Programs{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="h2 mb-0">Leadership Training Programs</h1>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <form method="get" class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Category</label>
+                                <select name="category" class="form-select">
+                                    <option value="">All Categories</option>
+                                    {% for value, label in categories %}
+                                        <option value="{{ value }}"
+                                                {% if request.GET.category == value %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Level</label>
+                                <select name="level" class="form-select">
+                                    <option value="">All Levels</option>
+                                    {% for value, label in levels %}
+                                        <option value="{{ value }}"
+                                                {% if request.GET.level == value %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter me-2"></i>Apply Filters
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enrolled Trainings -->
+        {% if user.is_authenticated and enrolled_trainings %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2 class="h4 mb-3">Your Enrolled Programs</h2>
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                        {% for enrollment in enrolled_trainings %}
+                            <div class="col">
+                                <div class="card h-100">
+                                    {% if enrollment.training.image %}
+                                        <img src="{{ enrollment.training.image.url }}" class="card-img-top"
+                                             alt="{{ enrollment.training.title }}">
+                                    {% endif %}
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ enrollment.training.title }}</h5>
+                                        <p class="card-text text-muted">
+                                            <span class="badge bg-{{ enrollment.status }}">{{ enrollment.get_status_display }}</span>
+                                        </p>
+                                        <a href="{% url 'education:training_detail' enrollment.training.slug %}"
+                                           class="btn btn-outline-primary">
+                                            Continue Training
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Available Trainings -->
+        <div class="row">
+            <div class="col-12">
+                <h2 class="h4 mb-3">Available Programs</h2>
+                {% if trainings %}
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                        {% for training in trainings %}
+                            <div class="col">
+                                <div class="card h-100">
+                                    {% if training.image %}
+                                        <img src="{{ training.image.url }}" class="card-img-top"
+                                             alt="{{ training.title }}">
+                                    {% endif %}
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ training.title }}</h5>
+                                        <p class="card-text">{{ training.description|truncatewords:30 }}</p>
+                                        <div class="mb-3">
+                                            <span class="badge bg-primary">{{ training.get_category_display }}</span>
+                                            <span class="badge bg-secondary">{{ training.get_level_display }}</span>
+                                            <span class="badge bg-info">{{ training.duration_weeks }} weeks</span>
+                                        </div>
+                                        <a href="{% url 'education:training_detail' training.slug %}"
+                                           class="btn btn-primary">
+                                            View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        No training programs available matching your criteria.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .card-img-top {
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .badge.bg-pending {
+            background-color: #ffc107;
+        }
+
+        .badge.bg-active {
+            background-color: #28a745;
+        }
+
+        .badge.bg-completed {
+            background-color: #17a2b8;
+        }
+
+        .badge.bg-withdrawn {
+            background-color: #dc3545;
+        }
+
+        .badge.bg-on_hold {
+            background-color: #6c757d;
+        }
+    </style>
+{% endblock %}

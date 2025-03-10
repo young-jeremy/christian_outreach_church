@@ -1,0 +1,62 @@
+{% extends 'base_christian_education.html' %}
+{% load crispy_forms_filters %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:course_detail' course.slug %}">
+                        {{ course.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">Enroll in Course</li>
+            </ol>
+        </nav>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>Course Enrollment</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ form|crispy }}
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-user-plus"></i> Confirm Enrollment
+                            </button>
+                            <a href="{% url 'education:course_detail' course.slug %}"
+                               class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </form>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>Course Information</h5>
+                                <ul class="list-unstyled">
+                                    <li><strong>Level:</strong> {{ course.level.name }}</li>
+                                    <li><strong>Duration:</strong> {{ course.duration_weeks }} weeks</li>
+                                    <li><strong>Instructor:</strong> {{ course.instructor.get_full_name }}</li>
+                                </ul>
+                                <hr>
+                                <h5>Enrollment Notes</h5>
+                                <ul class="small">
+                                    <li>Access to all course materials</li>
+                                    <li>Progress tracking</li>
+                                    <li>Assignment submissions</li>
+                                    <li>Discussion participation</li>
+                                    <li>Certificate upon completion</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,239 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}{{ material.title }} - Sunday School Material{% endblock %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+{% block content %}
+    <div class="container py-5">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:material_list' %}">Materials</a>
+                </li>
+                <li class="breadcrumb-item active">{{ material.title }}</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Main Content -->
+                <div class="card mb-4">
+                    {% if material.image %}
+                        <img src="{{ material.image.url }}" class="card-img-top" alt="{{ material.title }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h1 class="card-title h2">{{ material.title }}</h1>
+                        <div class="mb-3">
+                            <span class="badge bg-primary">{{ material.get_category_display }}</span>
+                            <span class="badge bg-secondary">{{ material.age_group.name }}</span>
+                            <span class="badge bg-info">{{ material.duration_minutes }} minutes</span>
+                        </div>
+
+                        <div class="mb-4">
+                            <h5>Description</h5>
+                            {{ material.description|linebreaks }}
+                        </div>
+
+                        <div class="mb-4">
+                            <h5>Bible Reference</h5>
+                            <p class="mb-0">{{ material.bible_reference }}</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <h5>Main Points</h5>
+                            {{ material.main_points|linebreaks }}
+                        </div>
+
+                        <div class="mb-4">
+                            <h5>Learning Objectives</h5>
+                            {{ material.learning_objectives|linebreaks }}
+                        </div>
+
+                        {% if material.materials_needed %}
+                            <div class="mb-4">
+                                <h5>Materials Needed</h5>
+                                {{ material.materials_needed|linebreaks }}
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-4">
+                            <h5>Content</h5>
+                            {{ material.content|linebreaks }}
+                        </div>
+
+                        {% if material.teacher_notes %}
+                            <div class="mb-4">
+                                <h5>Teacher Notes</h5>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        {{ material.teacher_notes|linebreaks }}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Activities -->
+                {% if activities %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Activities</h5>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for activity in activities %}
+                                <div class="list-group-item">
+                                    <h6 class="mb-1">{{ activity.title }}</h6>
+                                    <p class="mb-1">{{ activity.description }}</p>
+                                    <small class="text-muted">Duration: {{ activity.duration_minutes }} minutes</small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Resources -->
+                {% if resources %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Teaching Resources</h5>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for resource in resources %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ resource.title }}</h6>
+                                            <p class="mb-1">{{ resource.description }}</p>
+                                            <span class="badge bg-secondary">{{ resource.get_resource_type_display }}</span>
+                                        </div>
+                                        {% if resource.is_downloadable %}
+                                            <a href="{{ resource.file.url }}" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-download me-2"></i>Download
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Feedback Form -->
+                {% if user.is_authenticated %}
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Provide Feedback</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label class="form-label">Rating</label>
+                                    {{ feedback_form.rating|add_class:"form-select" }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Comment</label>
+                                    {{ feedback_form.comment|add_class:"form-control" }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Date Used</label>
+                                    {{ feedback_form.used_date|add_class:"form-control" }}
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Age Group Effectiveness</label>
+                                        {{ feedback_form.age_group_effectiveness|add_class:"form-select" }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Time Management</label>
+                                        {{ feedback_form.time_management|add_class:"form-select" }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Student Engagement</label>
+                                        {{ feedback_form.student_engagement|add_class:"form-select" }}
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Suggestions</label>
+                                    {{ feedback_form.suggestions|add_class:"form-control" }}
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    Submit Feedback
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Quick Info -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Quick Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-users me-2"></i>
+                                <strong>Age Group:</strong> {{ material.age_group.name }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-clock me-2"></i>
+                                <strong>Duration:</strong> {{ material.duration_minutes }} minutes
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-book me-2"></i>
+                                <strong>Category:</strong> {{ material.get_category_display }}
+                            </li>
+                            <li>
+                                <i class="fas fa-user me-2"></i>
+                                <strong>Created by:</strong> {{ material.created_by.get_full_name }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Download Section -->
+                {% if material.attachment %}
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Downloads</h5>
+                            <a href="{{ material.attachment.url }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-download me-2"></i>Download Material
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Recent Feedback -->
+                {% if feedback %}
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Recent Feedback</h5>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for fb in feedback|slice:":5" %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong>{{ fb.teacher.get_full_name }}</strong>
+                                        <div>
+                                            {% for i in "12345"|make_list %}
+                                                <i class="fas fa-star {% if forloop.counter <= fb.rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <p class="mb-1">{{ fb.comment }}</p>
+                                    <small class="text-muted">{{ fb.created_at|date:"F j, Y" }}</small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

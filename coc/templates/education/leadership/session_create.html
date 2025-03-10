@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="container py-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:mentorship_session_list' %}">Christian Mentorship</a>
+                </li>
+                <li class="breadcrumb-item active">Create Session</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">Create Mentorship Session</h3>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                            {% csrf_token %}
+
+                            <div class="row">
+                                <div class="col-md-8">
+                                    {{ form.topic|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.max_participants|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            {{ form.scripture_focus|as_crispy_field }}
+                            {{ form.description|as_crispy_field }}
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    {{ form.date|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.start_time|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.end_time|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            {{ form.study_materials|as_crispy_field }}
+
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Create Session
+                                </button>
+                                <a href="{% url 'education:mentorship_session_list' %}"
+                                   class="btn btn-outline-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Guidelines -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h4 class="mb-0"><i class="fas fa-info-circle"></i> Session Guidelines</h4>
+                    </div>
+                    <div class="card-body">
+                        <h5><i class="fas fa-lightbulb text-warning"></i> Tips for Creating Sessions</h5>
+                        <ul class="small text-muted mb-4">
+                            <li>Choose a clear, focused topic</li>
+                            <li>Select relevant Scripture passages</li>
+                            <li>Plan for interactive discussion</li>
+                            <li>Consider your target audience</li>
+                            <li>Allow time for prayer and reflection</li>
+                        </ul>
+
+                        <h5><i class="fas fa-clock text-info"></i> Time Management</h5>
+                        <ul class="small text-muted mb-4">
+                            <li>Sessions should be 60-90 minutes</li>
+                            <li>Include time for:</li>
+                            <ul>
+                                <li>Opening prayer (5 mins)</li>
+                                <li>Scripture reading (10 mins)</li>
+                                <li>Main teaching (30-40 mins)</li>
+                                <li>Discussion (20-25 mins)</li>
+                                <li>Closing prayer (5-10 mins)</li>
+                            </ul>
+                        </ul>
+
+                        <h5><i class="fas fa-file-alt text-success"></i> Study Materials</h5>
+                        <p class="small text-muted">
+                            Upload any relevant materials such as:
+                        </p>
+                        <ul class="small text-muted">
+                            <li>Study guides</li>
+                            <li>Scripture references</li>
+                            <li>Discussion questions</li>
+                            <li>Prayer points</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block extra_js %}
+        <script>
+            // Form validation
+            (function () {
+                'use strict';
+                window.addEventListener('load', function () {
+                    var forms = document.getElementsByClassName('needs-validation');
+                    Array.prototype.filter.call(forms, function (form) {
+                        form.addEventListener('submit', function (event) {
+                            if (form.checkValidity() === false) {
+                                event.preventDefault();
+                                event.stopPropagation();
+                            }
+                            form.classList.add('was-validated');
+                        }, false);
+                    });
+                }, false);
+            })();
+        </script>
+    {% endblock %}
+{% endblock %}

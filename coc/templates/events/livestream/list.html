@@ -1,0 +1,90 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h2>Live Streams</h2>
+                {% if request.user.is_staff %}
+                    <a href="{% url 'events:create_stream' %}" class="btn btn-primary">
+                        Create New Stream
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Live Streams -->
+        {% if live_streams %}
+            <div class="row mb-4">
+                <div class="col">
+                    <h4>Currently Live</h4>
+                    <div class="row">
+                        {% for stream in live_streams %}
+                            <div class="col-md-4 mb-4">
+                                <div class="card">
+                                    {% if stream.thumbnail %}
+                                        <img src="{{ stream.thumbnail.url }}" class="card-img-top"
+                                             alt="{{ stream.title }}">
+                                    {% endif %}
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ stream.title }}</h5>
+                                        <p class="card-text">{{ stream.description|truncatewords:20 }}</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="badge bg-danger">LIVE</span>
+                                            <small>{{ stream.viewers_count }} watching</small>
+                                        </div>
+                                        <a href="{% url 'education:stream_detail' stream.id %}"
+                                           class="btn btn-primary mt-3">
+                                            Watch Now
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Upcoming Streams -->
+        <div class="row">
+            <div class="col">
+                <h4>Upcoming Streams</h4>
+                {% if upcoming_streams %}
+                    <div class="row">
+                        {% for stream in upcoming_streams %}
+                            <div class="col-md-4 mb-4">
+                                <div class="card">
+                                    {% if stream.thumbnail %}
+                                        <img src="{{ stream.thumbnail.url }}" class="card-img-top"
+                                             alt="{{ stream.title }}">
+                                    {% endif %}
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ stream.title }}</h5>
+                                        <p class="card-text">{{ stream.description|truncatewords:20 }}</p>
+                                        <p class="text-muted">
+                                            <i class="fas fa-calendar"></i>
+                                            {{ stream.scheduled_time|date:"F j, Y" }}
+                                            <br>
+                                            <i class="fas fa-clock"></i>
+                                            {{ stream.scheduled_time|date:"g:i A" }}
+                                        </p>
+                                        <a href="{% url 'education:stream_detail' stream.id %}"
+                                           class="btn btn-outline-primary">
+                                            Set Reminder
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        No upcoming streams scheduled.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

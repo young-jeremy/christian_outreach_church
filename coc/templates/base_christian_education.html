@@ -1,0 +1,62 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/christian_education.css' %}">
+    <!-- Font Awesome 6 CDN -->
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Bootstrap Icons (optional) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Your custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/christian_education.css' %}">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% endblock %}
+
+{% block sidebar %}
+    <div class="sidebar">
+        <h5 class="sidebar-heading">Christian Education</h5>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'education:education_level_list' %}">
+                    <i class="fas fa-layer-group"></i> Education Levels
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'education:course_list' %}">
+                    <i class="fas fa-book"></i> Courses
+                </a>
+            </li>
+            {% if user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'education:enrollment_list' %}">
+                        <i class="fas fa-user-graduate"></i> My Enrollments
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'education:student_dashboard' %}">
+                        <i class="fas fa-tachometer-alt"></i> Student Dashboard
+                    </a>
+                </li>
+            {% endif %}
+            {% if perms.drmando.view_instructor_dashboard %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'education:instructor_dashboard' %}">
+                        <i class="fas fa-chalkboard-teacher"></i> Instructor Dashboard
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/christian_education.js' %}"></script>
+{% endblock %}

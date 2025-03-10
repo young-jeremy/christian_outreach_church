@@ -1,0 +1,96 @@
+{% extends 'base_christian_education.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3>{{ course.title }}</h3>
+                <div>
+                    {% if perms.coc.change_christiancourse %}
+                        <a href="{% url 'education:course_edit' course.slug %}"
+                           class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                    {% endif %}
+                    {% if not enrollment %}
+                        <a href="{% url 'education:enroll' course.slug %}"
+                           class="btn btn-success">
+                            <i class="fas fa-user-plus"></i> Enroll
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                {% if course.image %}
+                    <img src="{{ course.image.url }}" class="img-fluid mb-3" alt="{{ course.title }}">
+                {% endif %}
+
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <h4>Description</h4>
+                        <p>{{ course.description }}</p>
+
+                        <h4>Objectives</h4>
+                        <p>{{ course.objectives }}</p>
+
+                        <h4>Prerequisites</h4>
+                        <p>{{ course.prerequisites|default:"None" }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>Course Details</h5>
+                                <ul class="list-unstyled">
+                                    <li><strong>Level:</strong> {{ course.level.name }}</li>
+                                    <li><strong>Category:</strong> {{ course.get_category_display }}</li>
+                                    <li><strong>Duration:</strong> {{ course.duration_weeks }} weeks</li>
+                                    <li><strong>Instructor:</strong> {{ course.instructor.get_full_name }}</li>
+                                </ul>
+                                {% if course.syllabus %}
+                                    <a href="{{ course.syllabus.url }}" class="btn btn-outline-primary btn-block">
+                                        <i class="fas fa-download"></i> Download Syllabus
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if enrollment %}
+                    <div class="alert alert-info">
+                        <h5>Your Enrollment Status</h5>
+                        <p>Status: {{ enrollment.get_status_display }}</p>
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar"
+                                 style="width: {{ enrollment.progress }}%"
+                                 aria-valuenow="{{ enrollment.progress }}"
+                                 aria-valuemin="0" aria-valuemax="100">
+                                {{ enrollment.progress }}%
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <h4>Modules</h4>
+                <div class="list-group">
+                    {% for module in course.modules.all %}
+                        <a href="{% url 'education:module_detail' course.slug module.pk %}"
+                           class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ module.title }}</h5>
+                                {% if module.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </div>
+                            <p class="mb-1">{{ module.description|truncatewords:30 }}</p>
+                        </a>
+                    {% empty %}
+                        <p>No modules available for this course yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

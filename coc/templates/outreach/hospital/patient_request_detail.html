@@ -1,0 +1,152 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Patient Request Details{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'outreach:dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'outreach:request_list' %}">Patient Requests</a></li>
+                <li class="breadcrumb-item active">Request Details</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Request Information</h5>
+                        <span class="badge bg-light text-dark">
+                        {{ request.get_status_display }}
+                    </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Patient Name:</strong><br>
+                                    {{ request.patient_name }}</p>
+                                <p><strong>Room Number:</strong><br>
+                                    {{ request.room_number }}</p>
+                                <p><strong>Department:</strong><br>
+                                    {{ request.department.name }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Service Requested:</strong><br>
+                                    {{ request.service_requested.title }}</p>
+                                <p><strong>Priority:</strong><br>
+                                    <span class="badge bg-{{ request.priority }}">
+                                    {{ request.get_priority_display }}
+                                </span>
+                                </p>
+                                <p><strong>Preferred Time:</strong><br>
+                                    {% if request.preferred_time %}
+                                        {{ request.preferred_time|date:"M d, Y h:i A" }}
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        {% if request.special_notes %}
+                            <hr>
+                            <h6>Special Notes:</h6>
+                            <p class="mb-0">{{ request.special_notes|linebreaks }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if related_visits %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="card-title mb-0">Related Upcoming Visits</h5>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for visit in related_visits %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ visit.service.title }}</h6>
+                                            <p class="mb-1">
+                                                <i class="fas fa-calendar"></i>
+                                                {{ visit.date|date:"M d, Y h:i A" }}
+                                            </p>
+                                        </div>
+                                        <div class="text-end">
+                                            <small class="text-muted d-block">
+                                                {{ visit.volunteers.count }}
+                                                volunteer{{ visit.volunteers.count|pluralize }}
+                                            </small>
+                                            <a href="{% url 'outreach:visit_detail' visit.pk %}"
+                                               class="btn btn-sm btn-outline-primary">
+                                                View Details
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">Request Status</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item">
+                            <small class="text-muted">Created:</small><br>
+                            {{ request.created_at|date:"M d, Y h:i A" }}
+                        </div>
+                        {% if request.assigned_to %}
+                            <div class="list-group-item">
+                                <small class="text-muted">Assigned to:</small><br>
+                                {{ request.assigned_to.get_full_name }}
+                            </div>
+                        {% endif %}
+                        {% if request.completed_at %}
+                            <div class="list-group-item">
+                                <small class="text-muted">Completed:</small><br>
+                                {{ request.completed_at|date:"M d, Y h:i A" }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Actions</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% if can_handle_request and request.status == 'pending' %}
+                            <a href="{% url 'outreach:request_assign' request.pk %}"
+                               class="list-group-item list-group-item-action text-primary">
+                                <i class="fas fa-user-check me-2"></i>Assign to Me
+                            </a>
+                        {% endif %}
+
+                        {% if request.status == 'pending' %}
+                            <a href="{% url 'outreach:request_edit' request.pk %}"
+                               class="list-group-item list-group-item-action">
+                                <i class="fas fa-edit me-2"></i>Edit Request
+                            </a>
+                        {% endif %}
+
+                        <a href="{% url 'outreach:visit_create' %}?request={{ request.pk }}"
+                           class="list-group-item list-group-item-action">
+                            <i class="fas fa-calendar-plus me-2"></i>Schedule Visit
+                        </a>
+
+                        <a href="{% url 'outreach:dashboard' %}"
+                           class="list-group-item list-group-item-action">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

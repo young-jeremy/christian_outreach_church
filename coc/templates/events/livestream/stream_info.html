@@ -1,0 +1,84 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h4 class="mb-0">Stream Information</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success">
+                            <h5>Stream Created Successfully!</h5>
+                            <p>Your stream "{{ stream.title }}" has been created.</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <h5>Stream Key (Keep this private)</h5>
+                            <div class="input-group">
+                                <input type="text" class="form-control" value="{{ stream.stream_key }}" id="streamKey"
+                                       readonly>
+                                <button class="btn btn-outline-secondary" type="button"
+                                        onclick="copyToClipboard('streamKey')">
+                                    Copy
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h5>RTMP URL</h5>
+                            <div class="input-group">
+                                <input type="text" class="form-control" value="{{ rtmp_url }}" id="rtmpUrl" readonly>
+                                <button class="btn btn-outline-secondary" type="button"
+                                        onclick="copyToClipboard('rtmpUrl')">
+                                    Copy
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <h5>Recommended Settings:</h5>
+                            <ul class="mb-0">
+                                <li>Video Codec: H.264</li>
+                                <li>Audio Codec: AAC</li>
+                                <li>Bitrate: 2500-4000 Kbps</li>
+                                <li>Resolution: 1920x1080 or 1280x720</li>
+                                <li>Framerate: 30 fps</li>
+                                <li>Keyframe Interval: 2 seconds</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'education:stream_detail' stream.id %}" class="btn btn-primary">
+                                Go to Stream Page
+                            </a>
+                            <a href="{% url 'education:stream_list' %}" class="btn btn-outline-secondary">
+                                Back to Streams
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            element.select();
+            document.execCommand('copy');
+
+            // Show feedback
+            const button = element.nextElementSibling;
+            const originalText = button.innerText;
+            button.innerText = 'Copied!';
+            setTimeout(() => {
+                button.innerText = originalText;
+            }, 2000);
+        }
+    </script>
+{% endblock %}

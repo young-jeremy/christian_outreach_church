@@ -1,0 +1,104 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Prison Ministry Dashboard{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <h1 class="mb-4">Prison Ministry Dashboard</h1>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">My Applications</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for application in applications %}
+                            <div class="list-group-item">
+                                <h6 class="mb-1">{{ application.facility.name }}</h6>
+                                <p class="mb-1">
+                                    Status:
+                                    <span class="badge bg-{{ application.status }}">
+                                {{ application.get_status_display }}
+                            </span>
+                                </p>
+                                <small class="text-muted">
+                                    Submitted on {{ application.created_at|date }}
+                                </small>
+                            </div>
+                        {% empty %}
+                            <div class="list-group-item">
+                                <p class="mb-0">No applications submitted yet.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Completed Visits</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Program</th>
+                                <th>Facility</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for visit in completed_visits %}
+                                <tr>
+                                    <td>{{ visit.date|date }}</td>
+                                    <td>{{ visit.program.title }}</td>
+                                    <td>{{ visit.facility.name }}</td>
+                                    <td>
+                                        {% if not visit.visitreport %}
+                                            <a href="{% url 'submit_visit_report' visit.id %}"
+                                               class="btn btn-sm btn-outline-primary">
+                                                Submit Report
+                                            </a>
+                                        {% else %}
+                                            <span class="badge bg-success">Report Submitted</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No completed visits yet.</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Upcoming Visits</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for visit in upcoming_visits %}
+                            <div class="list-group-item">
+                                <h6 class="mb-1">{{ visit.program.title }}</h6>
+                                <p class="mb-1">{{ visit.facility.name }}</p>
+                                <p class="mb-1">
+                                    <i class="fas fa-calendar"></i>
+                                    {{ visit.date|date:"M d, Y H:i" }}
+                                </p>
+                            </div>
+                        {% empty %}
+                            <div class="list-group-item">
+                                <p class="mb-0">No upcoming visits scheduled.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

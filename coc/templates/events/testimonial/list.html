@@ -1,0 +1,99 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2>Testimonial Videos</h2>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'events:testimonial_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Share Your Testimony
+                </a>
+            </div>
+        </div>
+
+        <!-- Featured Testimonials -->
+        {% if featured_testimonials %}
+            <div class="row mb-5">
+                <div class="col-12">
+                    <h4 class="mb-3">Featured Testimonies</h4>
+                </div>
+                {% for testimonial in featured_testimonials %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="position-relative">
+                                {% if testimonial.thumbnail %}
+                                    <img src="{{ testimonial.thumbnail.url }}" class="card-img-top"
+                                         alt="{{ testimonial.title }}"
+                                         style="height: 250px; object-fit: cover;">
+                                {% endif %}
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    <span class="badge bg-primary">Featured</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <h4 class="card-title">{{ testimonial.title }}</h4>
+                                <h6 class="text-muted">{{ testimonial.person_name }}</h6>
+                                <p class="card-text">{{ testimonial.description|truncatewords:30 }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar"></i> {{ testimonial.recorded_date|date }}
+                                        <br>
+                                        <i class="fas fa-eye"></i> {{ testimonial.view_count }} views
+                                    </small>
+                                    <a href="{% url 'events:testimonial_detail' testimonial.slug %}"
+                                       class="btn btn-primary">Watch Now</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- All Testimonials -->
+        <div class="row">
+            {% for testimonial in testimonials %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="position-relative">
+                            {% if testimonial.thumbnail %}
+                                <img src="{{ testimonial.thumbnail.url }}" class="card-img-top"
+                                     alt="{{ testimonial.title }}"
+                                     style="height: 200px; object-fit: cover;">
+                            {% endif %}
+                            <a href="{% url 'events:testimonial_detail' testimonial.slug %}"
+                               class="position-absolute top-50 start-50 translate-middle">
+                                <i class="fas fa-play-circle fa-3x text-white"></i>
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ testimonial.title }}</h5>
+                            <h6 class="text-muted">{{ testimonial.person_name }}</h6>
+                            <p class="card-text">{{ testimonial.description|truncatewords:20 }}</p>
+                        </div>
+                        <div class="card-footer text-muted">
+                            <small>
+                                <i class="fas fa-calendar"></i> {{ testimonial.recorded_date|date }}
+                                <br>
+                                <i class="fas fa-eye"></i> {{ testimonial.view_count }} views
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col">
+                    <div class="alert alert-info">
+                        No testimonial videos available yet.
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% include 'includes/pagination.html' with page_obj=testimonials %}
+    </div>
+{% endblock %}

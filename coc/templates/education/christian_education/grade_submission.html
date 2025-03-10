@@ -1,0 +1,87 @@
+{% extends 'base_christian_education.html' %}
+{% load crispy_forms_filters %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:course_detail' submission.assignment.module.course.slug %}">
+                        {{ submission.assignment.module.course.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:module_detail' submission.assignment.module.course.slug submission.assignment.module.pk %}">
+                        {{ submission.assignment.module.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:assignment_detail' submission.assignment.pk %}">
+                        {{ submission.assignment.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">Grade Submission</li>
+            </ol>
+        </nav>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>Grade Assignment Submission</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h4>Student Submission</h4>
+                        <div class="submission-content mb-4">
+                            {{ submission.content|linebreaks }}
+                        </div>
+
+                        {% if submission.file %}
+                            <p>
+                                <a href="{{ submission.file.url }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-download"></i> Download Submission File
+                                </a>
+                            </p>
+                        {% endif %}
+
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ form|crispy }}
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Grade
+                            </button>
+                            <a href="{% url 'education:submission_detail' submission.pk %}"
+                               class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </form>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5>Assignment Details</h5>
+                                <ul class="list-unstyled">
+                                    <li><strong>Student:</strong> {{ submission.student.get_full_name }}</li>
+                                    <li><strong>Submitted:</strong> {{ submission.submission_date }}</li>
+                                    <li><strong>Maximum Points:</strong> {{ submission.assignment.points }}</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {% if submission.assignment.rubric %}
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5>Grading Rubric</h5>
+                                    <div class="rubric-content">
+                                        {{ submission.assignment.rubric|linebreaks }}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

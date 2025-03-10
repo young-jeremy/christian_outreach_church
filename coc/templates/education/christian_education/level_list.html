@@ -1,0 +1,33 @@
+{% extends 'base_christian_education.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Education Levels</h2>
+            {% if perms.coc.add_christianeducationlevel %}
+                <a href="{% url 'education:education_level_add' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Level
+                </a>
+            {% endif %}
+        </div>
+
+        <div class="row">
+            {% for level in levels %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ level.name }}</h5>
+                            <p class="card-text">{{ level.description|truncatewords:30 }}</p>
+                            <a href="{% url 'education:education_level_detail' level.pk %}"
+                               class="btn btn-outline-primary">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <p class="text-center">No education levels available.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Service Dashboard{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <h1 class="mb-4">Service Dashboard</h1>
+
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Service Hours</h5>
+                        <h2 class="display-4">{{ total_hours }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        Recent Service Hours
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Project</th>
+                                    <th>Hours</th>
+                                    <th>Status</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for entry in user_hours %}
+                                    <tr>
+                                        <td>{{ entry.date }}</td>
+                                        <td>
+                                            <a href="{% url 'service_project_detail' entry.project.slug %}">
+                                                {{ entry.project.title }}
+                                            </a>
+                                        </td>
+                                        <td>{{ entry.hours }}</td>
+                                        <td>
+                                            {% if entry.verified_by %}
+                                                <span class="badge bg-success">Verified</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No service hours logged yet.</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Recent Projects
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for project in recent_projects %}
+                            <a href="{% url 'service_project_detail' project.slug %}"
+                               class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ project.title }}</h6>
+                                    <small class="text-muted">{{ project.get_status_display }}</small>
+                                </div>
+                                <small class="text-muted">{{ project.organization }}</small>
+                            </a>
+                        {% empty %}
+                            <div class="list-group-item">No projects yet.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

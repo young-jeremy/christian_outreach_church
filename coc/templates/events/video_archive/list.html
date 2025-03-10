@@ -1,0 +1,104 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container py-4">
+        <!-- Search Bar -->
+        <div class="row mb-4">
+            <div class="col">
+                <form action="{% url 'events:search_videos' %}" method="get" class="d-flex">
+                    <input type="search" name="q" class="form-control me-2" placeholder="Search videos...">
+                    <button type="submit" class="btn btn-outline-primary">Search</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Featured Videos -->
+        {% if featured_videos %}
+            <div class="row mb-4">
+                <div class="col">
+                    <h4>Featured Videos</h4>
+                    <div class="row">
+                        {% for video in featured_videos %}
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    {% if video.thumbnail %}
+                                        <img src="{{ video.thumbnail.url }}" class="card-img-top"
+                                             alt="{{ video.title }}">
+                                    {% endif %}
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ video.title }}</h5>
+                                        <p class="card-text">{{ video.description|truncatewords:20 }}</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">{{ video.upload_date|date }}</small>
+                                            <small class="text-muted">{{ video.view_count }} views</small>
+                                        </div>
+                                        <a href="{% url 'events:video_detail' video.slug %}"
+                                           class="btn btn-primary mt-2">
+                                            Watch Video
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Categories -->
+        <div class="row mb-4">
+            <div class="col">
+                <h4>Categories</h4>
+                <div class="row">
+                    {% for category in categories %}
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'events:category_videos' category.slug %}"
+                               class="text-decoration-none">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ category.name }}</h5>
+                                        <p class="card-text text-muted">
+                                            {{ category.videos.count }} videos
+                                        </p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Videos -->
+        <div class="row">
+            <div class="col">
+                <h4>Recent Videos</h4>
+                <div class="row">
+                    {% for video in recent_videos %}
+                        <div class="col-md-3 mb-4">
+                            <div class="card h-100">
+                                {% if video.thumbnail %}
+                                    <img src="{{ video.thumbnail.url }}" class="card-img-top" alt="{{ video.title }}">
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ video.title }}</h5>
+                                    <p class="card-text">{{ video.description|truncatewords:15 }}</p>
+                                    <div class="text-muted small">
+                                        <div>Category: {{ video.category.name }}</div>
+                                        <div>Uploaded: {{ video.upload_date|timesince }} ago</div>
+                                        <div>Views: {{ video.view_count }}</div>
+                                    </div>
+                                    <a href="{% url 'events:video_detail' video.slug %}"
+                                       class="btn btn-outline-primary btn-sm mt-2">
+                                        Watch
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,5 +1,221 @@
+from .models import *
 from django import forms
-from .models import Mission, Project, ProjectUpdate
+
+from .models import *
+from .models import (DiscipleshipTrack, DiscipleshipModule, DiscipleshipLesson,
+                     MentorshipRelationship, DiscipleshipProgress, MentorshipMeeting)
+from .models import (HospitalVolunteer, VisitSchedule, PatientRequest,
+                     HospitalVisitReport)
+from .models import (VolunteerApplication, PrisonVisit, PrisonVisitReport,
+                     MinistryResource)
+
+
+class HospitalVolunteerForm(forms.ModelForm):
+    class Meta:
+        model = HospitalVolunteer
+        fields = ['hospitals', 'services', 'availability', 'emergency_contact',
+                  'emergency_phone', 'medical_training']
+        widgets = {
+            'hospitals': forms.CheckboxSelectMultiple(),
+            'services': forms.CheckboxSelectMultiple(),
+            'availability': forms.Textarea(attrs={'rows': 4}),
+            'medical_training': forms.Textarea(attrs={'rows': 4}),
+        }
+
+
+class VisitScheduleForm(forms.ModelForm):
+    class Meta:
+        model = VisitSchedule
+        fields = ['hospital', 'department', 'service', 'date', 'volunteers', 'notes']
+        widgets = {
+            'date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'volunteers': forms.CheckboxSelectMultiple(),
+            'notes': forms.Textarea(attrs={'rows': 4}),
+        }
+
+
+class PatientRequestForm(forms.ModelForm):
+    class Meta:
+        model = PatientRequest
+        fields = ['patient_name', 'room_number', 'department', 'service_requested',
+                  'priority', 'special_notes', 'preferred_time']
+        widgets = {
+            'preferred_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'special_notes': forms.Textarea(attrs={'rows': 4}),
+        }
+
+
+class PrisonVisitReportForm(forms.ModelForm):
+    class Meta:
+        model = PrisonVisitReport
+        fields = ['inmates_attended', 'activities_conducted', 'prayer_requests',
+                  'testimonies', 'challenges', 'follow_up_needed', 'resources_used']
+        widgets = {
+            'activities_conducted': forms.Textarea(attrs={'rows': 4}),
+            'prayer_requests': forms.Textarea(attrs={'rows': 4}),
+            'testimonies': forms.Textarea(attrs={'rows': 4}),
+            'challenges': forms.Textarea(attrs={'rows': 4}),
+            'follow_up_needed': forms.Textarea(attrs={'rows': 4}),
+            'resources_used': forms.Textarea(attrs={'rows': 4}),
+        }
+
+
+class VolunteerApplicationForm(forms.ModelForm):
+    class Meta:
+        model = VolunteerApplication
+        fields = ['facility', 'programs', 'experience', 'motivation',
+                  'availability', 'references', 'background_check_consent']
+        widgets = {
+            'programs': forms.CheckboxSelectMultiple(),
+            'experience': forms.Textarea(attrs={'rows': 4}),
+            'motivation': forms.Textarea(attrs={'rows': 4}),
+            'availability': forms.Textarea(attrs={'rows': 4}),
+            'references': forms.Textarea(attrs={'rows': 4}),
+        }
+
+
+class PrisonVisitForm(forms.ModelForm):
+    class Meta:
+        model = PrisonVisit
+        fields = ['facility', 'program', 'date', 'volunteers', 'notes']
+        widgets = {
+            'date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'volunteers': forms.CheckboxSelectMultiple(),
+            'notes': forms.Textarea(attrs={'rows': 4}),
+        }
+
+
+class HospitalVisitReportForm(forms.ModelForm):
+    class Meta:
+        model = HospitalVisitReport
+        fields = ['patients_visited', 'prayer_requests', 'testimonies',
+                  'challenges', 'follow_up_needed']
+        widgets = {
+            'prayer_requests': forms.Textarea(attrs={'rows': 4}),
+            'testimonies': forms.Textarea(attrs={'rows': 4}),
+            'challenges': forms.Textarea(attrs={'rows': 4}),
+            'follow_up_needed': forms.Textarea(attrs={'rows': 4}),
+        }
+
+
+class ResourceRequestForm(forms.ModelForm):
+    class Meta:
+        model = MinistryResource
+        fields = ['title', 'resource_type', 'description', 'quantity',
+                  'facility', 'program', 'notes']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+            'notes': forms.Textarea(attrs={'rows': 4}),
+        }
+
+
+class DiscipleshipTrackForm(forms.ModelForm):
+    class Meta:
+        model = DiscipleshipTrack
+        fields = ['title', 'description', 'level', 'duration_weeks',
+                  'prerequisites', 'featured_image']
+
+
+class DiscipleshipModuleForm(forms.ModelForm):
+    class Meta:
+        model = DiscipleshipModule
+        fields = ['title', 'description', 'order', 'learning_objectives',
+                  'estimated_hours']
+
+
+class DiscipleshipLessonForm(forms.ModelForm):
+    class Meta:
+        model = DiscipleshipLesson
+        fields = ['title', 'content', 'scripture_references',
+                  'reflection_questions', 'order', 'video_url',
+                  'additional_resources']
+
+
+class MentorshipRequestForm(forms.ModelForm):
+    class Meta:
+        model = MentorshipRelationship
+        fields = ['track', 'goals', 'meeting_frequency']
+        widgets = {
+            'goals': forms.Textarea(attrs={'rows': 4}),
+        }
+
+
+class LessonReflectionForm(forms.ModelForm):
+    class Meta:
+        model = DiscipleshipProgress
+        fields = ['reflection']
+        widgets = {
+            'reflection': forms.Textarea(attrs={'rows': 6}),
+        }
+
+
+class MentorshipMeetingForm(forms.ModelForm):
+    class Meta:
+        model = MentorshipMeeting
+        fields = ['date', 'topics_discussed', 'action_items',
+                  'next_meeting_date', 'notes']
+        widgets = {
+            'date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'next_meeting_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
+
+
+class CharityCampaignForm(forms.ModelForm):
+    class Meta:
+        model = CharityCampaign
+        fields = ['title', 'description', 'cause', 'target_amount', 'start_date',
+                  'end_date', 'featured_image', 'beneficiary', 'contact_person',
+                  'contact_email']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+
+class DonationForm(forms.ModelForm):
+    class Meta:
+        model = Donation
+        fields = ['amount', 'message', 'anonymous']
+        widgets = {
+            'amount': forms.NumberInput(attrs={'min': '1', 'step': '0.01'}),
+        }
+
+
+class CharityEventForm(forms.ModelForm):
+    class Meta:
+        model = CharityEvent
+        fields = ['title', 'description', 'date', 'location', 'max_participants']
+        widgets = {
+            'date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
+
+
+class ServiceProjectForm(forms.ModelForm):
+    class Meta:
+        model = ServiceProject
+        fields = ['title', 'category', 'description', 'location', 'organization',
+                  'contact_person', 'contact_email', 'start_date', 'end_date',
+                  'volunteers_needed', 'skills_required', 'featured_image']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+
+class ServiceHoursForm(forms.ModelForm):
+    class Meta:
+        model = ServiceHours
+        fields = ['project', 'date', 'hours', 'description']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+
+class ServiceReflectionForm(forms.ModelForm):
+    class Meta:
+        model = ServiceReflection
+        fields = ['reflection', 'impact', 'learning', 'images']
+
 
 
 class MissionForm(forms.ModelForm):

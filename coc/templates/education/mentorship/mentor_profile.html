@@ -1,0 +1,154 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:mentorship_session_list' %}">Mentorship</a>
+                </li>
+                <li class="breadcrumb-item active">Mentor Profile</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 text-center mb-4">
+                                {% if mentor.profile_image %}
+                                    <img src="{{ mentor.profile_image.url }}"
+                                         class="rounded-circle img-fluid mb-3"
+                                         style="max-width: 200px; height: auto;"
+                                         alt="{{ mentor.user.get_full_name }}">
+                                {% endif %}
+                                <h4>{{ mentor.user.get_full_name }}</h4>
+                                <p class="text-muted">{{ mentor.ministry_focus }}</p>
+                                {% if mentor.accepting_mentees %}
+                                    <a href="{% url 'education:apply_mentorship' mentor.id %}"
+                                       class="btn btn-primary">
+                                        <i class="fas fa-user-plus"></i> Apply for Mentorship
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-secondary" disabled>
+                                        Not Accepting Mentees
+                                    </button>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <h5>About</h5>
+                                <p>{{ mentor.spiritual_journey }}</p>
+
+                                <h5>Experience</h5>
+                                <p>{{ mentor.years_in_ministry }} years in ministry</p>
+
+                                <h5>Areas of Focus</h5>
+                                <ul>
+                                    {% for focus in mentor.ministry_focuses.all %}
+                                        <li>{{ focus.name }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upcoming Sessions -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h4>Upcoming Sessions by {{ mentor.user.get_full_name }}</h4>
+                    </div>
+                    <div class="card-body">
+                        {% for session in upcoming_sessions %}
+                            <div class="session-item mb-3">
+                                <h5>{{ session.topic }}</h5>
+                                <p class="text-muted mb-2">
+                                    <i class="fas fa-bible"></i> {{ session.scripture_focus }}
+                                    <br>
+                                    <i class="fas fa-calendar"></i> {{ session.date|date:"F j, Y" }}
+                                    <br>
+                                    <i class="fas fa-clock"></i> {{ session.start_time|time:"g:i A" }}
+                                </p>
+                                <p>{{ session.description|truncatewords:30 }}</p>
+                                {% if not session.is_full %}
+                                    <form method="post"
+                                          action="{% url 'education:register_mentorship_session' session.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-primary btn-sm">
+                                            Register for Session
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <span class="badge bg-warning">Session Full</span>
+                                {% endif %}
+                            </div>
+                        {% empty %}
+                            <p class="text-muted">No upcoming sessions scheduled.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Testimonials -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Mentee Testimonials</h4>
+                    </div>
+                    <div class="card-body">
+                        {% for feedback in testimonials %}
+                            <div class="testimonial-item mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="mb-0">{{ feedback.session.topic }}</h6>
+                                        <small class="text-muted">
+                                            {{ feedback.created_at|date:"F Y" }}
+                                        </small>
+                                    </div>
+                                    <div class="text-warning">
+                                        {% for i in "12345"|make_list %}
+                                            {% if forloop.counter <= feedback.spiritual_growth_rating %}
+                                                <i class="fas fa-star"></i>
+                                            {% else %}
+                                                <i class="far fa-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <p class="mt-2 mb-0">{{ feedback.feedback|truncatewords:30 }}</p>
+                            </div>
+                        {% empty %}
+                            <p class="text-muted">No testimonials yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Contact Information</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>
+                            <i class="fas fa-envelope"></i>
+                            <a href="mailto:{{ mentor.user.email }}">{{ mentor.user.email }}</a>
+                        </p>
+                        {% if mentor.office_hours %}
+                            <p>
+                                <i class="fas fa-clock"></i>
+                                Available: {{ mentor.office_hours }}
+                            </p>
+                        {% endif %}
+                        <hr>
+                        <p class="small text-muted">
+                            Please note that response times may vary. For urgent matters,
+                            please contact the church office directly.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

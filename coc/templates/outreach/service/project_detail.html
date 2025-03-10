@@ -1,0 +1,90 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}{{ project.title }} - Service Project{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row">
+            <div class="col-md-8">
+                {% if project.featured_image %}
+                    <img src="{{ project.featured_image.url }}" class="img-fluid rounded mb-4"
+                         alt="{{ project.title }}">
+                {% endif %}
+
+                <h1 class="mb-3">{{ project.title }}</h1>
+
+                <div class="mb-4">
+                    <span class="badge bg-{{ project.status }}">{{ project.get_status_display }}</span>
+                    <span class="ms-2"><i class="fas fa-map-marker-alt"></i> {{ project.location }}</span>
+                    <span class="ms-2"><i
+                            class="fas fa-users"></i> {{ project.volunteers_needed }} volunteers needed</span>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">About this Project</h5>
+                        <p class="card-text">{{ project.description }}</p>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Skills Required</h5>
+                        <p class="card-text">{{ project.skills_required|linebreaks }}</p>
+                    </div>
+                </div>
+
+                {% if user.is_authenticated %}
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start mb-4">
+                        <a href="{% url 'outreach:log_service_hours' project.slug %}" class="btn btn-primary">
+                            <i class="fas fa-clock"></i> Log Hours
+                        </a>
+                        <a href="{% url 'outreach:submit_reflection' project.slug %}" class="btn btn-outline-primary">
+                            <i class="fas fa-pen"></i> Submit Reflection
+                        </a>
+                    </div>
+
+                    {% if user_hours %}
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                Your Service Hours
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    {% for entry in user_hours %}
+                                        <li class="list-group-item">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-0">{{ entry.date }}</h6>
+                                                    <small class="text-muted">{{ entry.description }}</small>
+                                                </div>
+                                                <span class="badge bg-primary rounded-pill">{{ entry.hours }} hours</span>
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Organization Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Organization:</strong> {{ project.organization }}</p>
+                        <p><strong>Contact Person:</strong> {{ project.contact_person }}</p>
+                        <p><strong>Email:</strong> {{ project.contact_email }}</p>
+                        <p><strong>Dates:</strong><br>
+                            Start: {{ project.start_date }}<br>
+                            {% if project.end_date %}End: {{ project.end_date }}{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

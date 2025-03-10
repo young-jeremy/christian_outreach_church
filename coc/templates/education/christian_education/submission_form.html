@@ -1,0 +1,71 @@
+{% extends 'base_christian_education.html' %}
+{% load crispy_forms_filters %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:course_detail' assignment.module.course.slug %}">
+                        {{ assignment.module.course.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:module_detail' assignment.module.course.slug assignment.module.pk %}">
+                        {{ assignment.module.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:assignment_detail' assignment.pk %}">
+                        {{ assignment.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">Submit Assignment</li>
+            </ol>
+        </nav>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>Submit Assignment: {{ assignment.title }}</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {{ form|crispy }}
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Submit Assignment
+                            </button>
+                            <a href="{% url 'education:assignment_detail' assignment.pk %}"
+                               class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </form>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>Assignment Details</h5>
+                                <ul class="list-unstyled">
+                                    <li><strong>Due Date:</strong> {{ assignment.due_date }}</li>
+                                    <li><strong>Points:</strong> {{ assignment.points }}</li>
+                                    <li><strong>Type:</strong> {{ assignment.get_assignment_type_display }}</li>
+                                </ul>
+                                <hr>
+                                <h5>Submission Guidelines</h5>
+                                <ul class="small">
+                                    <li>Review all instructions carefully</li>
+                                    <li>Check file format requirements</li>
+                                    <li>Ensure all questions are answered</li>
+                                    <li>Proofread your work</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

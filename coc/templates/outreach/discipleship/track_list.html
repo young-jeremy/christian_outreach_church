@@ -1,0 +1,44 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Discipleship Tracks{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="h2">Discipleship Training Tracks</h1>
+                <p class="lead">Choose a discipleship track to begin your spiritual journey</p>
+            </div>
+        </div>
+
+        <div class="row">
+            {% for track in tracks %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        {% if track.featured_image %}
+                            <img src="{{ track.featured_image.url }}" class="card-img-top" alt="{{ track.title }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <span class="badge bg-primary">{{ track.get_level_display }}</span>
+                                <span class="ms-2 text-muted">{{ track.duration_weeks }} weeks</span>
+                            </div>
+                            <h5 class="card-title">{{ track.title }}</h5>
+                            <p class="card-text">{{ track.description|truncatewords:30 }}</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{% url 'outreach:track_detail' track.slug %}" class="btn btn-primary">Learn
+                                More</a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col">
+                    <div class="alert alert-info">
+                        No active discipleship tracks available at this time.
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

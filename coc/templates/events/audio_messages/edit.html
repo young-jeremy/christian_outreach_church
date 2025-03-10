@@ -1,0 +1,115 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'events:audio_message_list' %}">Audio Messages</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'events:audio_message_detail' message.slug %}">{{ message.title }}</a>
+                        </li>
+                        <li class="breadcrumb-item active">Edit</li>
+                    </ol>
+                </nav>
+
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h4 class="mb-0">Edit Audio Message</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data" id="audioMessageForm">
+                            {% csrf_token %}
+                            {{ form|crispy }}
+
+                            <!-- Current Audio Preview -->
+                            <div class="mb-3">
+                                <h5>Current Audio</h5>
+                                <audio controls class="w-100">
+                                    <source src="{{ message.audio_file.url }}" type="audio/mpeg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </div>
+
+                            <!-- New Audio Preview -->
+                            <div class="preview-container mb-3" id="audioPreview" style="display: none;">
+                                <h5>New Audio Preview</h5>
+                                <audio controls class="w-100">
+                                    <source src="" type="audio/mpeg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                                <div class="text-muted mt-2">
+                                    <small>Duration: <span id="audioDuration">--:--</span></small>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary" id="submitButton">
+                                    Update Message
+                                </button>
+                                <a href="{% url 'events:audio_message_detail' message.slug %}"
+                                   class="btn btn-outline-secondary">
+                                    Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // Audio preview and duration calculation
+        document.querySelector('input[name="audio_file"]').addEventListener('change', function (e) {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                const audio = document.querySelector('#audioPreview audio');
+                const container = document.querySelector('#audioPreview');
+                const durationDisplay = document.querySelector('#audioDuration');
+
+                audio.src = URL.createObjectURL(file);
+                container.style.display = 'block';
+
+                audio.addEventListener('loadedmetadata', function () {
+                    const minutes = Math.floor(audio.duration / 60);
+                    const seconds = Math.floor(audio.duration % 60);
+                    durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+                    const durationField = document.querySelector('input[name="duration"]');
+                    if (durationField) {
+                        durationField.value = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    }
+                });
+            }
+        });
+
+        // Form submission
+        document.getElementById('audioMessageForm').addEventListener('submit', function (e) {
+            const submitButton = document.getElementById('submitButton');
+            const audioFile = document.querySelector('input[name="audio_file"]');
+
+            if (audioFile.files.length > 0) {
+                const fileSize = audioFile.files[0].size / 1024 / 1024; // Convert to MB
+                if (fileSize > 100) {
+                    e.preventDefault();
+                    alert('File size exceeds 100MB limit. Please choose a smaller file.');
+                    return;
+                }
+            }
+
+            submitButton.disabled = true;
+            submitButton.innerHTML = `
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        Updating...
+    `;
+        });
+    </script>
+{% endblock extra_js %}

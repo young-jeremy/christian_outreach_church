@@ -1,0 +1,46 @@
+{% extends 'base_dashboard.html' %}
+{% load rest_framework %}
+
+{% block title %}Request a Mentor - {{ track.title }}{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <h1 class="mb-4">Request a Mentor</h1>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">{{ track.title }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            {% for field in form %}
+                                <div class="mb-3">
+                                    <label for="{{ field.id_for_label }}" class="form-label">
+                                        {{ field.label }}
+                                    </label>
+                                    {{ field.errors }}
+                                    {{ field|add_class:"form-control" }}
+                                    {% if field.help_text %}
+                                        <div class="form-text">{{ field.help_text }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    Submit Request
+                                </button>
+                                <a href="{% url 'track_detail' track.slug %}"
+                                   class="btn btn-outline-secondary">
+                                    Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

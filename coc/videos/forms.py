@@ -1,11 +1,10 @@
-from moviepy.editor import VideoFileClip
-from moviepy.editor import VideoFileClip
 from django import forms
+from moviepy.editor import VideoFileClip
+from moviepy.editor import VideoFileClip
 
 from .models import Category, Content, Playlist
 from .models import LiveStreamEvent
 from .models import ModerationRequest, ShortVideo, Comments
-from .models import Video, Comment
 
 
 class CategoryForm(forms.ModelForm):
@@ -25,7 +24,7 @@ class VideoForm(forms.ModelForm):
 
     class Meta:
         model = Content
-        fields = ['title', 'description', 'category', 'thumbnail', 'keywords', 'privacy',]
+        fields = ['title', 'description', 'category', 'thumbnail', 'keywords', 'privacy']
 
 
 class VideoSearchForm(forms.Form):

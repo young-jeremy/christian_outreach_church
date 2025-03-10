@@ -1,0 +1,109 @@
+{% extends 'base_christian_education.html' %}
+
+{% block content %}
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:course_detail' module.course.slug %}">
+                        {{ module.course.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">{{ module.title }}</li>
+            </ol>
+        </nav>
+
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3>Module: {{ module.title }}</h3>
+                <div>
+                    {% if perms.coc.change_christianmodule %}
+                        <a href="{% url 'education:module_edit' module.course.slug module.pk %}"
+                           class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit Module
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h4>Description</h4>
+                        <p>{{ module.description }}</p>
+
+                        <h4>Content</h4>
+                        <div class="content-section">
+                            {{ module.content|linebreaks }}
+                        </div>
+
+                        <h4>Scripture References</h4>
+                        <div class="scripture-section">
+                            {{ module.scripture_references|linebreaks }}
+                        </div>
+
+                        <h4>Learning Activities</h4>
+                        <div class="activities-section">
+                            {{ module.learning_activities|linebreaks }}
+                        </div>
+
+                        <h4>Resources</h4>
+                        <div class="resources-section">
+                            {{ module.resources|linebreaks }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Assignments</h5>
+                                {% if perms.coc.add_christianassignment %}
+                                    <a href="{% url 'education:assignment_add' module.pk %}"
+                                       class="btn btn-sm btn-primary">
+                                        <i class="fas fa-plus"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="list-group list-group-flush">
+                                {% for assignment in module.assignments.all %}
+                                    <a href="{% url 'education:assignment_detail' assignment.pk %}"
+                                       class="list-group-item list-group-item-action">
+                                        {{ assignment.title }}
+                                        <span class="badge bg-info float-end">
+                                    {{ assignment.get_assignment_type_display }}
+                                </span>
+                                    </a>
+                                {% empty %}
+                                    <div class="list-group-item text-muted">No assignments yet</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Discussions</h5>
+                                {% if perms.coc.add_christiandiscussion %}
+                                    <a href="{% url 'education:discussion_add' module.pk %}"
+                                       class="btn btn-sm btn-primary">
+                                        <i class="fas fa-plus"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="list-group list-group-flush">
+                                {% for discussion in module.discussions.all %}
+                                    <a href="{% url 'education:discussion_detail' discussion.pk %}"
+                                       class="list-group-item list-group-item-action">
+                                        {{ discussion.title }}
+                                        <span class="badge bg-secondary float-end">
+                                    {{ discussion.posts.count }} posts
+                                </span>
+                                    </a>
+                                {% empty %}
+                                    <div class="list-group-item text-muted">No discussions yet</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

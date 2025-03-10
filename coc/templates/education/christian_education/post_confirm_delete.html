@@ -1,0 +1,48 @@
+{% extends 'base_christian_education.html' %}
+
+{% block content %}
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:discussion_detail' object.discussion.pk %}">
+                        {{ object.discussion.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">Delete Post</li>
+            </ol>
+        </nav>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>Delete Post</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <h4 class="alert-heading">Warning!</h4>
+                    <p>You are about to delete your post. This action cannot be undone.</p>
+                    <hr>
+                    <p class="mb-0">All replies to this post will also be deleted.</p>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5>Post Content:</h5>
+                        {{ object.content|linebreaks }}
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Confirm Delete
+                    </button>
+                    <a href="{% url 'education:discussion_detail' object.discussion.pk %}"
+                       class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

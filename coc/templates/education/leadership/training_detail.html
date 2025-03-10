@@ -1,0 +1,164 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block title %}{{ training.title }}{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'education:training_list' %}">Training Programs</a></li>
+                <li class="breadcrumb-item active">{{ training.title }}</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    {% if training.image %}
+                        <img src="{{ training.image.url }}" class="card-img-top training-header-image"
+                             alt="{{ training.title }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h1 class="card-title h2">{{ training.title }}</h1>
+                        <div class="mb-3">
+                            <span class="badge bg-primary">{{ training.get_category_display }}</span>
+                            <span class="badge bg-secondary">{{ training.get_level_display }}</span>
+                        </div>
+                        <p class="card-text">{{ training.description|linebreaks }}</p>
+
+                        <h5 class="mt-4">Learning Objectives</h5>
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                {{ training.learning_objectives|linebreaks }}
+                            </div>
+                        </div>
+
+                        {% if training.prerequisites %}
+                            <h5>Prerequisites</h5>
+                            <div class="card bg-light mb-4">
+                                <div class="card-body">
+                                    {{ training.prerequisites|linebreaks }}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <h5>Training Modules</h5>
+                        <div class="list-group">
+                            {% for module in training.modules.all %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between align-items-center">
+                                        <h6 class="mb-1">{{ module.title }}</h6>
+                                        <span class="badge bg-secondary">{{ module.sessions.count }} sessions</span>
+                                    </div>
+                                    <p class="mb-1 text-muted small">{{ module.description }}</p>
+
+                                    {% if enrollment and enrollment.status == 'active' %}
+                                        <div class="list-group mt-2">
+                                            {% for session in module.sessions.all %}
+                                                <a href="{% url 'education:session_detail' session.pk %}"
+                                                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                                    {{ session.title }}
+                                                    {% if session.completed %}
+                                                        <i class="fas fa-check-circle text-success"></i>
+                                                    {% else %}
+                                                        <i class="far fa-circle text-muted"></i>
+                                                    {% endif %}
+                                                </a>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Program Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-3">
+                                <i class="fas fa-clock me-2"></i>
+                                <strong>Duration:</strong> {{ training.duration_weeks }} weeks
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-users me-2"></i>
+                                <strong>Enrolled:</strong>
+                                {{ training.participantenrollment_set.count }}/{{ training.max_participants }}
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-user-tie me-2"></i>
+                                <strong>Mentor:</strong>
+                                {{ training.mentor.get_full_name }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                {% if not enrollment %}
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Join This Program</h5>
+                            <p class="card-text">Enhance your leadership skills through this comprehensive training
+                                program.</p>
+                            <a href="{% url 'education:enroll_training' training.slug %}"
+                               class="btn btn-primary w-100">
+                                <i class="fas fa-user-plus me-2"></i>Enroll Now
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Your Progress</h5>
+                            <div class="progress mb-3">
+                                <div class="progress-bar" role="progressbar"
+                                     style="width: {{ enrollment.progress }}%"
+                                     aria-valuenow="{{ enrollment.progress }}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    {{ enrollment.progress }}%
+                                </div>
+                            </div>
+                            <p class="text-muted">
+                                Status: <span class="badge bg-{{ enrollment.status }}">
+                            {{ enrollment.get_status_display }}
+                        </span>
+                            </p>
+                            {% if enrollment.status == 'active' %}
+                                <a href="#modules" class="btn btn-primary w-100">
+                                    <i class="fas fa-book-reader me-2"></i>Continue Training
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if training.syllabus %}
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Resources</h5>
+                            <a href="{{ training.syllabus.url }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-file-pdf me-2"></i>Download Syllabus
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .training-header-image {
+            height: 300px;
+            object-fit: cover;
+        }
+    </style>
+{% endblock %}

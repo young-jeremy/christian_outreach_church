@@ -1,0 +1,105 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Mentorship Dashboard{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <h1 class="mb-4">Mentorship Dashboard</h1>
+
+        <div class="row">
+            {% if my_mentorships %}
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">My Mentors</h5>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for relationship in my_mentorships %}
+                                <div class="list-group-item">
+                                    <h6 class="mb-1">{{ relationship.mentor.get_full_name }}</h6>
+                                    <p class="mb-1">Track: {{ relationship.track.title }}</p>
+                                    <small class="text-muted">Since {{ relationship.start_date }}</small>
+                                    <div class="mt-2">
+                                        <a href="{% url 'schedule_meeting' relationship.id %}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Schedule Meeting
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if my_mentees %}
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">My Mentees</h5>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for relationship in my_mentees %}
+                                <div class="list-group-item">
+                                    <h6 class="mb-1">{{ relationship.mentee.get_full_name }}</h6>
+                                    <p class="mb-1">Track: {{ relationship.track.title }}</p>
+                                    <small class="text-muted">Since {{ relationship.start_date }}</small>
+                                    <div class="mt-2">
+                                        <a href="{% url 'schedule_meeting' relationship.id %}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Schedule Meeting
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Upcoming Meetings</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>With</th>
+                                    <th>Topics</th>
+                                    <th>Action Items</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for meeting in upcoming_meetings %}
+                                    <tr>
+                                        <td>{{ meeting.date|date:"M d, Y H:i" }}</td>
+                                        <td>
+                                            {% if meeting.relationship.mentor == user %}
+                                                {{ meeting.relationship.mentee.get_full_name }}
+                                            {% else %}
+                                                {{ meeting.relationship.mentor.get_full_name }}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ meeting.topics_discussed|truncatewords:10 }}</td>
+                                        <td>{{ meeting.action_items|truncatewords:10 }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No upcoming meetings scheduled.</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

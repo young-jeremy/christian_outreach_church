@@ -1,0 +1,110 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Hospital Ministry Dashboard{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <h1 class="mb-4">Hospital Ministry Dashboard</h1>
+
+        {% if not volunteer %}
+            <div class="alert alert-info">
+                <h5>Welcome to Hospital Ministry!</h5>
+                <p>To get started, please complete your volunteer registration.</p>
+                <a href="{% url 'outreach:volunteer_registration' %}" class="btn btn-primary">
+                    Register as Volunteer
+                </a>
+            </div>
+        {% else %}
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Upcoming Visits</h5>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for visit in upcoming_visits %}
+                                <div class="list-group-item">
+                                    <h6 class="mb-1">{{ visit.service.title }}</h6>
+                                    <p class="mb-1">{{ visit.hospital.name }} - {{ visit.department.name }}</p>
+                                    <p class="mb-1">
+                                        <i class="fas fa-calendar"></i> {{ visit.date|date:"M d, Y H:i" }}
+                                    </p>
+                                </div>
+                            {% empty %}
+                                <div class="list-group-item">
+                                    <p class="mb-0">No upcoming visits scheduled.</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Assigned Patient Requests</h5>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for request in assigned_requests %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-1">{{ request.service_requested.title }}</h6>
+                                        <span class="badge bg-{{ request.priority }}">
+                                {{ request.get_priority_display }}
+                            </span>
+                                    </div>
+                                    <p class="mb-1">Patient: {{ request.patient_name }}</p>
+                                    <p class="mb-1">Room: {{ request.room_number }}</p>
+                                    <small class="text-muted">
+                                        Requested: {{ request.created_at|date:"M d, Y H:i" }}
+                                    </small>
+                                </div>
+                            {% empty %}
+                                <div class="list-group-item">
+                                    <p class="mb-0">No patient requests assigned.</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Quick Actions</h5>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            <a href="{% url 'outreach:patient_request_form' %}"
+                               class="list-group-item list-group-item-action">
+                                <i class="fas fa-plus"></i> Submit Patient Request
+                            </a>
+                            <a href="{% url 'outreach:volunteer_registration' %}"
+                               class="list-group-item list-group-item-action">
+                                <i class="fas fa-user-edit"></i> Update Volunteer Profile
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Recent Activities</h5>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for visit in completed_visits %}
+                                <div class="list-group-item">
+                                    <h6 class="mb-1">{{ visit.service.title }}</h6>
+                                    <p class="mb-1">{{ visit.hospital.name }}</p>
+                                    <small class="text-muted">
+                                        Completed: {{ visit.date|date:"M d, Y" }}
+                                    </small>
+                                </div>
+                            {% empty %}
+                                <div class="list-group-item">
+                                    <p class="mb-0">No recent activities.</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

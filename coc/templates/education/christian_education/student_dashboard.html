@@ -1,0 +1,147 @@
+{% extends 'base_christian_education.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2>Welcome, {{ user.get_full_name }}</h2>
+                <p class="text-muted">Your Christian Education Journey</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'education:course_list' %}" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Browse Courses
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Active Courses</h4>
+                    </div>
+                    <div class="card-body">
+                        {% for enrollment in active_enrollments %}
+                            <div class="course-item mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5>{{ enrollment.course.title }}</h5>
+                                    <div class="progress" style="width: 200px;">
+                                        <div class="progress-bar" role="progressbar"
+                                             style="width: {{ enrollment.progress }}%"
+                                             aria-valuenow="{{ enrollment.progress }}"
+                                             aria-valuemin="0" aria-valuemax="100">
+                                            {{ enrollment.progress }}%
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-muted small">
+                                    Next module: {{ enrollment.next_module.title|default:"All modules completed" }}
+                                </p>
+                                <a href="{% url 'education:course_detail' enrollment.course.slug %}"
+                                   class="btn btn-sm btn-outline-primary">Continue Learning</a>
+                            </div>
+                        {% empty %}
+                            <p class="text-center text-muted">
+                                You are not currently enrolled in any courses.
+                                <br>
+                                <a href="{% url 'education:course_list' %}">Find a course to get started</a>
+                            </p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Recent Activity</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            {% for activity in recent_activities %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ activity.description }}</h6>
+                                        <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                                    </div>
+                                    <p class="mb-1">{{ activity.details }}</p>
+                                    {% if activity.link %}
+                                        <a href="{{ activity.link }}" class="btn btn-sm btn-link">View Details</a>
+                                    {% endif %}
+                                </div>
+                            {% empty %}
+                                <p class="text-center text-muted">No recent activity</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Your Stats</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <strong>Courses Completed:</strong> {{ completed_courses_count }}
+                            </li>
+                            <li class="mb-2">
+                                <strong>Active Courses:</strong> {{ active_enrollments.count }}
+                            </li>
+                            <li class="mb-2">
+                                <strong>Assignments Submitted:</strong> {{ assignments_submitted }}
+                            </li>
+                            <li class="mb-2">
+                                <strong>Discussion Posts:</strong> {{ discussion_posts_count }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Upcoming Deadlines</h4>
+                    </div>
+                    <div class="card-body">
+                        {% for deadline in upcoming_deadlines %}
+                            <div class="deadline-item mb-3">
+                                <h6>{{ deadline.assignment.title }}</h6>
+                                <p class="small text-muted">
+                                    Due: {{ deadline.due_date|date:"M d, Y" }}
+                                    <br>
+                                    Course: {{ deadline.course.title }}
+                                </p>
+                            </div>
+                        {% empty %}
+                            <p class="text-center text-muted">No upcoming deadlines</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% if certificates %}
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Your Certificates</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group">
+                                {% for cert in certificates %}
+                                    <a href="{{ cert.certificate.url }}"
+                                       class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">{{ cert.course.title }}</h6>
+                                            <small>{{ cert.completion_date|date:"M Y" }}</small>
+                                        </div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-download"></i> Download Certificate
+                                        </small>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends 'base_christian_education.html' %}
+{% load crispy_forms_filters %}
+
+{% block content %}
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:course_detail' discussion.module.course.slug %}">
+                        {{ discussion.module.course.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:module_detail' discussion.module.course.slug discussion.module.pk %}">
+                        {{ discussion.module.title }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">{{ discussion.title }}</li>
+            </ol>
+        </nav>
+
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3>{{ discussion.title }}</h3>
+                {% if perms.coc.change_christiandiscussion %}
+                    <a href="{% url 'education:discussion_edit' discussion.pk %}"
+                       class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Discussion
+                    </a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="lead">{{ discussion.description }}</p>
+
+                <div class="discussion-stats text-muted mb-4">
+                    <i class="fas fa-comments"></i> {{ discussion.posts.count }} posts
+                    <i class="fas fa-user ml-3"></i> {{ discussion.posts.values('author').distinct.count }} participants
+                    <i class="fas fa-clock ml-3"></i> Started {{ discussion.created_at|timesince }} ago
+                </div>
+
+                <div class="discussion-posts">
+                    {% for post in posts %}
+                        <div class="card mb-3 {% if post.parent %}ml-5{% endif %}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="mb-1">{{ post.author.get_full_name }}</h5>
+                                        <small class="text-muted">
+                                            Posted {{ post.created_at|timesince }} ago
+                                        </small>
+                                    </div>
+                                    {% if user == post.author or perms.coc.change_christiandiscussionpost %}
+                                        <div class="btn-group">
+                                            <a href="{% url 'education:edit_post' post.pk %}"
+                                               class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'education:delete_post' post.pk %}"
+                                               class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="post-content mt-3">
+                                    {{ post.content|linebreaks }}
+                                </div>
+                                <div class="post-actions mt-3">
+                                    <button class="btn btn-sm btn-outline-primary reply-btn"
+                                            data-post-id="{{ post.id }}">
+                                        <i class="fas fa-reply"></i> Reply
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="new-post-form mt-4">
+                    <h4>Add Your Response</h4>
+                    <form method="post" action="{% url 'education:add_post' discussion.pk %}">
+                        {% csrf_token %}
+                        {{ post_form|crispy }}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Post Response
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block extra_js %}
+        {{ block.super }}
+        <script>
+            $(document).ready(function () {
+                $('.reply-btn').click(function () {
+                    var postId = $(this).data('post-id');
+                    var replyForm = $('#reply-form-template').clone();
+                    replyForm.find('input[name="parent"]').val(postId);
+                    $(this).closest('.post-actions').after(replyForm.html());
+                });
+            });
+        </script>
+
+        <div id="reply-form-template" style="display: none;">
+            <div class="reply-form mt-3">
+                <form method="post" action="{% url 'education:add_post' discussion.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="parent" value="">
+                    {{ reply_form|crispy }}
+                    <button type="submit" class="btn btn-sm btn-primary">
+                        <i class="fas fa-reply"></i> Submit Reply
+                    </button>
+                    <button type="button" class="btn btn-sm btn-secondary cancel-reply">
+                        Cancel
+                    </button>
+                </form>
+            </div>
+        </div>
+    {% endblock %}
+{% endblock %}

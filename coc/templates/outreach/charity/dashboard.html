@@ -1,0 +1,95 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Charity Dashboard{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <h1 class="mb-4">Charity Dashboard</h1>
+
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Donations</h5>
+                        <h2 class="display-4">${{ total_donated }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Recent Donations</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Campaign</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for donation in recent_donations %}
+                                    <tr>
+                                        <td>{{ donation.created_at|date }}</td>
+                                        <td>
+                                            <a href="{% url 'campaign_detail' donation.campaign.slug %}">
+                                                {{ donation.campaign.title }}
+                                            </a>
+                                        </td>
+                                        <td>${{ donation.amount }}</td>
+                                        <td>
+                                        <span class="badge bg-{{ donation.payment_status }}">
+                                            {{ donation.get_payment_status_display }}
+                                        </span>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No donations made yet.</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Upcoming Events</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for registration in upcoming_events %}
+                            <div class="list-group-item">
+                                <h6 class="mb-1">{{ registration.event.title }}</h6>
+                                <p class="mb-1">
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar"></i> {{ registration.event.date|date }}
+                                    </small>
+                                </p>
+                                <p class="mb-0">
+                                    <small class="text-muted">
+                                        <i class="fas fa-map-marker-alt"></i> {{ registration.event.location }}
+                                    </small>
+                                </p>
+                            </div>
+                        {% empty %}
+                            <div class="list-group-item">
+                                <p class="mb-0">No upcoming events.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

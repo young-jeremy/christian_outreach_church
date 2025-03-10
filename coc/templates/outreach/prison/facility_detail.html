@@ -1,0 +1,94 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}{{ facility.name }} - Prison Ministry{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row">
+            <div class="col-md-8">
+                <h1 class="mb-3">{{ facility.name }}</h1>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Facility Information</h5>
+                        <p><i class="fas fa-map-marker-alt"></i> {{ facility.address }}</p>
+                        <p><i class="fas fa-clock"></i> <strong>Visiting Hours:</strong></p>
+                        <p class="ms-4">{{ facility.visiting_hours|linebreaks }}</p>
+                        <p><i class="fas fa-info-circle"></i> <strong>Requirements:</strong></p>
+                        <p class="ms-4">{{ facility.requirements|linebreaks }}</p>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Available Programs</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for program in programs %}
+                            <div class="list-group-item">
+                                <h6 class="mb-1">{{ program.title }}</h6>
+                                <p class="mb-1">{{ program.description|truncatewords:30 }}</p>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar"></i> {{ program.schedule }}
+                                    <span class="ms-3">
+                                <i class="fas fa-users"></i> 
+                                Volunteers needed: {{ program.volunteers_needed }}
+                            </span>
+                                </small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% if user.is_authenticated %}
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'outreach:volunteer_application' facility.id %}" class="btn btn-primary">
+                            Apply to Volunteer
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        Please <a href="{% url 'account_login' %}">login</a> to apply as a volunteer.
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Contact Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Contact Person:</strong><br>
+                            {{ facility.contact_person }}</p>
+                        <p><strong>Phone:</strong><br>
+                            {{ facility.contact_phone }}</p>
+                        <p><strong>Email:</strong><br>
+                            {{ facility.contact_email }}</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Upcoming Visits</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for visit in upcoming_visits %}
+                            <div class="list-group-item">
+                                <h6 class="mb-1">{{ visit.program.title }}</h6>
+                                <p class="mb-1">
+                                    <i class="fas fa-calendar"></i>
+                                    {{ visit.date|date:"M d, Y H:i" }}
+                                </p>
+                            </div>
+                        {% empty %}
+                            <div class="list-group-item">
+                                <p class="mb-0">No upcoming visits scheduled.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

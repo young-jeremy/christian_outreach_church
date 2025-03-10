@@ -1,0 +1,80 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit Discussion{% else %}Start New Discussion{% endif %}
+
+{% endblock %}
+{% block extra_css %}
+    <link href="{% static 'css/education.css' %}" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'education:course_list' %}">Courses</a></li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:lesson_detail' lesson.pk %}">{{ lesson.title }}</a>
+                </li>
+                <li class="breadcrumb-item active">
+                    {% if form.instance.pk %}Edit Discussion{% else %}New Discussion{% endif %}
+                </li>
+            </ol>
+        </nav>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            {% if form.instance.pk %}Edit Discussion{% else %}Start New Discussion{% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label">Discussion Title</label>
+                                {% if form.title.errors %}
+                                    <div class="alert alert-danger">{{ form.title.errors }}</div>
+                                {% endif %}
+                                {{ form.title|add_class:"form-control" }}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.content.id_for_label }}" class="form-label">Content</label>
+                                {% if form.content.errors %}
+                                    <div class="alert alert-danger">{{ form.content.errors }}</div>
+                                {% endif %}
+                                {{ form.content|add_class:"form-control rich-text-editor" }}
+                                <div class="form-text">Share your thoughts, questions, or insights about this lesson.
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-2"></i>
+                                    {% if form.instance.pk %}Update Discussion{% else %}Post Discussion{% endif %}
+                                </button>
+                                <a href="{% url 'education:lesson_detail' lesson.pk %}"
+                                   class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    {{ block.super }}
+    <script src="{% static 'js/education.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h2>Bible College Dashboard</h2>
+                <p class="text-muted">Welcome, {{ student.user.get_first_name }}</p>
+            </div>
+        </div>
+
+        <!-- Current Enrollments -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Current Courses</h5>
+            </div>
+            <div class="card-body">
+                {% if enrollments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Semester</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for enrollment in enrollments %}
+                                <tr>
+                                    <td>{{ enrollment.course.code }} - {{ enrollment.course.title }}</td>
+                                    <td>{{ enrollment.get_semester_display }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">In Progress</span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'education:bible_college_course_detail' enrollment.course.id %}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            View Details
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">You are not enrolled in any courses.</p>
+                    <a href="{% url 'education:bible_college_course_list' %}" class="btn btn-primary">
+                        Browse Courses
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Upcoming Assignments -->
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">Upcoming Assignments</h5>
+            </div>
+            <div class="card-body">
+                {% if assignments %}
+                    <div class="list-group">
+                        {% for assignment in assignments %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ assignment.title }}</h6>
+                                    <small class="text-muted">Due: {{ assignment.due_date|date:"M d, Y" }}</small>
+                                </div>
+                                <p class="mb-1">{{ assignment.description|truncatewords:30 }}</p>
+                                <small>Course: {{ assignment.course.code }}</small>
+                                <div class="mt-2">
+                                    <a href="{% url 'education:bible_college_submit_assignment' assignment.id %}"
+                                       class="btn btn-sm btn-primary">
+                                        Submit Assignment
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No upcoming assignments.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

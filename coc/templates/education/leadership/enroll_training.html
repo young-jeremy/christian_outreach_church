@@ -1,0 +1,67 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Enroll in {{ training.title }}{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'education:training_list' %}">Training Programs</a></li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'education:training_detail' training.slug %}">{{ training.title }}</a>
+                </li>
+                <li class="breadcrumb-item active">Enroll</li>
+            </ol>
+        </nav>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Enrollment Application</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h6>Program Details</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Title:</strong> {{ training.title }}</li>
+                                <li><strong>Category:</strong> {{ training.get_category_display }}</li>
+                                <li><strong>Level:</strong> {{ training.get_level_display }}</li>
+                                <li><strong>Duration:</strong> {{ training.duration_weeks }} weeks</li>
+                            </ul>
+                        </div>
+
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="mb-3">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                    Why do you want to join this program?
+                                </label>
+                                {% if form.notes.errors %}
+                                    <div class="alert alert-danger">{{ form.notes.errors }}</div>
+                                {% endif %}
+                                {{ form.notes|add_class:"form-control" }}
+                                <div class="form-text">
+                                    Please share your motivation and what you hope to learn.
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-2"></i>Submit Application
+                                </button>
+                                <a href="{% url 'education:training_detail' training.slug %}"
+                                   class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

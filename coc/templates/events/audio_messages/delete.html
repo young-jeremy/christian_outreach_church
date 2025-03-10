@@ -1,0 +1,58 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="card shadow">
+                    <div class="card-header bg-danger text-white">
+                        <h4 class="mb-0">Delete Audio Message</h4>
+                    </div>
+                    <div class="card-body">
+                        <h5>Are you sure you want to delete "{{ message.title }}"?</h5>
+                        <p class="text-muted">
+                            This action cannot be undone. The audio file and all associated data will be permanently
+                            deleted.
+                        </p>
+
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Warning</h6>
+                            <ul class="mb-0">
+                                <li>The audio file will be permanently removed from storage</li>
+                                <li>All references to this message will be deleted</li>
+                                <li>This action is irreversible</li>
+                            </ul>
+                        </div>
+
+                        <!-- Message Details -->
+                        <div class="mb-4">
+                            <h6>Message Details:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Title:</strong> {{ message.title }}</li>
+                                <li>
+                                    <strong>Speaker:</strong> {{ message.speaker.get_full_name|default:message.speaker.username }}
+                                </li>
+                                <li><strong>Category:</strong> {{ message.get_category_display }}</li>
+                                <li><strong>Recorded Date:</strong> {{ message.recorded_date|date }}</li>
+                            </ul>
+                        </div>
+
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash"></i> Delete Message
+                                </button>
+                                <a href="{% url 'events:audio_message_detail' message.slug %}"
+                                   class="btn btn-outline-secondary">
+                                    Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

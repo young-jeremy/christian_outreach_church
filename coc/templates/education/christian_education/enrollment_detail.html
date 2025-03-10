@@ -1,0 +1,69 @@
+{% extends 'base_christian_education.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Course Enrollments</h2>
+            <div class="btn-group">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    Filter by Status
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="?status=all">All</a></li>
+                    <li><a class="dropdown-item" href="?status=active">Active</a></li>
+                    <li><a class="dropdown-item" href="?status=completed">Completed</a></li>
+                    <li><a class="dropdown-item" href="?status=withdrawn">Withdrawn</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="row">
+            {% for enrollment in enrollments %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">{{ enrollment.course.title }}</h5>
+                            <span class="badge {% if enrollment.status == 'active' %}bg-success
+                                     {% elif enrollment.status == 'completed' %}bg-primary
+                                     {% else %}bg-secondary{% endif %}">
+                        {{ enrollment.get_status_display }}
+                    </span>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <strong>Enrolled:</strong> {{ enrollment.enrollment_date|date:"M d, Y" }}<br>
+                                <strong>Progress:</strong>
+                                <div class="progress mt-2">
+                                    <div class="progress-bar" role="progressbar"
+                                         style="width: {{ enrollment.progress }}%"
+                                         aria-valuenow="{{ enrollment.progress }}"
+                                         aria-valuemin="0" aria-valuemax="100">
+                                        {{ enrollment.progress }}%
+                                    </div>
+                                </div>
+                            </div>
+                            {% if enrollment.completion_date %}
+                                <p><strong>Completed:</strong> {{ enrollment.completion_date|date:"M d, Y" }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer">
+                            <a href="{% url 'education:enrollment_detail' enrollment.pk %}"
+                               class="btn btn-outline-primary">View Details</a>
+                            {% if enrollment.status == 'active' %}
+                                <a href="{% url 'education:course_detail' enrollment.course.slug %}"
+                                   class="btn btn-outline-success">Continue Course</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <p class="mb-0">No enrollments found.</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

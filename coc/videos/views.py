@@ -2230,7 +2230,7 @@ def create_video(request):
             video.save()
 
             # Create notification
-            Notification.objects.create(
+            Notifications.objects.create(
                 user=request.user,
                 message="Your video has been published successfully!",
                 notification_type="video",
@@ -2285,7 +2285,7 @@ class VideoListView(ListView):
 
 class VideoDetailView(DetailView):
     model = Video
-    template_name = 'videos/video_checks/video_detail.html'
+    template_name = 'videos/video_checks/video_details.html'
     context_object_name = 'video'
 
     def get_context_data(self, **kwargs):
@@ -2305,14 +2305,17 @@ class VideoDetailView(DetailView):
         return response
 
 
-class VideoUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class VideoUpdateView(LoginRequiredMixin, UpdateView):
     model = Video
     template_name = 'videos/video_checks/video_form.html'
-    fields = ['title', 'description', 'category', 'tags', 'visibility', 'language']
+    fields = ['title', 'description', 'video_file', 'thumbnail', 'is_active']
 
-    def test_func(self):
-        video = self.get_object()
-        return self.request.user == video.user
+    def get_success_url(self):
+        return reverse_lazy('videos:video_detail', kwargs={'pk': self.object.pk})
+
+    def get_queryset(self):
+        # Only allow editing of videos uploaded by the current user
+        return Video.objects.filter(user=self.request.user)
 
 
 class VideoDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):

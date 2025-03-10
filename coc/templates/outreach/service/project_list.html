@@ -1,0 +1,88 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Community Service Projects{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="h2">Community Service Projects</h1>
+            </div>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="row mb-4">
+            <div class="col">
+                <div class="btn-group" role="group">
+                    <a href="{% url 'outreach:service_project_list' %}"
+                       class="btn {% if not request.GET.category %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        All
+                    </a>
+                    {% for category in categories %}
+                        <a href="?category={{ category.name }}"
+                           class="btn {% if request.GET.category == category.name %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            <i class="{{ category.icon }}"></i> {{ category.name }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Projects Grid -->
+        <div class="row">
+            {% for project in projects %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        {% if project.featured_image %}
+                            <img src="{{ project.featured_image.url }}" class="card-img-top" alt="{{ project.title }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ project.title }}</h5>
+                            <p class="card-text text-muted">
+                                <i class="fas fa-map-marker-alt"></i> {{ project.location }}
+                            </p>
+                            <p class="card-text">{{ project.description|truncatewords:30 }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-{{ project.status }}">{{ project.get_status_display }}</span>
+                                <small class="text-muted">{{ project.volunteers_needed }} volunteers needed</small>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{% url 'outreach:service_project_detail' project.slug %}" class="btn btn-primary">Learn
+                                More</a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col">
+                    <p>No service projects available at this time.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+{% endblock %}

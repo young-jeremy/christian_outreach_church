@@ -1,0 +1,150 @@
+{% extends 'base_dashboard.html' %}
+{% load widget_tweaks %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <nav aria-label="breadcrumb" class="mb-4">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'outreach:dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">{{ title }}</li>
+                    </ol>
+                </nav>
+
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">{{ title }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" id="visitForm">
+                            {% csrf_token %}
+
+                            <div class="mb-3">
+                                <label for="{{ form.hospital.id_for_label }}" class="form-label">Hospital</label>
+                                {% if form.hospital.errors %}
+                                    <div class="alert alert-danger">{{ form.hospital.errors }}</div>
+                                {% endif %}
+                                {{ form.hospital|add_class:"form-select" }}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.department.id_for_label }}" class="form-label">Department</label>
+                                {% if form.department.errors %}
+                                    <div class="alert alert-danger">{{ form.department.errors }}</div>
+                                {% endif %}
+                                {{ form.department|add_class:"form-select" }}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.service.id_for_label }}" class="form-label">Service Type</label>
+                                {% if form.service.errors %}
+                                    <div class="alert alert-danger">{{ form.service.errors }}</div>
+                                {% endif %}
+                                {{ form.service|add_class:"form-select" }}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.date.id_for_label }}" class="form-label">Visit Date & Time</label>
+                                {% if form.date.errors %}
+                                    <div class="alert alert-danger">{{ form.date.errors }}</div>
+                                {% endif %}
+                                {{ form.date|add_class:"form-control"|attr:"type:datetime-local" }}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.volunteers.id_for_label }}" class="form-label">Additional
+                                    Volunteers</label>
+                                {% if form.volunteers.errors %}
+                                    <div class="alert alert-danger">{{ form.volunteers.errors }}</div>
+                                {% endif %}
+                                {{ form.volunteers|add_class:"form-select"|attr:"multiple:multiple" }}
+                                <div class="form-text">Hold Ctrl/Cmd to select multiple volunteers</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                                {% if form.notes.errors %}
+                                    <div class="alert alert-danger">{{ form.notes.errors }}</div>
+                                {% endif %}
+                                {{ form.notes|add_class:"form-control" }}
+                                <div class="form-text">Add any special instructions or notes for this visit</div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>{{ submit_text }}
+                                </button>
+                                <a href="{% url 'outreach:dashboard' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // Dynamic form updates based on hospital selection
+        document.getElementById('id_hospital').addEventListener('change', function () {
+            const hospitalId = this.value;
+            const departmentSelect = document.getElementById('id_department');
+            const serviceSelect = document.getElementById('id_service');
+
+            // Clear current options
+            departmentSelect.innerHTML = '<option value="">---------</option>';
+            serviceSelect.innerHTML = '<option value="">---------</option>';
+
+            if (hospitalId) {
+                // Fetch departments for selected hospital
+                fetch(`/hospital/api/departments/${hospitalId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(dept => {
+                            const option = new Option(dept.name, dept.id);
+                            departmentSelect.add(option);
+                        });
+                    });
+            }
+        });
+
+        // Update services when department changes
+        document.getElementById('id_department').addEventListener('change', function () {
+            const departmentId = this.value;
+            const serviceSelect = document.getElementById('id_service');
+
+            // Clear current options
+            serviceSelect.innerHTML = '<option value="">---------</option>';
+
+            if (departmentId) {
+                fetch(`/hospital/api/services/${departmentId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(service => {
+                            const option = new Option(service.title, service.id);
+                            serviceSelect.add(option);
+                        });
+                    });
+            }
+        });
+
+        // Form change warning
+        let formChanged = false;
+        document.getElementById('visitForm').addEventListener('change', function () {
+            formChanged = true;
+        });
+
+        window.addEventListener('beforeunload', function (e) {
+            if (formChanged) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    </script>
+{% endblock %}

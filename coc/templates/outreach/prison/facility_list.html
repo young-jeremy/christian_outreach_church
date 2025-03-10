@@ -1,0 +1,43 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Prison Ministry Facilities{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="h2">Prison Ministry Facilities</h1>
+                <p class="lead">Join us in bringing hope and transformation to those behind bars</p>
+            </div>
+        </div>
+
+        <div class="row">
+            {% for facility in facilities %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ facility.name }}</h5>
+                            <p class="card-text">
+                                <i class="fas fa-map-marker-alt"></i> {{ facility.address }}
+                            </p>
+                            <hr>
+                            <h6>Visiting Hours</h6>
+                            <p class="card-text">{{ facility.visiting_hours|linebreaks }}</p>
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'outreach:facility_detail' facility.id %}" class="btn btn-primary">
+                                    View Programs & Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col">
+                    <div class="alert alert-info">
+                        No active prison ministry facilities available at this time.
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

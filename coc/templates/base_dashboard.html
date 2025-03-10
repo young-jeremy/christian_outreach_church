@@ -8,26 +8,26 @@
     <!-- Bootstrap CSS -->
     <link rel="alternate" type="application/rss+xml" title="Church Podcast" href="{% url 'resources:podcast_feed' %}">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-    <!-- Flatpickr for date picking -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <!-- Required Meta Tags -->
+    <link href="{% static  'css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Bootstrap JavaScript Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Font Awesome -->
+    <link href="{% static 'css/all.min.css' %}" rel="stylesheet">
+    <!-- Flatpickr for date picking -->
+    <link rel="stylesheet" href="{% static 'css/flatpickr.min.css' %}">
+    <!-- Required Meta Tags -->
 
     <!-- Font Awesome (for additional icons) -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{% static 'ajax/libs/font-awesome/6.0.0/css/all.min.css' %}" rel="stylesheet">
     <meta charset="utf-8">
     <meta content="ca-pub-7500012205346003" name="google-adsense-account">
     <meta content="width=device-width, initial-scale=1" name="viewport">
     <!-- In your base.html head section -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 
     <!-- Before closing body tag -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'jquery-3.6.0.min.js' %}"></script>
+    <script src="{% static 'dist/js/bootstrap.bundle.min.js' %}"></script>
 
     <!-- Document Title, Description, and Author -->
     <title>Christian Outreach Church</title>
@@ -35,7 +35,7 @@
     <meta content="BootstrapBrain" name="author">
 
     <!-- Favicon and Touch Icons -->
-    <link href="{% static 'img/coc.png' %}" rel="icon" sizes="712x712" style="height:50" type="image/png">
+    <link href="{% static 'img/coc.png' %}" rel="icon" sizes="712x712" type="image/png">
 
     <!-- Google Fonts Files -->
     <link href="https://fonts.googleapis.com" rel="preconnect">
@@ -55,8 +55,7 @@
     <link href="{% static 'assets/css/console-bsb.css' %}" rel="stylesheet">
     <link href="{% static 'assets/css/settings_privacy.css' %}" rel="stylesheet">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/jsvectormap/dist/css/jsvectormap.min.css" rel="stylesheet">
+    <link href="{% static 'npm/jsvectormap/dist/css/jsvectormap.min.css' %}" rel="stylesheet">
 
     <!-- ads-->
     <script async crossorigin="anonymous"
@@ -897,7 +896,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'outreach:mission_list' %}">
+                                   href="{% url 'outreach:tool_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-megaphone"></i>
                                     </div>
@@ -906,7 +905,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:calendars_basic' %}">
+                                   href="{% url 'outreach:service_project_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-heart-fill"></i>
                                     </div>
@@ -915,7 +914,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:calendars_basic' %}">
+                                   href="{% url 'outreach:campaign_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-gift"></i>
                                     </div>
@@ -924,7 +923,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:calendars_basic' %}">
+                                   href="{% url 'outreach:track_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-people"></i>
                                     </div>
@@ -933,7 +932,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:calendars_basic' %}">
+                                   href="{% url 'outreach:track_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-chat-heart"></i>
                                     </div>
@@ -942,7 +941,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:calendars_basic' %}">
+                                   href="{% url 'outreach:facility_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-building"></i>
                                     </div>
@@ -951,7 +950,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:calendars_basic' %}">
+                                   href="{% url 'outreach:hospital_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-hospital"></i>
                                     </div>
@@ -974,7 +973,7 @@
                         <ul class="nav flex-column ms-4">
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:apex_charts' %}">
+                                   href="{% url 'education:course_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-book-fill"></i>
                                     </div>
@@ -983,7 +982,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:apex_charts' %}">
+                                   href="{% url 'education:training_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-person-workspace"></i>
                                     </div>
@@ -992,7 +991,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:apex_charts' %}">
+                                   href="{% url 'education:material_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-easel"></i> <!-- Sunday School Materials -->
 
@@ -1002,7 +1001,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:apex_charts' %}">
+                                   href="{% url 'education:theological_resource_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-journal-bookmark"></i> <!-- Theological Resources -->
                                     </div>
@@ -1011,7 +1010,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:apex_charts' %}">
+                                   href="{% url 'education:education_level_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-mortarboard"></i> <!-- Christian Education -->
                                     </div>
@@ -1020,7 +1019,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:apex_charts' %}">
+                                   href="{% url 'education:mentorship_session_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-people-fill"></i> <!-- Mentorship Programs -->
                                     </div>
@@ -1029,7 +1028,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:apex_charts' %}">
+                                   href="{% url 'education:bible_college_dashboard' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-building-fill"></i> <!-- Bible College -->
                                     </div>
@@ -1051,7 +1050,7 @@
                         <ul class="nav flex-column ms-4">
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:js_vecto_rmap_maps' %}">
+                                   href="{% url 'events:stream_list_view' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-broadcast"></i>
                                     </div>
@@ -1060,7 +1059,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:js_vecto_rmap_maps' %}">
+                                   href="{% url 'events:video_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-collection-play"></i> <!-- Video Archives -->
                                     </div>
@@ -1069,7 +1068,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:js_vecto_rmap_maps' %}">
+                                   href="{% url 'events:album_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-images"></i> <!-- Photo Gallery -->
                                     </div>
@@ -1078,7 +1077,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:js_vecto_rmap_maps' %}">
+                                   href="{% url 'events:audio_message_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-file-music"></i> <!-- Audio Messages -->
                                     </div>
@@ -1087,7 +1086,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:js_vecto_rmap_maps' %}">
+                                   href="{% url 'events:news_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-newspaper"></i> <!-- Church News -->
                                     </div>
@@ -1096,7 +1095,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:js_vecto_rmap_maps' %}">
+                                   href="{% url 'events:newsletter_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-envelope-paper"></i> <!-- Newsletters -->
                                     </div>
@@ -1105,7 +1104,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:js_vecto_rmap_maps' %}">
+                                   href="{% url 'events:announcement_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-megaphone-fill"></i> <!-- Announcements -->
                                     </div>
@@ -1114,7 +1113,7 @@
                             </li>
                             <li class="nav-item">
                                 <a aria-current="page" class="nav-link link-secondary"
-                                   href="{% url 'dashboard:js_vecto_rmap_maps' %}">
+                                   href="{% url 'events:testimonial_list' %}">
                                     <div class="nav-link-icon text-primary-emphasis">
                                         <i class="bi bi-camera-reels"></i> <!-- Testimonial Videos -->
                                     </div>
@@ -1270,12 +1269,17 @@
 </body>
 
     <!-- Javascript Files: Vendors -->
-    <script src="https://unpkg.com/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script src="https://unpkg.com/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Bootstrap JavaScript Bundle (includes Popper) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-rZNe32LEhrOrq3H+4fFj+P69ME0N+PfYftz6S2u5N51Ic5I6w5l5jZUyukP1aFcJ"
+        crossorigin="anonymous"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsvectormap"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/world-merc.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/bootstrap5@6.1.9/index.global.min.js"></script>
+<script src="{% static 'npm/jsvectormap/dist/maps/world-merc.js' %}"></script>
+<script src="{% static 'npm/fullcalendar@6.1.9/index.global.min.js' %}"></script>
+<script src="{% static 'index.global.min.js' %}"></script>
 
     <!-- Javascript Files: Controllers -->
     <script src="{% static 'assets/controller/console-bsb.js' %}"></script>

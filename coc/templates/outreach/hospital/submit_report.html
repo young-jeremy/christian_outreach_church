@@ -1,0 +1,155 @@
+{% extends 'base_dashboard.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Submit Visit Report{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <nav aria-label="breadcrumb" class="mb-4">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'outreach:dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Submit Visit Report</li>
+                    </ol>
+                </nav>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Visit Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Service:</strong><br>
+                                    {{ visit.service.title }}</p>
+                                <p><strong>Hospital:</strong><br>
+                                    {{ visit.hospital.name }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Department:</strong><br>
+                                    {{ visit.department.name }}</p>
+                                <p><strong>Date:</strong><br>
+                                    {{ visit.date|date:"M d, Y h:i A" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Report Form</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="mb-4">
+                                <label for="{{ form.patients_visited.id_for_label }}" class="form-label">
+                                    Number of Patients Visited
+                                </label>
+                                {% if form.patients_visited.errors %}
+                                    <div class="alert alert-danger">
+                                        {{ form.patients_visited.errors }}
+                                    </div>
+                                {% endif %}
+                                {{ form.patients_visited|add_class:"form-control" }}
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="{{ form.prayer_requests.id_for_label }}" class="form-label">
+                                    Prayer Requests
+                                </label>
+                                {% if form.prayer_requests.errors %}
+                                    <div class="alert alert-danger">
+                                        {{ form.prayer_requests.errors }}
+                                    </div>
+                                {% endif %}
+                                {{ form.prayer_requests|add_class:"form-control" }}
+                                <div class="form-text">List any prayer requests shared by patients or their families.
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="{{ form.testimonies.id_for_label }}" class="form-label">
+                                    Testimonies
+                                </label>
+                                {% if form.testimonies.errors %}
+                                    <div class="alert alert-danger">
+                                        {{ form.testimonies.errors }}
+                                    </div>
+                                {% endif %}
+                                {{ form.testimonies|add_class:"form-control" }}
+                                <div class="form-text">Share any testimonies or positive outcomes from the visit.</div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="{{ form.challenges.id_for_label }}" class="form-label">
+                                    Challenges
+                                </label>
+                                {% if form.challenges.errors %}
+                                    <div class="alert alert-danger">
+                                        {{ form.challenges.errors }}
+                                    </div>
+                                {% endif %}
+                                {{ form.challenges|add_class:"form-control" }}
+                                <div class="form-text">Note any challenges or difficulties encountered during the
+                                    visit.
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="{{ form.follow_up_needed.id_for_label }}" class="form-label">
+                                    Follow-up Needed
+                                </label>
+                                {% if form.follow_up_needed.errors %}
+                                    <div class="alert alert-danger">
+                                        {{ form.follow_up_needed.errors }}
+                                    </div>
+                                {% endif %}
+                                {{ form.follow_up_needed|add_class:"form-control" }}
+                                <div class="form-text">Specify any follow-up actions needed for specific patients.</div>
+                            </div>
+
+                            <div class="alert alert-info mb-4">
+                                <h6 class="alert-heading">Important Notes:</h6>
+                                <ul class="mb-0">
+                                    <li>Please maintain patient confidentiality in your report</li>
+                                    <li>Use initials or room numbers instead of full names</li>
+                                    <li>Focus on spiritual care aspects of the visit</li>
+                                </ul>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-2"></i>Submit Report
+                                </button>
+                                <a href="{% url 'outreach:dashboard' %}"
+                                   class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // Add confirmation before leaving page with unsaved changes
+        let formChanged = false;
+        document.querySelector('form').addEventListener('change', function () {
+            formChanged = true;
+        });
+
+        window.addEventListener('beforeunload', function (e) {
+            if (formChanged) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    </script>
+{% endblock %}

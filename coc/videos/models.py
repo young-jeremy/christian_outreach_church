@@ -12,7 +12,6 @@ from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
 
-
 logger = logging.getLogger(__name__)
 
 CATEGORY_CHOICES = [
@@ -95,11 +94,11 @@ class Song(models.Model):
 
 
 class ScriptureReference(models.Model):
-    book = models.CharField(max_length=50)
+    book = models.CharField(max_length=50, null=True, blank=True)
     chapter = models.IntegerField()
     verse_start = models.IntegerField()
     verse_end = models.IntegerField(null=True, blank=True)
-    text = models.TextField()
+    text = models.TextField(null=True, blank=True)
 
     def __str__(self):
         if self.verse_end:

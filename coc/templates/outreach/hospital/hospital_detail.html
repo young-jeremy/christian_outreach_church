@@ -1,0 +1,191 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}{{ hospital.name }} - Hospital Ministry{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'outreach:dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'outreach:hospital_list' %}">Hospitals</a></li>
+                <li class="breadcrumb-item active">{{ hospital.name }}</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Hospital Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong><i class="fas fa-map-marker-alt"></i> Address:</strong><br>
+                                    {{ hospital.address|linebreaks }}</p>
+                                <p><strong><i class="fas fa-clock"></i> Visiting Hours:</strong><br>
+                                    {{ hospital.visiting_hours|linebreaks }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong><i class="fas fa-user"></i> Contact Person:</strong><br>
+                                    {{ hospital.contact_person }}</p>
+                                <p><strong><i class="fas fa-phone"></i> Phone:</strong><br>
+                                    {{ hospital.contact_phone }}</p>
+                                <p><strong><i class="fas fa-envelope"></i> Email:</strong><br>
+                                    {{ hospital.contact_email }}</p>
+                            </div>
+                        </div>
+
+                        {% if hospital.special_instructions %}
+                            <hr>
+                            <h6><i class="fas fa-info-circle"></i> Special Instructions:</h6>
+                            <p class="mb-0">{{ hospital.special_instructions|linebreaks }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">Departments</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for dept in departments %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ dept.name }}</h6>
+                                        <small class="text-muted">Floor: {{ dept.floor }}</small>
+                                    </div>
+                                    {% if dept.visiting_restrictions %}
+                                        <span class="badge bg-warning text-dark">
+                                <i class="fas fa-exclamation-triangle"></i> Restrictions Apply
+                            </span>
+                                    {% endif %}
+                                </div>
+                                {% if dept.visiting_restrictions %}
+                                    <div class="mt-2 text-danger">
+                                        <small>{{ dept.visiting_restrictions }}</small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">Available Services</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for service in services %}
+                            <div class="list-group-item">
+                                <h6 class="mb-1">{{ service.title }}</h6>
+                                <p class="mb-1">{{ service.description }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i> Duration: {{ service.duration }} minutes
+                                        {% if service.materials_needed %}
+                                            <br><i class="fas fa-box"></i> Materials needed:
+                                            {{ service.materials_needed }}
+                                        {% endif %}
+                                    </small>
+                                    <span class="badge bg-primary">
+                                {{ service.get_service_type_display }}
+                            </span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                {% if user.is_authenticated %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">Quick Actions</h5>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            <a href="{% url 'outreach:visit_create' %}?hospital={{ hospital.id }}"
+                               class="list-group-item list-group-item-action">
+                                <i class="fas fa-calendar-plus me-2"></i>Schedule Visit
+                            </a>
+                            <a href="{% url 'outreach:request_create' %}?hospital={{ hospital.id }}"
+                               class="list-group-item list-group-item-action">
+                                <i class="fas fa-plus me-2"></i>Submit Patient Request
+                            </a>
+                            {% if not user.hospitalvolunteer %}
+                                <a href="{% url 'outreach:volunteer_registration' %}?hospital={{ hospital.id }}"
+                                   class="list-group-item list-group-item-action">
+                                    <i class="fas fa-user-plus me-2"></i>Become a Volunteer
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Join Our Ministry</h5>
+                            <p class="card-text">Please login to schedule visits or submit patient requests.</p>
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'login' %}?next={{ request.path }}"
+                                   class="btn btn-primary">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">Upcoming Visits</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for visit in upcoming_visits %}
+                            <div class="list-group-item">
+                                <h6 class="mb-1">{{ visit.service.title }}</h6>
+                                <p class="mb-1">
+                                    <i class="fas fa-calendar"></i>
+                                    {{ visit.date|date:"M d, Y h:i A" }}
+                                </p>
+                                <p class="mb-0">
+                                    <small class="text-muted">
+                                        <i class="fas fa-hospital"></i> {{ visit.department.name }}
+                                        <br>
+                                        <i class="fas fa-users"></i>
+                                        {{ visit.volunteers.count }} volunteer{{ visit.volunteers.count|pluralize }}
+                                    </small>
+                                </p>
+                            </div>
+                        {% empty %}
+                            <div class="list-group-item">
+                                <p class="mb-0 text-muted">No upcoming visits scheduled.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">Statistics</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item">
+                            <small class="text-muted">Departments:</small><br>
+                            <strong>{{ departments.count }}</strong>
+                        </div>
+                        <div class="list-group-item">
+                            <small class="text-muted">Available Services:</small><br>
+                            <strong>{{ services.count }}</strong>
+                        </div>
+                        <div class="list-group-item">
+                            <small class="text-muted">Active Volunteers:</small><br>
+                            <strong>{{ hospital.hospitalvolunteer_set.count }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
