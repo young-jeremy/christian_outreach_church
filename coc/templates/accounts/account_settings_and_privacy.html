@@ -1,9 +1,7 @@
 {% extends 'base_dashboard.html' %}
 
-
 {% block content %}
 <div class="container">
-
     <div class="pill-container">
         <ul class="vertical-pills">
             <li><a class="active" href="#profile">Profile</a></li>
@@ -12,30 +10,102 @@
             <li><a href="#security">Security</a></li>
             <li><a href="#privacy">Privacy</a></li>
             <li><a href="#connectedApps">Connected Apps</a></li>
-            <li><a href="#accountPayments">Payments & Billing</a></li>
-            <li><a href="#contentSettings">Content Settings</a></li>
+            <li><a href="#ministryPreferences">Ministry Preferences</a></li>
+            <li><a href="#contentSettings">Content Guidelines</a></li>
             <li><a href="#twoFactorAuthentication">2FA</a></li>
-            <li><a href="#privacy">Advanced</a></li>
-        </ul>
+            <li><a href="#donations">Donations & Giving</a></li>
+            <li><a href="#advanced">Advanced</a></li>
         </ul>
     </div>
     <div class="pill-content">
-        <!-- Example content areas -->
+        <!-- Profile section -->
         <div id="profile">
-
+            <fieldset>
+                <h6>Your Church Profile</h6>
+                <p>Manage your personal information and how you appear to the church community.</p>
+                <form action="{% url 'accounts:update_profile' %}" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="fullName" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="fullName" value="{{ user.username }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" value="{{ user.email }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="phone" value="{{ user.profile.phone|default:'' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="ministry" class="form-label">Ministry/Department</label>
+                        <select class="form-select" id="ministry">
+                            <option value="">Select a ministry</option>
+                            <option value="worship">Worship Team</option>
+                            <option value="youth">Youth Ministry</option>
+                            <option value="children">Children's Ministry</option>
+                            <option value="outreach">Outreach & Missions</option>
+                            <option value="prayer">Prayer Team</option>
+                            <option value="admin">Administration</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Profile</button>
+                </form>
+            </fieldset>
         </div>
-        <div id="settings">Advanced settings on the various content that you see you Crout</div>
+
+        <!-- Settings section -->
+        <div id="settings">
+            <fieldset>
+                <h6>Church Application Settings</h6>
+                <p>Customize your experience with our church community platform.</p>
+                <form action="{% url 'accounts:update_settings' %}" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Display Preferences</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="showBibleVerses">
+                            <label class="form-check-label" for="showBibleVerses">
+                                Show daily Bible verses on dashboard
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="showPrayerRequests">
+                            <label class="form-check-label" for="showPrayerRequests">
+                                Show prayer requests in feed
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="showEvents">
+                            <label class="form-check-label" for="showEvents">
+                                Show upcoming church events
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="preferredBible" class="form-label">Preferred Bible Version</label>
+                        <select class="form-select" id="preferredBible">
+                            <option value="niv">New International Version (NIV)</option>
+                            <option value="kjv">King James Version (KJV)</option>
+                            <option value="nlt">New Living Translation (NLT)</option>
+                            <option value="esv">English Standard Version (ESV)</option>
+                            <option value="nkjv">New King James Version (NKJV)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                </form>
+            </fieldset>
+        </div>
+
+        <!-- Notifications section -->
         <div id="notifications">
             <fieldset>
                 <h6>
-                    Choose which notifications you want to receive from us or you activity on the system and any
-                    newsletters from our magazines and the media team
-
+                    Choose which notifications you want to receive from our church community
                 </h6>
                 <p>
-                    select the email notifications you might want to receive. it is okay to receive all notifications.
-                    if you feel that you want to choose
-                    which notifications reach you, you have the authority to change this right not
+                    Select the email notifications you'd like to receive about church activities, events, and ministry
+                    updates.
                 </p>
                 <form action="{% url 'notifications:notifications_settings' %}" method="post">
                     {% csrf_token %}
@@ -46,98 +116,73 @@
                             <div class="form-check">
                                 <input class="form-check-input" id="email_notifications" type="checkbox">
                                 <label class="form-check-label" for="email_notifications">
-                                    Email Changed
+                                    Account Updates
                                 </label>
-                                <p>Notify me when the email has been changed.</p>
+                                <p>Notify me when my account information has been changed.</p>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" id="password_change_notifications" type="checkbox">
                                 <label class="form-check-label" for="password_change_notifications">
                                     Password Changed
                                 </label>
-                                <p>Send me email when the password has been changed.</p>
+                                <p>Send me email when my password has been changed.</p>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" id="weekly_newsletter"
-                                       type="checkbox">
+                                <input class="form-check-input" id="weekly_newsletter" type="checkbox">
                                 <label class="form-check-label" for="weekly_newsletter">
-                                    Weekly Newsletter
+                                    Weekly Church Newsletter
                                 </label>
-                                <p>Send me weekly newsletters on the progress of our content and contemporary
-                                    improvements</p>
+                                <p>Send me weekly newsletters with church announcements and upcoming events</p>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" id="product_promotions"
-                                       type="checkbox">
-                                <label class="form-check-label" for="product_promotions">
-                                    Product Promotions
+                                <input class="form-check-input" id="sermonNotifications" type="checkbox">
+                                <label class="form-check-label" for="sermonNotifications">
+                                    New Sermons
                                 </label>
-                                <p>Notify me when there are that better suits my content needs.</p>
+                                <p>Notify me when new sermons are posted online.</p>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" id="commentsNotifications" type="checkbox">
-                                <label class="form-check-label" for="commentsNotifications">
-                                    Comments
+                                <input class="form-check-input" id="prayerRequests" type="checkbox">
+                                <label class="form-check-label" for="prayerRequests">
+                                    Prayer Requests
                                 </label>
-                                <p>Send me emails about comments posted on my content.</p>
+                                <p>Send me notifications about new prayer requests from the congregation.</p>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" id="subscriptions" type="checkbox">
-                                <label class="form-check-label" for="subscriptions">
-                                    Subscriptions
+                                <input class="form-check-input" id="ministryUpdates" type="checkbox">
+                                <label class="form-check-label" for="ministryUpdates">
+                                    Ministry Updates
                                 </label>
-                                <p>Notify me when the channels i have subscribed to have posted content on their
-                                    channels</p>
+                                <p>Notify me about updates from ministries I'm involved with or following.</p>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" id="activityNotifications"
-                                       type="checkbox">
-                                <label class="form-check-label" for="weekly_newsletter">
-                                    Activity Notifications
+                                <input class="form-check-input" id="eventReminders" type="checkbox">
+                                <label class="form-check-label" for="eventReminders">
+                                    Event Reminders
                                 </label>
-                                <p>Send me emails about activity notifications such as likes</p>
+                                <p>Send me reminders about church events I've registered for.</p>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" id="sharedContent"
-                                       type="checkbox">
-                                <label class="form-check-label" for="sharedContent">
-                                    Shared Content
+                                <input class="form-check-input" id="volunteerOpportunities" type="checkbox">
+                                <label class="form-check-label" for="volunteerOpportunities">
+                                    Volunteer Opportunities
                                 </label>
-                                <p>Notify me when someone shares my content on their websites</p>
+                                <p>Notify me about new volunteer opportunities in the church.</p>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" id="recommendations" type="checkbox">
-                                <label class="form-check-label" for="recommendations">
-                                    Recommendations
+                                <input class="form-check-input" id="bibleStudies" type="checkbox">
+                                <label class="form-check-label" for="bibleStudies">
+                                    Bible Studies
                                 </label>
-                                <p>Send me recommendations of what is new based on my last activity and preferences.</p>
+                                <p>Send me notifications about new Bible studies and small groups.</p>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" id="mentions"
-                                       type="checkbox">
-                                <label class="form-check-label" for="mentions">
-                                    Mentions
+                                <input class="form-check-input" id="devotionals" type="checkbox">
+                                <label class="form-check-label" for="devotionals">
+                                    Daily Devotionals
                                 </label>
-                                <p>Send emails when someone mentions me on their spaces</p>
+                                <p>Send me daily devotionals and spiritual encouragement.</p>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" id="promotionContent"
-                                       type="checkbox">
-                                <label class="form-check-label" for="promotionContent">
-                                    Promotion Content
-                                </label>
-                                <p>Send me emails when there are one time offers such as for premium memberships</p>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" id="educationalContent"
-                                       type="checkbox">
-                                <label class="form-check-label" for="educationalContent">
-                                    Educational Content
-                                </label>
-                                <p>Send me emails on how i can improve content through educational content</p>
-                            </div>
-
-
                         </div>
                     </fieldset>
                     <div class="row">
@@ -148,84 +193,449 @@
                 </form>
                 <hr>
                 <h6>
-                    Here are General settings on various notifications
+                    General Notification Settings
                 </h6>
                 <p>All emails will be sent to {{ user.email }} unless you want to <a href="{% url 'account_email' %}">change
                     your primary email</a></p>
-
             </fieldset>
         </div>
-        <div id="security">We value your</div>
 
-
-        <div id="privacy">
-            <div>
-                <h4>set private information</h4>
-                <fieldset>
-                    this is the field set section
-                </fieldset>
-
-            </div>
+        <!-- Security section -->
+        <div id="security">
+            <fieldset>
+                <h6>Account Security</h6>
+                <p>We value your privacy and the security of your account. Manage your security settings here.</p>
+                <form action="{% url 'accounts:security_settings' %}" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="currentPassword">
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="newPassword">
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirmPassword">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Password</button>
+                </form>
+            </fieldset>
         </div>
 
+        <!-- Privacy section -->
+        <div id="privacy">
+            <fieldset>
+                <h6>Privacy Settings</h6>
+                <p>Control who can see your information within our church community.</p>
+                <form action="{% url 'accounts:privacy_settings' %}" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Profile Visibility</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="showEmail">
+                            <label class="form-check-label" for="showEmail">
+                                Show my email to other church members
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="showPhone">
+                            <label class="form-check-label" for="showPhone">
+                                Show my phone number to other church members
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="showAddress">
+                            <label class="form-check-label" for="showAddress">
+                                Show my address to other church members
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Activity Visibility</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="showPrayers">
+                            <label class="form-check-label" for="showPrayers">
+                                Make my prayer requests visible to the congregation
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="showEvents">
+                            <label class="form-check-label" for="showEvents">
+                                Show events I'm attending to other members
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Privacy Settings</button>
+                </form>
+            </fieldset>
+        </div>
 
+        <!-- Connected Apps section -->
         <div id="connectedApps">
             <fieldset>
+                <h6>Connected Applications</h6>
                 <p>
-                    Choose which application will be connected with Crout and the associations
+                    Connect third-party applications to enhance your church community experience.
                 </p>
                 <hr>
-                <h6 class="text-center">Why you should connect third party applications</h6>
+                <h6 class="text-center">Why Connect Third-Party Applications?</h6>
                 <p>
-                    Connected apps are third party accounts that we collaborate with such as google which gives
-                    you a simple way to sign in instead of having to sign up from scratch.
+                    Connected apps like Google or Facebook provide a simpler way to sign in and can enhance your
+                    experience
+                    with features like calendar integration for church events or easy sharing of church content.
                 </p>
                 <hr>
                 <p>
-                    if you want to add <a href="{% url 'socialaccount_connections' %}">Google</a> as your way of signing
-                    in or
-                    signup, click and set
+                    If you want to add <a href="{% url 'socialaccount_connections' %}">Google</a> or other services as
+                    your way of signing
+                    in, click and set up your connections here.
                 </p>
+                <div class="row mt-4">
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Google</h5>
+                                <p class="card-text">Connect for easy sign-in and calendar integration</p>
+                                <a href="{% url 'socialaccount_connections' %}"
+                                   class="btn btn-outline-primary">Connect</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Facebook</h5>
+                                <p class="card-text">Connect to share events and content easily</p>
+                                <a href="{% url 'socialaccount_connections' %}"
+                                   class="btn btn-outline-primary">Connect</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">YouVersion Bible</h5>
+                                <p class="card-text">Connect to integrate Bible reading plans</p>
+                                <a href="{% url 'socialaccount_connections' %}"
+                                   class="btn btn-outline-primary">Connect</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </fieldset>
         </div>
 
-
-        <div id="accountPayments">
+        <!-- Ministry Preferences section (new) -->
+        <div id="ministryPreferences">
             <fieldset>
-                <h6>
-                    Set your credit card numbers or terminate payments whenever you want
-                </h6>
-                <hr>
-                <p>You can customize whether you want to make purchases automatically from the credit card and terminate
-                    when you want to or make the purchase when you want to
-                </p>
-                <a href="{% url 'payments:payment_view' %}">Set Automatic Payments</a>
+                <h6>Ministry Preferences</h6>
+                <p>Customize your involvement with different church ministries and activities.</p>
+                <form action="{% url 'accounts:ministry_preferences' %}" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Ministry Interests</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="worshipTeam">
+                            <label class="form-check-label" for="worshipTeam">
+                                Worship Team
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="childrenMinistry">
+                            <label class="form-check-label" for="childrenMinistry">
+                                Children's Ministry
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="youthMinistry">
+                            <label class="form-check-label" for="youthMinistry">
+                                Youth Ministry
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="outreachMinistry">
+                            <label class="form-check-label" for="outreachMinistry">
+                                Outreach & Missions
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="prayerTeam">
+                            <label class="form-check-label" for="prayerTeam">
+                                Prayer Team
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="hospitalityTeam">
+                            <label class="form-check-label" for="hospitalityTeam">
+                                Hospitality Team
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Volunteer Availability</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="sundayMorning">
+                            <label class="form-check-label" for="sundayMorning">
+                                Sunday Morning
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="sundayEvening">
+                            <label class="form-check-label" for="sundayEvening">
+                                Sunday Evening
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="weekdays">
+                            <label class="form-check-label" for="weekdays">
+                                Weekdays
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="specialEvents">
+                            <label class="form-check-label" for="specialEvents">
+                                Special Events
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="spiritualGifts" class="form-label">Spiritual Gifts</label>
+                        <select class="form-select" id="spiritualGifts" multiple>
+                            <option value="teaching">Teaching</option>
+                            <option value="worship">Worship/Music</option>
+                            <option value="service">Service</option>
+                            <option value="leadership">Leadership</option>
+                            <option value="encouragement">Encouragement</option>
+                            <option value="giving">Giving</option>
+                            <option value="mercy">Mercy</option>
+                            <option value="hospitality">Hospitality</option>
+                        </select>
+                        <div class="form-text">Hold Ctrl/Cmd to select multiple gifts</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Preferences</button>
+                </form>
             </fieldset>
         </div>
 
+        <!-- Content Settings section (modified) -->
+        <div id="contentSettings">
+            <fieldset>
+                <h6>Content Guidelines & Preferences</h6>
+                <p>Customize the content you see and share within our church community platform.</p>
+                <form action="{% url 'accounts:content_settings' %}" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Content Preferences</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="showSermons">
+                            <label class="form-check-label" for="showSermons">
+                                Show sermon content in my feed
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="showDevotionals">
+                            <label class="form-check-label" for="showDevotionals">
+                                Show daily devotionals in my feed
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="showBibleStudies">
+                            <label class="form-check-label" for="showBibleStudies">
+                                Show Bible study materials in my feed
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="showCommunityPosts">
+                            <label class="form-check-label" for="showCommunityPosts">
+                                Show community posts in my feed
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Content Guidelines Acknowledgment</label>
+                        <div class="card p-3 mb-3 bg-light">
+                            <h6>Church Community Content Guidelines</h6>
+                            <ul>
+                                <li>All content should reflect Christian values and principles</li>
+                                <li>Be respectful and encouraging in all communications</li>
+                                <li>Avoid controversial political discussions</li>
+                                <li>Do not share confidential prayer requests without permission</li>
+                                <li>Content should be appropriate for all ages</li>
+                                <li>Focus on building up the church community</li>
+                                <li>Scripture should be accurately quoted with proper references</li>
+                            </ul>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="agreeGuidelines">
+                                <label class="form-check-label" for="agreeGuidelines">
+                                    I have read and agree to follow these content guidelines
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Content Settings</button>
+                </form>
+            </fieldset>
+        </div>
 
-        <div id="contentSettings">Choose which content is to be shown when you open Crout application</div>
-
-
+        <!-- 2FA section -->
         <div id="twoFactorAuthentication">
-            <section>
-                <h6>
-                    Two-Factor Authentication
-                </h6>
-                <p>Two-Factor Authentication (2FA) protects your account from frauds who are trying to access your
-                    account
-                    in order to manipulate or steal content. Be aware that this is a critical point since your account
-                    might be terminated the moment
-                    we realize that your content is not consistent with the System guidelines.
-
+            <fieldset>
+                <h6>Two-Factor Authentication</h6>
+                <p>
+                    Two-Factor Authentication (2FA) adds an extra layer of security to your account by requiring a
+                    second
+                    verification step when signing in. This helps protect your account and the church community from
+                    unauthorized access.
                 </p>
                 <hr>
                 <p>
-                    if you want to enable this setting, click on the button below to goggle on this setting
+                    If you want to enable this setting, click on the button below to set up Two-Factor Authentication.
                 </p>
-                <p><a href="{% url 'mfa_index' %}">2FA</a></p>
-            </section>
+                <p><a href="{% url 'mfa_index' %}" class="btn btn-outline-primary">Set Up 2FA</a></p>
+                <div class="alert alert-info mt-3">
+                    <h6>Why use Two-Factor Authentication?</h6>
+                    <p>
+                        Enabling 2FA helps protect sensitive church information and ensures that only you can access
+                        your account,
+                        even if someone else knows your password.
+                    </p>
+                </div>
+            </fieldset>
+        </div>
+
+        <!-- Donations section (new) -->
+        <div id="donations">
+            <fieldset>
+                <h6>Donations & Giving</h6>
+                <p>Manage your recurring donations and giving preferences.</p>
+                <form action="{% url 'donations:settings' %}" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Recurring Giving</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="recurringTithe">
+                            <label class="form-check-label" for="recurringTithe">
+                                Set up recurring tithe
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="recurringMissions">
+                            <label class="form-check-label" for="recurringMissions">
+                                Set up recurring missions giving
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="recurringBuildingFund">
+                            <label class="form-check-label" for="recurringBuildingFund">
+                                Set up recurring building fund giving
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="preferredPaymentMethod" class="form-label">Preferred Payment Method</label>
+                        <select class="form-select" id="preferredPaymentMethod">
+                            <option value="creditCard">Credit/Debit Card</option>
+                            <option value="bankTransfer">Bank Transfer (ACH)</option>
+                            <option value="paypal">PayPal</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="donationReceipts" class="form-label">Donation Receipts</label>
+                        <select class="form-select" id="donationReceipts">
+                            <option value="immediately">Send immediately</option>
+                            <option value="monthly">Send monthly summary</option>
+                            <option value="quarterly">Send quarterly summary</option>
+                            <option value="annually">Send annual summary only</option>
+                        </select>
+                    </div>
+                    <a href="{% url 'donations:payment_view' %}" class="btn btn-primary">Manage Payment Methods</a>
+                    <a href="{% url 'donations:history' %}" class="btn btn-outline-secondary ms-2">View Giving
+                        History</a>
+                </form>
+            </fieldset>
+        </div>
+
+        <!-- Advanced section -->
+        <div id="advanced">
+            <fieldset>
+                <h6>Advanced Settings</h6>
+                <p>Additional settings for your church community account.</p>
+                <form action="{% url 'accounts:advanced_settings' %}" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Account Management</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="dataExport">
+                            <label class="form-check-label" for="dataExport">
+                                Request data export
+                            </label>
+                            <p class="form-text">Request a copy of all your personal data stored in our system.</p>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning">
+                        <h6>Danger Zone</h6>
+                        <p>These actions cannot be undone. Please be certain.</p>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal"
+                                    data-bs-target="#deactivateModal">
+                                Deactivate Account
+                            </button>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal"
+                                    data-bs-target="#deleteModal">
+                                Delete Account
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </fieldset>
+        </div>
+    </div>
+</div>
+
+    <!-- Modals for account actions -->
+    <div class="modal fade" id="deactivateModal" tabindex="-1" aria-labelledby="deactivateModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deactivateModalLabel">Deactivate Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to deactivate your account? You can reactivate it later by signing in
+                        again.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning">Deactivate Account</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Delete Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to permanently delete your account? This action cannot be undone and all
+                        your data will be removed.</p>
+                    <div class="mb-3">
+                        <label for="deleteConfirm" class="form-label">Type "DELETE" to confirm</label>
+                        <input type="text" class="form-control" id="deleteConfirm">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" disabled>Delete Account</button>
+                </div>
         </div>
     </div>
 </div>
 {% endblock content %}
+

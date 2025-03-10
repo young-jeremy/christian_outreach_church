@@ -1,0 +1,80 @@
+{% extends 'ministries/base_ministry.html' %}
+{% load static %}
+
+{% block ministry_content %}
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Register for Bible Study</h5>
+                </div>
+                <div class="card-body">
+                    <h2 class="mb-4">{{ study.title }}</h2>
+
+                    <div class="mb-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Date:</strong> {{ study.start_date|date:"F j, Y" }}</p>
+                                <p><strong>Time:</strong> {{ study.time|time:"g:i A" }}</p>
+                                <p><strong>Duration:</strong> {{ study.duration }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Location:</strong> {{ study.location }}</p>
+                                <p><strong>Target Group:</strong> {{ study.get_target_group_display }}</p>
+                                <p><strong>Available Spots:</strong> {{ study.spots_available }}
+                                    of {{ study.max_participants }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-info-circle-fill me-2"></i> Registration Information</h5>
+                        <p>By registering for this Bible study, you are committing to:</p>
+                        <ul>
+                            <li>Attend the scheduled sessions</li>
+                            <li>Participate in discussions</li>
+                            <li>Complete any assigned readings or homework</li>
+                        </ul>
+                        {% if study.is_recurring %}
+                            <p class="mb-0"><strong>Note:</strong> This is
+                                a {{ study.get_recurring_pattern_display|lower }} Bible study.</p>
+                        {% endif %}
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="confirmRegistration" required>
+                            <label class="form-check-label" for="confirmRegistration">
+                                I understand and commit to participating in this Bible study
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'services:bible_study_detail' study.id %}"
+                               class="btn btn-outline-secondary me-md-2">
+                                <i class="bi bi-arrow-left"></i> Back
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="registerButton" disabled>
+                                <i class="bi bi-check-circle"></i> Confirm Registration
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block extra_js %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const confirmCheckbox = document.getElementById('confirmRegistration');
+                const registerButton = document.getElementById('registerButton');
+
+                confirmCheckbox.addEventListener('change', function () {
+                    registerButton.disabled = !this.checked;
+                });
+            });
+        </script>
+    {% endblock %}
+{% endblock %}

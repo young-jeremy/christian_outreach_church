@@ -1,4 +1,6 @@
 from django.urls import path
+
+from services.views import BibleStudyCreateView
 from .feeds import PodcastRSSFeed
 from . import views
 from .views import (
@@ -14,6 +16,7 @@ app_name='resources'
 
 urlpatterns = [
     path('bible-study/', BibleStudyMaterialListView.as_view(), name='bible-study-list'),
+    path('bible_study_create/', BibleStudyCreateView.as_view(), name='bible-study-create'),
     path('bible-study/<int:pk>/', BibleStudyMaterialDetailView.as_view(), name='bible-study-detail'),
     path('bible-study/<int:pk>/delete/', BibleStudyMaterialDeleteView.as_view(), name='bible-study-delete'),
 

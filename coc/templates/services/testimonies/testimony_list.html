@@ -44,7 +44,7 @@
                     <span class="badge bg-primary">{{ testimony.get_category_display }}</span>
                     {% if not testimony.is_anonymous %}
                     <small class="text-muted">
-                        By {{ testimony.author.get_full_name }}
+                        By {{ testimony.author.username }}
                     </small>
                     {% endif %}
                 </div>

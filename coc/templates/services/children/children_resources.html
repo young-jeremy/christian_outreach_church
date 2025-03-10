@@ -1,0 +1,103 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="mb-0">Children's Ministry Resources</h1>
+                <p class="text-muted">Educational materials and activities for children</p>
+            </div>
+            {% if user.is_authenticated and user.is_staff %}
+                <div>
+                    <a href="{% url 'services:create_resource' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Add Resource
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Filter Section -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-5">
+                        <label for="age_group" class="form-label">Filter by Age Group</label>
+                        <select name="age_group" id="age_group" class="form-select">
+                            <option value="">All Age Groups</option>
+                            {% for value, label in age_groups %}
+                                <option value="{{ value }}" {% if request.GET.age_group == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label for="resource_type" class="form-label">Filter by Resource Type</label>
+                        <select name="resource_type" id="resource_type" class="form-select">
+                            <option value="">All Resource Types</option>
+                            {% for value, label in resource_types %}
+                                <option value="{{ value }}"
+                                        {% if request.GET.resource_type == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">Filter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Resources Grid -->
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for resource in resources %}
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-header bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">{{ resource.title }}</h5>
+                                <span class="badge {% if resource.resource_type == 'pdf' %}bg-danger{% elif resource.resource_type == 'video' %}bg-primary{% elif resource.resource_type == 'link' %}bg-success{% else %}bg-warning{% endif %}">
+                            {{ resource.get_resource_type_display }}
+                        </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">{{ resource.description }}</p>
+                            <p class="small text-muted">
+                                <strong>Age Group:</strong> {{ resource.get_age_group_display }}
+                            </p>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="d-grid">
+                                {% if resource.resource_type == 'pdf' or resource.resource_type == 'activity' %}
+                                    <a href="{{ resource.file.url }}" class="btn btn-outline-primary" target="_blank">
+                                        <i class="bi bi-file-earmark-pdf"></i> Download
+                                    </a>
+                                {% elif resource.resource_type == 'video' %}
+                                    <a href="{{ resource.url }}" class="btn btn-outline-primary" target="_blank">
+                                        <i class="bi bi-play-circle"></i> Watch Video
+                                    </a>
+                                {% elif resource.resource_type == 'link' %}
+                                    <a href="{{ resource.url }}" class="btn btn-outline-primary" target="_blank">
+                                        <i class="bi bi-link-45deg"></i> Visit Resource
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        <h4 class="alert-heading">No Resources Available</h4>
+                        <p>There are currently no resources matching your filter criteria.</p>
+                        <a href="{% url 'services:children_resources' %}" class="btn btn-primary">Clear Filters</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

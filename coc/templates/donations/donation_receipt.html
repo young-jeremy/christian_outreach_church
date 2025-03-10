@@ -1,0 +1,136 @@
+{% extends 'base_dashboard.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4>Donation Receipt</h4>
+                        <button class="btn btn-outline-primary btn-sm" onclick="window.print()">
+                            <i class="bi bi-printer"></i> Print Receipt
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-4">
+                            <h3>{{ church_name|default:"Christian Outreach Church" }}</h3>
+                            <p>{{ church_address|default:"123 Faith Street, Cityville, ST 12345" }}</p>
+                            <p>{{ church_phone|default:"(555) 123-4567" }}
+                                | {{ church_email|default:"info@gracechurch.org" }}</p>
+                            <h5 class="mt-4">Donation Receipt</h5>
+                            <p class="text-muted">Tax ID: {{ tax_id|default:"12-3456789" }}</p>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6>Donor Information:</h6>
+                                <p>{{ donation.user.get_display_name|default:donation.user.username }}</p>
+                                <p>{{ donation.user.email }}</p>
+                                {% if donation.user.profile.address %}
+                                    <p>{{ donation.user.profile.address }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <h6>Receipt Information:</h6>
+                                <p>Receipt #: {{ donation.id }}</p>
+                                <p>Date: {{ donation.date|date:"F j, Y" }}</p>
+                                <p>Time: {{ donation.date|date:"g:i A" }}</p>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive mb-4">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Description</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>
+                                        {% if donation.donation_type == 'tithe' %}
+                                            Tithe
+                                        {% elif donation.donation_type == 'missions' %}
+                                            Missions Fund
+                                        {% elif donation.donation_type == 'building' %}
+                                            Building Fund
+                                        {% else %}
+                                            General Donation
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">${{ donation.amount }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Total</th>
+                                    <th class="text-end">${{ donation.amount }}</th>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mb-4">
+                            <h6>Payment Method:</h6>
+                            <p>{{ donation.payment_method|default:"Credit Card" }}</p>
+                            {% if donation.payment_last_four %}
+                                <p>Card ending in {{ donation.payment_last_four }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="alert alert-info">
+                            <p class="mb-0">
+                                <strong>Tax Information:</strong> This letter is to acknowledge that no goods or
+                                services were
+                                provided in exchange for your generous contribution. Your donation is tax-deductible to
+                                the
+                                extent allowed by law.
+                            </p>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <p>Thank you for your generous support!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'donations:history' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to History
+                    </a>
+                    <a href="mailto:{{ church_email|default:'finance@gracechurch.org' }}?subject=Question about Donation #{{ donation.id }}"
+                       class="btn btn-outline-primary">
+                        <i class="bi bi-envelope"></i> Questions?
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            .card, .card * {
+                visibility: visible;
+            }
+
+            .card {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                border: none !important;
+            }
+
+            .card-header {
+                border-bottom: 1px solid #dee2e6 !important;
+            }
+
+            .btn {
+                display: none !important;
+            }
+        }
+    </style>
+{% endblock %}

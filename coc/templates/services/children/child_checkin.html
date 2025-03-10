@@ -1,0 +1,127 @@
+{% extends 'base_dashboard.html' %}
+{% load widget_tweaks %}
+{% load static %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Child Check-In</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if user.children.exists %}
+                            <form method="post">
+                                {% csrf_token %}
+
+                                <div class="mb-3">
+                                    <label for="{{ form.child.id_for_label }}" class="form-label">Select Child</label>
+                                    {{ form.child|add_class:"form-select" }}
+                                    {% if form.child.errors %}
+                                        <div class="text-danger">{{ form.child.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.program.id_for_label }}" class="form-label">Select
+                                        Program</label>
+                                    {{ form.program|add_class:"form-select" }}
+                                    {% if form.program.errors %}
+                                        <div class="text-danger">{{ form.program.errors }}</div>
+                                    {% endif %}
+
+                                    {% if not form.program.field.queryset.exists %}
+                                        <div class="form-text text-warning">
+                                            There are no programs scheduled for today.
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary"
+                                            {% if not form.program.field.queryset.exists or not user.children.exists %}disabled{% endif %}>
+                                        Check In
+                                    </button>
+                                </div>
+                            </form>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <h5 class="alert-heading">No Children Registered</h5>
+                                <p>You need to register your children before you can check them in.</p>
+                                <a href="{% url 'services:register_child' %}" class="btn btn-primary">Register a
+                                    Child</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">Today's Check-Ins</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if attendance_records %}
+                            <div class="list-group">
+                                {% for record in attendance_records %}
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1">{{ record.child.first_name }} {{ record.child.last_name }}</h5>
+                                            <small>
+                                                {% if record.check_out_time %}
+                                                    Checked out at {{ record.check_out_time|time:"g:i A" }}
+                                                {% else %}
+                                                    <span class="badge bg-success">Currently checked in</span>
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <p class="mb-1">{{ record.program.title }}</p>
+                                        <small>Checked in at {{ record.check_in_time|time:"g:i A" }}</small>
+
+                                        {% if not record.check_out_time %}
+                                            <div class="mt-2">
+                                                <button class="btn btn-sm btn-outline-danger checkout-btn"
+                                                        data-attendance-id="{{ record.id }}">
+                                                    Check Out
+                                                </button>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <p>No children checked in today.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block extra_js %}
+        <script>
+            $(document).ready(function () {
+                $('.checkout-btn').click(function () {
+                    const attendanceId = $(this).data('attendance-id');
+                    if (confirm('Are you sure you want to check out this child?')) {
+                        $.post(`/services/children/checkout/${attendanceId}/`, {
+                            csrfmiddlewaretoken: '{{ csrf_token }}'
+                        })
+                            .done(function (response) {
+                                if (response.status === 'success') {
+                                    location.reload();
+                                } else {
+                                    alert(response.message);
+                                }
+                            });
+                    }
+                });
+            });
+        </script>
+    {% endblock %}
+
+{% endblock %}

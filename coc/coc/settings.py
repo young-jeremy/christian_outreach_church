@@ -33,7 +33,7 @@ SECRET_KEY = "django-insecure-pxrh=7@@zb#5-6+v88o$x5)p7=64719^p!*5i@limgjt-$su(6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "django_daraja",
     "django_summernote",
     'django.contrib.humanize',
+    'donations',
     # E
     "events",
     'education',
@@ -66,6 +67,7 @@ INSTALLED_APPS = [
     'django_cleanup.apps.CleanupConfig',
     # M
     "members",
+    'multiselectfield',  # For MultiSelectField
     # N
     "notifications",
     # O
@@ -75,9 +77,13 @@ INSTALLED_APPS = [
     # R
     "resources",
     "payments",
+    'paypalrestsdk',
+
     # S
     "social_django",
     "services",
+
+    'stripe',
     "channels",
     "videos",
     "django.contrib.sites",
@@ -462,3 +468,13 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
+
+# Payment settings
+STRIPE_PUBLISHABLE_KEY = 'pk_test_your_key'
+STRIPE_SECRET_KEY = 'sk_test_your_key'
+
+PAYPAL_CLIENT_ID = 'ASazgX17hfAhBbVZPyi4v9sEbkNxT6ZuerQUScPPCbSHjjzB3V-1xW8-Ucoli-bGLnHae7JLI6Ca-Doa'
+PAYPAL_CLIENT_SECRET = 'EIPiao5yENkSxllt0lTPgMeWvsxQCYkCi0QQvf3lD2gKxqw0vqNnacxsW2vj3k-EeJamug0ahmRBO-Oo'
+PAYPAL_MODE = 'sandbox'  # Change to 'live' for production
+
+# For Text-to-Give

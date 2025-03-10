@@ -1,0 +1,245 @@
+{% extends 'base_dashboard.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Donations & Giving Settings</h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">Manage your recurring donations and giving preferences.</p>
+
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="mb-4">
+                                <h5>Recurring Giving</h5>
+                                <p class="text-muted">Set up automatic recurring donations to support the church's
+                                    ministries.</p>
+
+                                <div class="form-check mb-3">
+                                    {{ form.recurring_tithe }}
+                                    <label class="form-check-label" for="{{ form.recurring_tithe.id_for_label }}">
+                                        Set up recurring tithe
+                                    </label>
+                                    {% if form.recurring_tithe.value %}
+                                        <div class="ms-4 mt-2">
+                                            <div class="input-group" style="max-width: 200px;">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" id="titheAmount"
+                                                       name="tithe_amount" value="{{ tithe_amount|default:'0.00' }}"
+                                                       step="0.01" min="0">
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    {{ form.recurring_missions }}
+                                    <label class="form-check-label" for="{{ form.recurring_missions.id_for_label }}">
+                                        Set up recurring missions giving
+                                    </label>
+                                    {% if form.recurring_missions.value %}
+                                        <div class="ms-4 mt-2">
+                                            <div class="input-group" style="max-width: 200px;">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" id="missionsAmount"
+                                                       name="missions_amount"
+                                                       value="{{ missions_amount|default:'0.00' }}" step="0.01" min="0">
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    {{ form.recurring_building_fund }}
+                                    <label class="form-check-label"
+                                           for="{{ form.recurring_building_fund.id_for_label }}">
+                                        Set up recurring building fund giving
+                                    </label>
+                                    {% if form.recurring_building_fund.value %}
+                                        <div class="ms-4 mt-2">
+                                            <div class="input-group" style="max-width: 200px;">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" id="buildingAmount"
+                                                       name="building_amount"
+                                                       value="{{ building_amount|default:'0.00' }}" step="0.01" min="0">
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="recurringFrequency" class="form-label">Frequency</label>
+                                    <select class="form-select" id="recurringFrequency" name="recurring_frequency"
+                                            style="max-width: 200px;">
+                                        <option value="weekly">Weekly</option>
+                                        <option value="biweekly">Bi-weekly</option>
+                                        <option value="monthly" selected>Monthly</option>
+                                        <option value="quarterly">Quarterly</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h5>Payment Preferences</h5>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.preferred_payment_method.id_for_label }}" class="form-label">Preferred
+                                        Payment Method</label>
+                                    {{ form.preferred_payment_method }}
+                                    {% if form.preferred_payment_method.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.preferred_payment_method.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.donation_receipts.id_for_label }}" class="form-label">Donation
+                                        Receipts</label>
+                                    {{ form.donation_receipts }}
+                                    {% if form.donation_receipts.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.donation_receipts.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Choose how often you'd like to receive donation receipts.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <div class="d-flex">
+                                    <div class="me-3">
+                                        <i class="bi bi-info-circle-fill fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="alert-heading">Tax Deductible Donations</h5>
+                                        <p class="mb-0">
+                                            All donations to our church are tax-deductible. You'll receive an annual
+                                            statement
+                                            for tax purposes in January for the previous year's donations.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Save Donation Settings</button>
+                                <a href="{% url 'accounts:accounts_settings_and_privacy' %}"
+                                   class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h4>Payment Methods</h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">Manage your saved payment methods for donations.</p>
+
+                        <a href="{% url 'donations:payment_view' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-credit-card"></i> Manage Payment Methods
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h4>Donation History</h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">View your donation history and download tax statements.</p>
+
+                        <a href="{% url 'donations:history' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-clock-history"></i> View Donation History
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Show/hide amount fields based on checkbox state
+        document.addEventListener('DOMContentLoaded', function () {
+            const recurringTithe = document.getElementById('{{ form.recurring_tithe.id_for_label }}');
+            const recurringMissions = document.getElementById('{{ form.recurring_missions.id_for_label }}');
+            const recurringBuilding = document.getElementById('{{ form.recurring_building_fund.id_for_label }}');
+
+            const titheAmountContainer = recurringTithe.closest('.form-check').querySelector('.ms-4');
+            const missionsAmountContainer = recurringMissions.closest('.form-check').querySelector('.ms-4');
+            const buildingAmountContainer = recurringBuilding.closest('.form-check').querySelector('.ms-4');
+
+            // Initialize on page load
+            if (titheAmountContainer) {
+                titheAmountContainer.style.display = recurringTithe.checked ? 'block' : 'none';
+            }
+            if (missionsAmountContainer) {
+                missionsAmountContainer.style.display = recurringMissions.checked ? 'block' : 'none';
+            }
+            if (buildingAmountContainer) {
+                buildingAmountContainer.style.display = recurringBuilding.checked ? 'block' : 'none';
+            }
+
+            // Add event listeners
+            recurringTithe.addEventListener('change', function () {
+                if (titheAmountContainer) {
+                    titheAmountContainer.style.display = this.checked ? 'block' : 'none';
+                } else if (this.checked) {
+                    // Create amount field if it doesn't exist
+                    const container = document.createElement('div');
+                    container.className = 'ms-4 mt-2';
+                    container.innerHTML = `
+                    <div class="input-group" style="max-width: 200px;">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control" id="titheAmount" name="tithe_amount" value="0.00" step="0.01" min="0">
+                    </div>
+                `;
+                    this.closest('.form-check').appendChild(container);
+                }
+            });
+
+            recurringMissions.addEventListener('change', function () {
+                if (missionsAmountContainer) {
+                    missionsAmountContainer.style.display = this.checked ? 'block' : 'none';
+                } else if (this.checked) {
+                    const container = document.createElement('div');
+                    container.className = 'ms-4 mt-2';
+                    container.innerHTML = `
+                    <div class="input-group" style="max-width: 200px;">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control" id="missionsAmount" name="missions_amount" value="0.00" step="0.01" min="0">
+                    </div>
+                `;
+                    this.closest('.form-check').appendChild(container);
+                }
+            });
+
+            recurringBuilding.addEventListener('change', function () {
+                if (buildingAmountContainer) {
+                    buildingAmountContainer.style.display = this.checked ? 'block' : 'none';
+                } else if (this.checked) {
+                    const container = document.createElement('div');
+                    container.className = 'ms-4 mt-2';
+                    container.innerHTML = `
+                    <div class="input-group" style="max-width: 200px;">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control" id="buildingAmount" name="building_amount" value="0.00" step="0.01" min="0">
+                    </div>
+                `;
+                    this.closest('.form-check').appendChild(container);
+                }
+            });
+        });
+    </script>
+{% endblock %}

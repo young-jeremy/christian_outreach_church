@@ -1,0 +1,250 @@
+{% extends 'base_dashboard.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4>Annual Giving Statement</h4>
+                        <div>
+                            <button class="btn btn-outline-primary btn-sm me-2" onclick="window.print()">
+                                <i class="bi bi-printer"></i> Print
+                            </button>
+                            <a href="#" class="btn btn-outline-success btn-sm">
+                                <i class="bi bi-download"></i> Download PDF
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-4">
+                            <h3>{{ church_name|default:"Grace Community Church" }}</h3>
+                            <p>{{ church_address|default:"123 Faith Street, Cityville, ST 12345" }}</p>
+                            <p>{{ church_phone|default:"(555) 123-4567" }}
+                                | {{ church_email|default:"info@gracechurch.org" }}</p>
+                            <h5 class="mt-4">Annual Giving Statement</h5>
+                            <p>For the Year: {{ year|default:"2023" }}</p>
+                            <p class="text-muted">Tax ID: {{ tax_id|default:"12-3456789" }}</p>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6>Donor Information:</h6>
+                                <p>{{ user.get_full_name|default:user.username }}</p>
+                                <p>{{ user.email }}</p>
+                                {% if user.profile.address %}
+                                    <p>{{ user.profile.address }}</p>
+                                    <p>{{ user.profile.city }}, {{ user.profile.state }} {{ user.profile.zip }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <h6>Statement Information:</h6>
+                                <p>Statement Date: {{ statement_date|date:"F j, Y"|default:"January 15, 2024" }}</p>
+                                <p>Statement ID: {{ statement_id|default:"ST-2023-001" }}</p>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive mb-4">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% if donations %}
+                                    {% for donation in donations %}
+                                        <tr>
+                                            <td>{{ donation.date|date:"M d, Y" }}</td>
+                                            <td>
+                                                {% if donation.donation_type == 'tithe' %}
+                                                    Tithe
+                                                {% elif donation.donation_type == 'missions' %}
+                                                    Missions Fund
+                                                {% elif donation.donation_type == 'building' %}
+                                                    Building Fund
+                                                {% else %}
+                                                    General Donation
+                                                {% endif %}
+                                                {% if donation.recurring %}
+                                                    (Recurring)
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">${{ donation.amount }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <!-- Sample data for display purposes -->
+                                    <tr>
+                                        <td>Jan 5, 2023</td>
+                                        <td>Tithe</td>
+                                        <td class="text-end">$250.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Feb 2, 2023</td>
+                                        <td>Tithe</td>
+                                        <td class="text-end">$250.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Mar 5, 2023</td>
+                                        <td>Tithe</td>
+                                        <td class="text-end">$250.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Apr 15, 2023</td>
+                                        <td>Missions Fund</td>
+                                        <td class="text-end">$100.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>May 7, 2023</td>
+                                        <td>Tithe</td>
+                                        <td class="text-end">$250.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Jun 4, 2023</td>
+                                        <td>Tithe</td>
+                                        <td class="text-end">$250.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Jul 2, 2023</td>
+                                        <td>Tithe</td>
+                                        <td class="text-end">$250.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Aug 6, 2023</td>
+                                        <td>Tithe</td>
+                                        <td class="text-end">$250.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Sep 3, 2023</td>
+                                        <td>Tithe</td>
+                                        <td class="text-end">$250.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Oct 1, 2023</td>
+                                        <td>Tithe</td>
+                                        <td class="text-end">$250.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Nov 5, 2023</td>
+                                        <td>Tithe</td>
+                                        <td class="text-end">$250.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Dec 3, 2023</td>
+                                        <td>Tithe</td>
+                                        <td class="text-end">$250.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Dec 24, 2023</td>
+                                        <td>Building Fund</td>
+                                        <td class="text-end">$500.00</td>
+                                    </tr>
+                                {% endif %}
+                                </tbody>
+                                <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="2" class="text-end">Total Contributions:</th>
+                                    <th class="text-end">${{ total_donations|default:"3,350.00" }}</th>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <div class="mb-4">
+                            <h6>Contribution Summary by Fund:</h6>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Fund</th>
+                                        <th class="text-end">Amount</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr>
+                                        <td>Tithe</td>
+                                        <td class="text-end">${{ tithe_total|default:"2,750.00" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Missions Fund</td>
+                                        <td class="text-end">${{ missions_total|default:"100.00" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Building Fund</td>
+                                        <td class="text-end">${{ building_total|default:"500.00" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Other</td>
+                                        <td class="text-end">${{ other_total|default:"0.00" }}</td>
+                                    </tr>
+                                    </tbody>
+                                    <tfoot class="table-light">
+                                    <tr>
+                                        <th class="text-end">Total:</th>
+                                        <th class="text-end">${{ total_donations|default:"3,350.00" }}</th>
+                                    </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <p class="mb-0">
+                                <strong>Tax Information:</strong> This statement is provided for tax purposes. No goods
+                                or services were
+                                provided in exchange for these contributions. All contributions listed are
+                                tax-deductible to the
+                                extent allowed by law.
+                            </p>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <p>Thank you for your faithful and generous support of our church ministries!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'donations:history' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to History
+                    </a>
+                    <a href="mailto:{{ church_email|default:'finance@gracechurch.org' }}?subject=Question about Tax Statement {{ statement_id|default:'ST-2023-001' }}"
+                       class="btn btn-outline-primary">
+                        <i class="bi bi-envelope"></i> Questions?
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            .card, .card * {
+                visibility: visible;
+            }
+
+            .card {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                border: none !important;
+            }
+
+            .card-header {
+                border-bottom: 1px solid #dee2e6 !important;
+            }
+
+            .btn {
+                display: none !important;
+            }
+        }
+    </style>
+{% endblock %}

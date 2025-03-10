@@ -1,4 +1,5 @@
 {% extends 'ministries/base_ministry.html' %}
+{% load crispy_forms_filters %}
 {% load static %}
 {% load crispy_forms_tags %}
 
@@ -6,6 +7,23 @@
 {{ block.super }}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+    <style>
+        /* Custom styles for error messages */
+        .error-feedback {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .form-error-summary {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 0.25rem;
+            color: #721c24;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+    </style>
 {% endblock %}
 
 {% block ministry_content %}
@@ -19,6 +37,23 @@
                 </a>
             </div>
             <div class="card-body">
+                {% if form.errors %}
+                    <div class="form-error-summary mb-4">
+                        <h6 class="mb-2"><i class="bi bi-exclamation-triangle"></i> Please correct the following errors:
+                        </h6>
+                        <ul class="mb-0">
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <li>{{ field.label }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
                 <form method="post" enctype="multipart/form-data" id="bibleStudyForm">
                     {% csrf_token %}
 
@@ -62,7 +97,13 @@
                                     {{ form.duration|as_crispy_field }}
                                 </div>
                                 <div class="col-12">
-                                    {{ form.is_recurring|as_crispy_field }}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="id_is_recurring"
+                                               name="is_recurring" {% if form.is_recurring.value %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_is_recurring">
+                                            Is this a recurring Bible study?
+                                        </label>
+                                    </div>
                                 </div>
                                 <div id="recurringFields" class="col-12" style="display: none;">
                                     {{ form.recurring_pattern|as_crispy_field }}
@@ -86,7 +127,13 @@
                                     {{ form.max_participants|as_crispy_field }}
                                 </div>
                                 <div class="col-12">
-                                    {{ form.is_online|as_crispy_field }}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="id_is_online"
+                                               name="is_online" {% if form.is_online.value %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_is_online">
+                                            Is this an online Bible study?
+                                        </label>
+                                    </div>
                                 </div>
                                 <div id="onlineFields" class="col-12" style="display: none;">
                                     {{ form.meeting_link|as_crispy_field }}
@@ -126,7 +173,14 @@
                         <div class="card-body">
                             <div class="row g-3">
                                 <div class="col-12">
-                                    {{ form.registration_required|as_crispy_field }}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="id_registration_required"
+                                               name="registration_required"
+                                               {% if form.registration_required.value %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_registration_required">
+                                            Is registration required?
+                                        </label>
+                                    </div>
                                 </div>
                                 <div id="registrationFields" class="col-12" style="display: none;">
                                     {{ form.registration_deadline|as_crispy_field }}
@@ -141,7 +195,13 @@
                             <h6 class="mb-0">Additional Settings</h6>
                         </div>
                         <div class="card-body">
-                            {{ form.is_featured|as_crispy_field }}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="id_is_featured" name="is_featured"
+                                       {% if form.is_featured.value %}checked{% endif %}>
+                                <label class="form-check-label" for="id_is_featured">
+                                    Feature this Bible study on the homepage
+                                </label>
+                            </div>
                         </div>
                     </div>
 
@@ -167,7 +227,12 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize date pickers
-        flatpickr("#id_start_date, #id_end_date", {
+        flatpickr("#id_start_date", {
+            dateFormat: "Y-m-d",
+            minDate: "today",
+        });
+
+        flatpickr("#id_end_date", {
             dateFormat: "Y-m-d",
             minDate: "today",
         });
@@ -197,41 +262,135 @@
         const recurringCheckbox = document.getElementById('id_is_recurring');
         const recurringFields = document.getElementById('recurringFields');
 
-        recurringCheckbox.addEventListener('change', function() {
-            recurringFields.style.display = this.checked ? 'block' : 'none';
-        });
+        function toggleRecurringFields() {
+            recurringFields.style.display = recurringCheckbox.checked ? 'block' : 'none';
+        }
+
+        recurringCheckbox.addEventListener('change', toggleRecurringFields);
+        toggleRecurringFields(); // Initialize on page load
 
         // Toggle online fields
         const onlineCheckbox = document.getElementById('id_is_online');
         const onlineFields = document.getElementById('onlineFields');
 
-        onlineCheckbox.addEventListener('change', function() {
-            onlineFields.style.display = this.checked ? 'block' : 'none';
-        });
+        function toggleOnlineFields() {
+            onlineFields.style.display = onlineCheckbox.checked ? 'block' : 'none';
+        }
+
+        onlineCheckbox.addEventListener('change', toggleOnlineFields);
+        toggleOnlineFields(); // Initialize on page load
 
         // Toggle registration fields
         const registrationCheckbox = document.getElementById('id_registration_required');
         const registrationFields = document.getElementById('registrationFields');
 
-        registrationCheckbox.addEventListener('change', function() {
-            registrationFields.style.display = this.checked ? 'block' : 'none';
-        });
+        function toggleRegistrationFields() {
+            registrationFields.style.display = registrationCheckbox.checked ? 'block' : 'none';
+        }
 
-        // Show/hide conditional fields on page load
-        if (recurringCheckbox.checked) recurringFields.style.display = 'block';
-        if (onlineCheckbox.checked) onlineFields.style.display = 'block';
-        if (registrationCheckbox.checked) registrationFields.style.display = 'block';
+        registrationCheckbox.addEventListener('change', toggleRegistrationFields);
+        toggleRegistrationFields(); // Initialize on page load
 
         // Form validation
         const form = document.getElementById('bibleStudyForm');
         form.addEventListener('submit', function(e) {
-            const startDate = document.getElementById('id_start_date').value;
-            const time = document.getElementById('id_time').value;
+            let hasErrors = false;
+            const errorMessages = [];
 
-            if (!startDate || !time) {
+            // Required fields validation
+            const requiredFields = [
+                {id: 'id_title', name: 'Title'},
+                {id: 'id_study_type', name: 'Study Type'},
+                {id: 'id_target_group', name: 'Target Group'},
+                {id: 'id_description', name: 'Description'},
+                {id: 'id_start_date', name: 'Start Date'},
+                {id: 'id_time', name: 'Time'},
+                {id: 'id_location', name: 'Location'},
+                {id: 'id_max_participants', name: 'Maximum Participants'}
+            ];
+
+            requiredFields.forEach(field => {
+                const element = document.getElementById(field.id);
+                if (!element.value.trim()) {
+                    hasErrors = true;
+                    errorMessages.push(`${field.name} is required`);
+
+                    // Add error class to the field
+                    const formGroup = element.closest('.form-group');
+                    if (formGroup) {
+                        formGroup.classList.add('has-error');
+
+                        // Check if error message already exists
+                        let errorDiv = formGroup.querySelector('.error-feedback');
+                        if (!errorDiv) {
+                            errorDiv = document.createElement('div');
+                            errorDiv.className = 'error-feedback';
+                            errorDiv.textContent = `${field.name} is required`;
+                            formGroup.appendChild(errorDiv);
+                        }
+                    }
+                }
+            });
+
+            // Conditional validation
+            if (recurringCheckbox.checked) {
+                const recurringPattern = document.getElementById('id_recurring_pattern');
+                if (!recurringPattern.value) {
+                    hasErrors = true;
+                    errorMessages.push('Recurring Pattern is required when recurring is enabled');
+                }
+            }
+
+            if (onlineCheckbox.checked) {
+                const meetingLink = document.getElementById('id_meeting_link');
+                if (!meetingLink.value) {
+                    hasErrors = true;
+                    errorMessages.push('Meeting Link is required for online Bible studies');
+                }
+            }
+
+            if (registrationCheckbox.checked) {
+                const deadline = document.getElementById('id_registration_deadline');
+                if (!deadline.value) {
+                    hasErrors = true;
+                    errorMessages.push('Registration Deadline is required when registration is enabled');
+                }
+            }
+
+            if (hasErrors) {
                 e.preventDefault();
-                alert('Please select both date and time for the Bible study.');
-                return false;
+
+                // Create error summary if it doesn't exist
+                let errorSummary = document.querySelector('.form-error-summary');
+                if (!errorSummary) {
+                    errorSummary = document.createElement('div');
+                    errorSummary.className = 'form-error-summary mb-4';
+
+                    const heading = document.createElement('h6');
+                    heading.className = 'mb-2';
+                    heading.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Please correct the following errors:';
+
+                    const ul = document.createElement('ul');
+                    ul.className = 'mb-0';
+
+                    errorMessages.forEach(msg => {
+                        const li = document.createElement('li');
+                        li.textContent = msg;
+                        ul.appendChild(li);
+                    });
+
+                    errorSummary.appendChild(heading);
+                    errorSummary.appendChild(ul);
+
+                    const cardBody = form.closest('.card-body');
+                    cardBody.insertBefore(errorSummary, form);
+                }
+
+                // Scroll to the top of the form
+                window.scrollTo({
+                    top: form.offsetTop - 100,
+                    behavior: 'smooth'
+                });
             }
         });
     });

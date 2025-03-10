@@ -5,11 +5,15 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.http import JsonResponse
+import logging
+
+logger = logging.getLogger(__name__)
+
 from .models import (
     SinglesMinistry,
     SinglesEvent,
     MentorshipRequest,
-    SinglesResource, SermonNote
+    SinglesResource, SermonNote, ChildProgramEnrollment, Child, ChildProgramEnrollment, ChildAttendance
 )
 from .forms import (
     SinglesMinistryForm,
@@ -17,7 +21,7 @@ from .forms import (
     MentorshipRequestForm,
     SinglesResourceForm,
     MentorshipMatchForm,
-    SinglesEventRegistrationForm
+    SinglesEventRegistrationForm, PrayerUpdateForm
 )
 from django.contrib.auth.models import User
 from .models import (
@@ -176,6 +180,7 @@ from .models import WomensMinistry, MinistryEvent
 from .forms import WomensMinistryForm, MinistryEventForm
 
 
+
 class SermonResourcesView(ListView):
     template_name = 'services/sermons/sermon_resources.html'
     context_object_name = 'sermon_resources'
@@ -194,6 +199,8 @@ class SermonResourcesView(ListView):
 
 
 def add_sermon_view(request):
+    form = SermonForm(request.POST)
+
     if request.method == 'POST':
         # ... your form processing code ...
         if form.is_valid():
@@ -251,7 +258,7 @@ def ministry_event_create(request, ministry_slug):
     else:
         form = MinistryEventForm()
 
-    return render(request, 'services/womens_ministry/event_form.html', {
+    return render(request, 'services/womens_ministry/form.html', {
         'form': form,
         'ministry': ministry,
         'action': 'Create'
@@ -280,7 +287,7 @@ def create_worship_service(request):
         'title': 'Create Worship Service'
     }
 
-    return render(request, 'services/create_worship_service.html', context)
+    return render(request, 'services/worship/create_worship_service.html', context)
 
 
 
@@ -289,7 +296,7 @@ def video_feed(request):
     subscriptions = Subscription.objects.filter(subscriber=request.user)
     channels = [subscription.channel for subscription in subscriptions]
     videos = Content.objects.filter(channel__in=channels).order_by('-uploaded_at')
-    return render(request, 'video_feed.html', {'videos': videos})
+    return render(request, 'videos/video_checks/video_feed.html', {'videos': videos})
 
 
 @login_required
@@ -422,7 +429,7 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
 
 class BibleStudyListView(ListView):
     model = BibleStudy
-    template_name = 'services/bible_study_list.html'
+    template_name = 'services/bible_study/bible_study_list.html'
     context_object_name = 'bible_studies'
     paginate_by = 9
 
@@ -456,7 +463,7 @@ class BibleStudyListView(ListView):
 
 class BibleStudyDetailView(DetailView):
     model = BibleStudy
-    template_name = 'services/bible_study_detail.html'
+    template_name = 'services/bible_study/bible_study_detail.html'
     context_object_name = 'study'
 
     def get_context_data(self, **kwargs):
@@ -476,7 +483,7 @@ class BibleStudyDetailView(DetailView):
 class BibleStudyCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = BibleStudy
     form_class = BibleStudyForm
-    template_name = 'services/bible_study_form.html'
+    template_name = 'services/bible_study/bible_study_form.html'
     success_url = reverse_lazy('services:bible_study_list')
 
     def test_func(self):
@@ -491,7 +498,7 @@ class BibleStudyCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 class BibleStudyUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = BibleStudy
     form_class = BibleStudyForm
-    template_name = 'services/bible_study_form.html'
+    template_name = 'services/bible_study/bible_study_form.html'
 
     def test_func(self):
         study = self.get_object()
@@ -508,7 +515,7 @@ class BibleStudyUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 class BibleStudyDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = BibleStudy
     success_url = reverse_lazy('services:bible_study_list')
-    template_name = 'services/bible_study_confirm_delete.html'
+    template_name = 'services/bible_study/bible_study_confirm_delete.html'
 
     def test_func(self):
         study = self.get_object()
@@ -1498,15 +1505,9 @@ def delete_sermon_category(request, category_slug):
         messages.success(request, 'Category deleted successfully!')
     return redirect('services:categories')
 
-@login_required
-def bible_study_list(request):
-    studies = BibleStudy.objects.all().order_by('-start_date')
-    return render(request, 'services/bible_study_list.html', {'studies': studies})
 
-@login_required
-def bible_study_detail(request, pk):
-    study = get_object_or_404(BibleStudy, pk=pk)
-    return render(request, 'services/bible_study_detail.html', {'study': study})
+
+
 
 @login_required
 def create_bible_study(request):
@@ -1520,7 +1521,8 @@ def create_bible_study(request):
             return redirect('services:bible_study_list')
     else:
         form = BibleStudyForm()
-    return render(request, 'services/create_bible_study.html', {'form': form})
+    return render(request, 'services/bible_study/create_bible_study.html', {'form': form})
+
 
 @login_required
 def worship_service_list(request):
@@ -1544,7 +1546,7 @@ def youth_ministry_list(request):
 @login_required
 def youth_event_detail(request, pk):
     event = get_object_or_404(YouthEvent, pk=pk)
-    return render(request, 'services/youth/youth_event_detail.html', {'event': event})
+    return render(request, 'services/youth_programs/detail.html', {'event': event})
 
 @login_required
 def create_youth_event(request):
@@ -1558,36 +1560,12 @@ def create_youth_event(request):
         form = YouthEventForm()
     return render(request, 'services/youth_programs/event_form.html', {'form': form})
 
-@login_required
-def children_ministry_list(request):
-    programs = ChildrenProgram.objects.all().order_by('-date')
-    return render(request, 'services/children/children_programs.html', {'programs': programs})
 
-@login_required
-def register_child(request):
-    if request.method == 'POST':
-        form = ChildRegistrationForm(request.POST)
-        if form.is_valid():
-            registration = form.save(commit=False)
-            registration.parent = request.user
-            registration.save()
-            messages.success(request, 'Child registered successfully!')
-            return redirect('services:children_ministry_list')
-    else:
-        form = ChildRegistrationForm()
-    return render(request, 'services/register_child.html', {'form': form})
+def child_checking(request):
+    template_name = 'services/children/checking.html'
+    return render(request, template_name)
 
-@login_required
-def create_children_program(request):
-    if request.method == 'POST':
-        form = ChildrenProgramForm(request.POST)
-        if form.is_valid():
-            program = form.save()
-            messages.success(request, 'Children\'s program created successfully!')
-            return redirect('services:children_ministry_list')
-    else:
-        form = ChildrenProgramForm()
-    return render(request, 'services/children/create_children_program.html', {'form': form})
+
 
 class CouplesHomeView(LoginRequiredMixin, TemplateView):
     template_name = 'services/couples/home.html'
@@ -1673,8 +1651,8 @@ def events_view(request):
     upcoming_events = Event.objects.filter(
         start_date__gte=timezone.now()
     ).order_by('start_date')
-    
-    return render(request, 'events/event_list.html', {
+
+    return render(request, 'events/events_list.html', {
         'upcoming_events': upcoming_events
     })
 
@@ -1726,46 +1704,114 @@ def add_testimony(request, pk):
             return redirect('services:prayer_request_detail', pk=pk)
     else:
         form = TestimonyForm()
-    return render(request, 'services/add_testimony.html', {'form': form, 'prayer_request': prayer_request})
+    return render(request, 'services/testimonies/add_testimony.html', {'form': form, 'prayer_request': prayer_request})
+
 
 @login_required
-def prayer_requests_list(request):
-    """List all prayer requests"""
-    prayer_requests = PrayerRequest.objects.filter(
-        Q(requester=request.user) | Q(is_private=False)
-    ).order_by('-created_at')
-    return render(request, 'services/prayer_requests/prayer_requests.html', {
-        'prayer_requests': prayer_requests
-    })
+def prayer_requests(request):
+    """View for listing all prayer requests with filtering options"""
+    # Get filter parameters
+    category = request.GET.get('category', '')
+    status = request.GET.get('status', '')
+
+    # Base queryset - exclude private prayers unless they belong to the user or user is staff
+    if request.user.is_staff:
+        prayers = PrayerRequest.objects.all()
+    else:
+        prayers = PrayerRequest.objects.filter(
+            Q(is_private=False) | Q(requester=request.user)
+        )
+
+    # Apply filters
+    if category:
+        prayers = prayers.filter(category=category)
+
+    if status:
+        prayers = prayers.filter(status=status)
+
+    # Order by created_at (newest first)
+    prayers = prayers.order_by('-created_at')
+
+    # Create a new form for the modal
+    form = PrayerRequestForm()
+
+    # Get choices for filters
+    categories = PrayerRequest.PRAYER_CATEGORIES
+    statuses = PrayerRequest.PRAYER_STATUS
+
+    # Add status color mapping
+    status_colors = {
+        'new': 'primary',
+        'praying': 'info',
+        'answered': 'success',
+        'archived': 'secondary'
+    }
+
+    context = {
+        'prayers': prayers,
+        'form': form,
+        'categories': categories,
+        'statuses': statuses,
+        'current_category': category,
+        'current_status': status,
+        'status_colors': status_colors,
+    }
+
+    return render(request, 'services/prayer_requests/prayer_requests.html', context)
+
 
 @login_required
 def create_prayer_request(request):
     """Create a new prayer request"""
+    # Debug information
+    logger.info(f"User authenticated: {request.user.is_authenticated}")
+    logger.info(f"User ID: {request.user.id}")
+    logger.info(f"Username: {request.user.username}")
+
     if request.method == 'POST':
+        logger.info("POST request received")
         form = PrayerRequestForm(request.POST)
+
+        logger.info(f"Form is valid: {form.is_valid()}")
         if form.is_valid():
-            prayer_request = form.save(commit=False)
-            prayer_request.author = request.user
-            prayer_request.save()
-            messages.success(request, 'Prayer request created successfully!')
-            return redirect('services:prayer_requests')
+            # Get form data directly
+            title = form.cleaned_data['title']
+            prayer_text = form.cleaned_data['request']
+            category = form.cleaned_data['category']
+            is_anonymous = form.cleaned_data.get('is_anonymous', False)
+            is_private = form.cleaned_data.get('is_private', False)
+
+            logger.info(f"Form data: {title}, {category}, {is_anonymous}, {is_private}")
+
+            # Create prayer request directly
+            try:
+                prayer_request = PrayerRequest(
+                    requester=request.user,
+                    title=title,
+                    request=prayer_text,
+                    category=category,
+                    is_anonymous=is_anonymous,
+                    is_private=is_private,
+                    status='new'
+                )
+                prayer_request.save()
+                logger.info("Prayer request saved successfully")
+                messages.success(request, 'Prayer request created successfully!')
+                return redirect('services:prayer_requests')
+            except Exception as e:
+                logger.error(f"Error saving prayer request: {str(e)}")
+                messages.error(request, f"Error creating prayer request: {str(e)}")
+        else:
+            logger.error(f"Form errors: {form.errors}")
+            messages.error(request, f"Form validation failed: {form.errors}")
     else:
         form = PrayerRequestForm()
-    return render(request, 'services/prayer_requests/create_prayer_request.html', {'form': form})
 
-@login_required
-def prayer_request_detail(request, pk):
-    """View a specific prayer request"""
-    prayer_request = get_object_or_404(PrayerRequest, pk=pk)
-    if prayer_request.is_private and prayer_request.author != request.user:
-        messages.error(request, 'You do not have permission to view this prayer request.')
-        return redirect('services:prayer_requests')
-    
-    updates = prayer_request.updates.all().order_by('-created_at')
-    return render(request, 'services/prayer_requests/request_detail.html', {
-        'prayer_request': prayer_request,
-        'updates': updates
-    })
+    context = {
+        'form': form
+    }
+    return render(request, 'services/prayer_requests/create_prayer_request.html', context)
+
 
 @login_required
 def add_prayer_update(request, pk):
@@ -1935,39 +1981,10 @@ def reading_plan_detail(request, pk):
     })
 
 
-@login_required
-def create_prayer_request(request):
-    profile = request.user.couple_profile
-    if request.method == 'POST':
-        form = PrayerRequestForm(request.POST)
-        if form.is_valid():
-            prayer = form.save(commit=False)
-            prayer.couple = profile
-            prayer.save()
-            messages.success(request, 'Prayer request created successfully!')
-            return redirect('services:couple_prayers')
-    else:
-        form = PrayerRequestForm()
-
-    return render(request, 'services/couples/prayer_request_form.html', {
-        'form': form,
-        'profile': profile,
-    })
-
-
-@login_required
-def prayer_request_detail(request, pk):
-    profile = request.user.couple_profile
-    prayer = get_object_or_404(PrayerRequest, pk=pk, couple=profile)
-    return render(request, 'services/couples/prayer_request_detail.html', {
-        'prayer': prayer,
-        'profile': profile,
-    })
-
 
 @login_required
 def update_prayer_request(request, pk):
-    profile = request.user.couple_profile
+    profile = request.user
     prayer = get_object_or_404(PrayerRequest, pk=pk, couple=profile)
 
     if request.method == 'POST':
@@ -1979,7 +1996,7 @@ def update_prayer_request(request, pk):
     else:
         form = PrayerRequestForm(instance=prayer)
 
-    return render(request, 'services/couples/prayer_request_form.html', {
+    return render(request, 'services/prayer_requests/create_prayer_request.html', {
         'form': form,
         'prayer': prayer,
         'profile': profile,
@@ -2017,30 +2034,10 @@ def reading_plan_detail(request, pk):
 
 
 @login_required
-def create_prayer_request(request):
-    profile = request.user.couple_profile
-    if request.method == 'POST':
-        form = PrayerRequestForm(request.POST)
-        if form.is_valid():
-            prayer = form.save(commit=False)
-            prayer.couple = profile
-            prayer.save()
-            messages.success(request, 'Prayer request created successfully!')
-            return redirect('services:couple_prayers')
-    else:
-        form = PrayerRequestForm()
-
-    return render(request, 'services/couples/prayer_request_form.html', {
-        'form': form,
-        'profile': profile,
-    })
-
-
-@login_required
 def prayer_request_detail(request, pk):
-    profile = request.user.couple_profile
-    prayer = get_object_or_404(PrayerRequest, pk=pk, couple=profile)
-    return render(request, 'services/couples/prayer_request_detail.html', {
+    profile = request.user
+    prayer = get_object_or_404(PrayerRequest, pk=pk, requester=profile)
+    return render(request, 'services/prayer_requests/prayer_request_detail.html', {
         'prayer': prayer,
         'profile': profile,
     })
@@ -2048,7 +2045,7 @@ def prayer_request_detail(request, pk):
 
 @login_required
 def update_prayer_request(request, pk):
-    profile = request.user.couple_profile
+    profile = request.user
     prayer = get_object_or_404(PrayerRequest, pk=pk, couple=profile)
 
     if request.method == 'POST':
@@ -2060,7 +2057,7 @@ def update_prayer_request(request, pk):
     else:
         form = PrayerRequestForm(instance=prayer)
 
-    return render(request, 'services/couples/prayer_request_form.html', {
+    return render(request, 'services/prayer_requests/create_prayer_request.html', {
         'form': form,
         'prayer': prayer,
         'profile': profile,
@@ -2074,7 +2071,7 @@ def couple_reading_plans(request):
         messages.info(request, 'Please create your couple profile first to access reading plans.')
         return redirect('services:create_couple_profile')
 
-    profile = request.user.couple_profile
+    profile = request.user
     reading_plans = BibleReadingPlan.objects.filter(couples=profile).annotate(
         completion_percentage=models.F('completed_chapters') * 100.0 / models.F('total_chapters')
     ).order_by('-created_at')
@@ -2118,7 +2115,7 @@ def create_reading_plan(request):
         messages.warning(request, 'Please create your couple profile first to create reading plans.')
         return redirect('services:create_couple_profile')
 
-    profile = request.user.couple_profile
+    profile = request.user
 
     if request.method == 'POST':
         form = BibleReadingPlanForm(request.POST)
@@ -2206,8 +2203,7 @@ class CoupleProfileDetailView(LoginRequiredMixin, DetailView):
             messages.warning(request, 'Please create your couple profile first.')
             return redirect('services:create_couple_profile')
 
-    def get_object(self):
-        return get_object_or_404(CoupleProfile, user=self.request.user)
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -2335,9 +2331,18 @@ def mens_ministry_detail(request, slug):
         'ministry': ministry,
         'upcoming_events': upcoming_events,
         'past_events': past_events,
-        'section': 'mens_ministry'
-    }
+        'section': 'mens_ministry'}
     return render(request, 'services/mens_ministry/detail.html', context)
+
+
+def children_program_detail(request, program_id):
+    programs = get_object_or_404(ChildrenProgram, id=program_id)
+
+    context = {
+        'programs': programs,
+    }
+    template_name = 'services/children/children_program_detail.html'
+    return render(request, template_name, context)
 
 
 @login_required
@@ -2412,7 +2417,7 @@ def youth_program_list(request):
 
 
 def youth_program_detail(request, slug):
-    program = get_object_or_404(YouthProgram, slug=slug)
+    program = get_object_or_404(YouthEvent, slug=slug)
 
     # Get upcoming and past events
     upcoming_events = program.events.filter(
@@ -2483,7 +2488,7 @@ def youth_program_create(request):
     else:
         form = YouthProgramForm()
 
-    return render(request, 'services/youth/form.html', {
+    return render(request, 'services/youth_programs/event_form.html', {
         'form': form,
         'action': 'Create'
     })
@@ -2525,23 +2530,6 @@ def youth_program_edit(request, slug):
 # Rest of your views remain the same...
 
 
-@login_required
-def youth_program_create(request):
-    if request.method == 'POST':
-        form = YouthProgramForm(request.POST, request.FILES)
-        if form.is_valid():
-            program = form.save(commit=False)
-            program.leader = request.user
-            program.save()
-            messages.success(request, 'Youth program created successfully!')
-            return redirect('services:youth_program_detail', slug=program.slug)
-    else:
-        form = YouthProgramForm()
-
-    return render(request, 'services/youth_programs/form.html', {
-        'form': form,
-        'action': 'Create'
-    })
 
 
 @login_required
@@ -2605,7 +2593,7 @@ def process_payment(request, event_id):
             # Integrate with payment gateway here
             try:
                 # Process payment (example)
-                payment_successful = process_payment_gateway(
+                payment_successful = process_payment(
                     amount=event.cost,
                     payment_method=form.cleaned_data['payment_method'],
                     user=request.user
@@ -2723,7 +2711,7 @@ def seniors_events(request):
         'upcoming_events': upcoming_events,
         'past_events': past_events,
     }
-    return render(request, 'services/seniors_ministry/events.html', context)
+    return render(request, 'services/seniors_ministry/list.html', context)
 
 
 @login_required
@@ -3577,7 +3565,7 @@ def resource_detail(request, resource_id):
         ).exclude(id=resource.id)[:3],
         'can_edit': request.user.is_staff
     }
-    return render(request, 'services/singles_ministry/resource_detail.html', context)
+    return render(request, 'services/children/resource_detail.html', context)
 
 
 @login_required
@@ -3604,3 +3592,691 @@ def download_resource(request, resource_id):
     except Exception as e:
         messages.error(request, 'Error downloading the resource. Please try again.')
         return redirect('services:singles_resource_detail', resource_id=resource_id)
+
+
+from .models import ChildrenProgram, Child, ChildProgramEnrollment, ChildResource
+from .forms import ChildrenProgramForm, ChildRegistrationForm, ChildCheckInForm, ResourceForm
+
+
+def children_program_list(request):
+    """Main view for children's ministry page showing all programs"""
+    programs = ChildrenProgram.objects.all().order_by('time')
+
+    # If user is logged in, annotate programs with enrollment status
+    if request.user.is_authenticated and hasattr(request.user, 'children'):
+        user_children_ids = request.user.children.values_list('id', flat=True)
+        for program in programs:
+            program.user_enrolled = ChildProgramEnrollment.objects.filter(
+                program=program,
+                child__id__in=user_children_ids,
+                active=True
+            ).exists()
+
+    context = {
+        'programs': programs,
+    }
+    return render(request, 'services/children/children_events.html', context)
+
+
+@login_required
+def create_children_program(request):
+    """View for creating a new children's program"""
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to create programs.")
+        return redirect('services:create_children_program')
+
+    if request.method == 'POST':
+        form = ChildrenProgramForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Program created successfully!")
+            return redirect('services:children_ministry_list')
+    else:
+        form = ChildrenProgramForm()
+
+    return render(request, 'services/children/children_program_form.html', {
+        'form': form,
+        'title': 'Create New Program',
+    })
+
+
+@login_required
+def edit_children_program(request, pk):
+    """View for editing an existing children's program"""
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to edit programs.")
+        return redirect('services:children')
+
+    program = get_object_or_404(ChildrenProgram, pk=pk)
+
+    if request.method == 'POST':
+        form = ChildrenProgramForm(request.POST, request.FILES, instance=program)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Program updated successfully!")
+            return redirect('services:children')
+    else:
+        form = ChildrenProgramForm(instance=program)
+
+    return render(request, 'services/children/children_program_form.html', {
+        'form': form,
+        'title': 'Edit Program',
+        'program': program,
+    })
+
+
+@login_required
+def delete_children_program(request, pk):
+    """View for deleting a children's program"""
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to delete programs.")
+        return redirect('services:children')
+
+    program = get_object_or_404(ChildrenProgram, pk=pk)
+
+    if request.method == 'POST':
+        program.delete()
+        messages.success(request, "Program deleted successfully!")
+        return redirect('services:children')
+
+    return render(request, 'services/children/confirm_delete.html', {
+        'object': program,
+        'title': 'Delete Program',
+    })
+
+
+@login_required
+def register_child(request):
+    """View for parents to register their children"""
+    if request.method == 'POST':
+        form = ChildRegistrationForm(request.POST)
+        if form.is_valid():
+            # Create child but don't save to DB yet
+            child = form.save(commit=False)
+            # Set the parent to the current logged-in user
+            child.parent = request.user
+            child.save()
+
+            messages.success(request, f"{child.first_name} has been registered successfully!")
+            return redirect('services:children_ministry_list')
+    else:
+        form = ChildRegistrationForm()
+
+    return render(request, 'services/children/register_child.html', {
+        'form': form,
+        'children': request.user.children.all()
+    })
+
+
+@login_required
+@require_POST
+def register_child_for_program(request, program_id):
+    """View to register a specific child for a specific program"""
+    programs = ChildrenProgram.objects.all()
+    try:
+        child_id = request.POST.get('child_id')
+
+        if not child_id:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'No child ID provided'
+            })
+
+        child = get_object_or_404(Child, id=child_id, parent=request.user)
+        program = get_object_or_404(ChildrenProgram, id=program_id)
+
+        # Check if already enrolled
+        if ChildProgramEnrollment.objects.filter(child=child, program=program).exists():
+            return JsonResponse({
+                'status': 'error',
+                'message': f'{child.first_name} is already enrolled in this program'
+            })
+
+        # Check if spots are available
+        if program.spots_available <= 0:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'No spots available in this program'
+            })
+
+        # Create the enrollment
+        enrollment = ChildProgramEnrollment(
+            child=child,
+            program=program
+        )
+        enrollment.save()
+
+        return JsonResponse({
+            'status': 'success',
+            'message': f'{child.first_name} has been enrolled in {program.title}'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error: {str(e)}'
+        })
+
+
+@login_required
+def child_checkin(request):
+    """View for checking in children to programs"""
+    if request.method == 'POST':
+        form = ChildCheckInForm(request.POST, user=request.user)
+        if form.is_valid():
+            child = form.cleaned_data['child']
+            program = form.cleaned_data['program']
+
+            # Check if child is enrolled in the program
+            enrollment = ChildProgramEnrollment.objects.filter(
+                child=child,
+                program=program,
+                active=True
+            ).first()
+
+            if not enrollment:
+                messages.warning(request, f"{child.first_name} is not enrolled in this program.")
+                return redirect('services:child_checkin')
+
+            # Check if already checked in today
+            existing_attendance = ChildAttendance.objects.filter(
+                child=child,
+                program=program,
+                date=timezone.now().date(),
+                check_out_time__isnull=True
+            ).first()
+
+            if existing_attendance:
+                messages.info(request, f"{child.first_name} is already checked in.")
+                return redirect('services:child_checkin')
+
+            # Create attendance record
+            ChildAttendance.objects.create(
+                child=child,
+                program=program,
+                checked_in_by=request.user
+            )
+
+            messages.success(request, f"{child.first_name} has been checked in successfully!")
+            return redirect('services:child_checkin')
+    else:
+        form = ChildCheckInForm(user=request.user)
+
+    # Get today's attendance records for user's children
+    today = timezone.now().date()
+    user_children_ids = request.user.children.values_list('id', flat=True)
+    attendance_records = ChildAttendance.objects.filter(
+        child__id__in=user_children_ids,
+        date=today
+    ).select_related('child', 'program')
+
+    return render(request, 'services/children/child_checkin.html', {
+        'form': form,
+        'attendance_records': attendance_records,
+    })
+
+
+@login_required
+def parent_portal(request):
+    """View for parent portal showing children and their enrollments"""
+    children = Child.objects.filter(parent=request.user)
+
+    # Get all enrollments for user's children
+    enrollments = ChildProgramEnrollment.objects.filter(
+        child__parent=request.user,
+        active=True
+    ).select_related('child', 'program')
+
+    # Group enrollments by child
+    children_enrollments = {}
+    for child in children:
+        children_enrollments[child] = [e for e in enrollments if e.child_id == child.id]
+
+    # Get upcoming programs (that start in the future)
+    upcoming_programs = ChildrenProgram.objects.filter(
+        time__gt=timezone.now()
+    ).order_by('time')[:5]
+
+    return render(request, 'services/children/parent_portal.html', {
+        'children': children,
+        'children_enrollments': children_enrollments,
+        'upcoming_programs': upcoming_programs,
+    })
+
+
+def children_ministry_list(request):
+    """View for listing children's ministry events"""
+    # Get upcoming events (programs of type 'special' or 'vbs')
+    today = timezone.now().date()
+    events = ChildrenProgram.objects.filter(
+        date__gte=today
+    ).order_by('date', 'time')
+    return render(request, 'services/children/children_events.html', {
+        'events': events,
+    })
+
+
+def children_resources(request):
+    """View for children's ministry resources"""
+    resources = ChildResource.objects.all().order_by('-created_at')
+
+    # Filter by age group if specified
+    age_group = request.GET.get('age_group')
+    if age_group:
+        resources = resources.filter(age_group=age_group)
+
+    # Filter by resource type if specified
+    resource_type = request.GET.get('resource_type')
+    if resource_type:
+        resources = resources.filter(resource_type=resource_type)
+
+    return render(request, 'services/children/children_resources.html', {
+        'resources': resources,
+        'age_groups': ChildrenProgram.AGE_GROUPS,
+        'resource_types': ChildResource.RESOURCE_TYPE_CHOICES,
+    })
+
+
+@login_required
+def child_list(request):
+    """View to list all children of the current user"""
+    children = request.user.children.all()
+    return render(request, 'services/children/child_list.html', {
+        'children': children
+    })
+
+
+@login_required
+def child_detail(request, child_id):
+    """View to show details of a specific child"""
+    child = get_object_or_404(Child, id=child_id, parent=request.user)
+    enrollments = ChildProgramEnrollment.objects.filter(child=child)
+
+    return render(request, 'services/child_detail.html', {
+        'child': child,
+        'enrollments': enrollments
+    })
+
+
+@login_required
+@require_POST
+def enroll_child_in_program(request, program_id):
+    """View to enroll a child in a program"""
+    try:
+        # Get the child ID from the request
+        child_id = request.POST.get('child_id')
+
+        if not child_id:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'No child ID provided'
+            })
+
+        # Ensure the child belongs to the current user
+        child = get_object_or_404(Child, id=child_id, parent=request.user)
+        program = get_object_or_404(ChildrenProgram, id=program_id)
+
+        # Check if already enrolled
+        if ChildProgramEnrollment.objects.filter(child=child, program=program).exists():
+            return JsonResponse({
+                'status': 'error',
+                'message': f'{child.first_name} is already enrolled in this program'
+            })
+
+        # Check if spots are available
+        if program.spots_available <= 0:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'No spots available in this program'
+            })
+
+        # Create the enrollment
+        enrollment = ChildProgramEnrollment(
+            child=child,
+            program=program
+        )
+        enrollment.save()
+
+        return JsonResponse({
+            'status': 'success',
+            'message': f'{child.first_name} has been enrolled in {program.title}'
+        })
+
+    except Child.DoesNotExist:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Child not found or does not belong to you'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error: {str(e)}'
+        })
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.utils import timezone
+from django.http import JsonResponse
+from django.core.paginator import Paginator
+from django.db.models import Q, Count
+from .models import BibleStudy, BibleStudyRegistration
+from .forms import BibleStudyForm
+
+
+def bible_study_list(request):
+    """View for listing all Bible studies with filtering options"""
+    studies = BibleStudy.objects.all().order_by('-start_date')
+
+    # Apply filters
+    study_type = request.GET.get('study_type')
+    if study_type:
+        studies = studies.filter(study_type=study_type)
+
+    target_group = request.GET.get('target_group')
+    if target_group:
+        studies = studies.filter(target_group=target_group)
+
+    upcoming_only = request.GET.get('upcoming_only')
+    if upcoming_only:
+        studies = studies.filter(start_date__gte=timezone.now().date())
+
+    # Search functionality
+    search_query = request.GET.get('search')
+    if search_query:
+        studies = studies.filter(
+            Q(title__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(scripture_focus__icontains=search_query)
+        )
+
+    # Annotate with participant count
+    studies = studies.annotate(participant_count=Count('registrations'))
+
+    # Pagination
+    paginator = Paginator(studies, 6)  # Show 6 studies per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'bible_studies': page_obj,
+        'study_types': BibleStudy.STUDY_TYPES,
+        'target_groups': BibleStudy.TARGET_GROUPS,
+        'is_paginated': page_obj.has_other_pages(),
+        'page_obj': page_obj,
+        'now': timezone.now(),  # Add current time for template comparisons
+    }
+
+    return render(request, 'services/bible_study/bible_study_list.html', context)
+
+
+def bible_study_detail(request, study_id):
+    """View for displaying a single Bible study"""
+    study = get_object_or_404(BibleStudy, id=study_id)
+
+    # Check if user is already registered
+    user_registered = False
+    if request.user.is_authenticated:
+        user_registered = BibleStudyRegistration.objects.filter(
+            study=study,
+            participant=request.user,
+            active=True
+        ).exists()
+
+    context = {
+        'study': study,
+        'user_registered': user_registered,
+        'now': timezone.now(),  # Add current time for template comparisons
+    }
+
+    return render(request, 'services/bible_study/bible_study_detail.html', context)
+
+
+@login_required
+def create_bible_study(request):
+    """View for creating a new Bible study"""
+    if request.method == 'POST':
+        form = BibleStudyForm(request.POST, request.FILES)
+        if form.is_valid():
+            study = form.save(commit=False)
+            study.created_by = request.user
+            study.save()
+
+            # Handle many-to-many relationships
+            form.save_m2m()
+
+            # Make sure the creator is always a leader
+            if request.user not in study.leaders.all():
+                study.leaders.add(request.user)
+
+            messages.success(request, 'Bible study created successfully!')
+            return redirect('services:bible_study_detail', study_id=study.id)
+    else:
+        form = BibleStudyForm(initial={'leaders': [request.user.id]})
+
+    context = {
+        'form': form,
+        'is_new': True,
+    }
+
+    return render(request, 'services/bible_study/bible_study_form.html', context)
+
+
+@login_required
+def edit_bible_study(request, study_id):
+    """View for editing an existing Bible study"""
+    study = get_object_or_404(BibleStudy, id=study_id)
+
+    # Check if user has permission to edit
+    if request.user != study.created_by and request.user not in study.leaders.all() and not request.user.is_staff:
+        messages.error(request, "You don't have permission to edit this Bible study.")
+        return redirect('services:bible_study_detail', study_id=study.id)
+
+    if request.method == 'POST':
+        form = BibleStudyForm(request.POST, request.FILES, instance=study)
+        if form.is_valid():
+            form.save()
+
+            # Make sure at least one leader is assigned
+            if not study.leaders.exists():
+                study.leaders.add(request.user)
+
+            messages.success(request, 'Bible study updated successfully!')
+            return redirect('services:bible_study_detail', study_id=study.id)
+    else:
+        form = BibleStudyForm(instance=study)
+
+    context = {
+        'form': form,
+        'study': study,
+        'is_new': False,
+    }
+
+    return render(request, 'services/bible_study/bible_study_form.html', context)
+
+
+@login_required
+def delete_bible_study(request, study_id):
+    """View for deleting a Bible study"""
+    study = get_object_or_404(BibleStudy, id=study_id)
+
+    # Check if user has permission to delete
+    if request.user != study.created_by and not request.user.is_staff:
+        messages.error(request, "You don't have permission to delete this Bible study.")
+        return redirect('services:bible_study_detail', study_id=study.id)
+
+    if request.method == 'POST':
+        study_title = study.title
+        study.delete()
+        messages.success(request, f'Bible study "{study_title}" has been deleted.')
+        return redirect('services:bible_study_list')
+
+    context = {
+        'study': study,
+    }
+
+    return render(request, 'services/bible_study/bible_study_delete.html', context)
+
+
+@login_required
+def register_for_bible_study(request, study_id):
+    """View for registering a user for a Bible study"""
+    study = get_object_or_404(BibleStudy, id=study_id)
+
+    # Check if registration is still open
+    if study.registration_required and study.registration_deadline and study.registration_deadline < timezone.now():
+        messages.error(request, "Registration for this Bible study has closed.")
+        return redirect('services:bible_study_detail', study_id=study.id)
+
+    # Check if the study is full
+    if study.is_full:
+        messages.error(request, "This Bible study is full.")
+        return redirect('services:bible_study_detail', study_id=study.id)
+
+    # Check if user is already registered
+    existing_registration = BibleStudyRegistration.objects.filter(
+        study=study,
+        participant=request.user,
+        active=True
+    ).first()
+
+    if existing_registration:
+        messages.info(request, "You are already registered for this Bible study.")
+        return redirect('services:bible_study_detail', study_id=study.id)
+
+    # Create registration
+    if request.method == 'POST':
+        BibleStudyRegistration.objects.create(
+            study=study,
+            participant=request.user
+        )
+
+        messages.success(request, f"You have successfully registered for {study.title}.")
+        return redirect('services:bible_study_detail', study_id=study.id)
+
+    context = {
+        'study': study,
+    }
+
+    return render(request, 'services/bible_study/bible_study_registration.html', context)
+
+
+@login_required
+def cancel_registration(request, study_id):
+    """View for canceling a registration for a Bible study"""
+    study = get_object_or_404(BibleStudy, id=study_id)
+
+    # Find the registration
+    registration = get_object_or_404(
+        BibleStudyRegistration,
+        study=study,
+        participant=request.user,
+        active=True
+    )
+
+    if request.method == 'POST':
+        registration.active = False
+        registration.save()
+
+        messages.success(request, f"Your registration for {study.title} has been canceled.")
+        return redirect('services:bible_study_detail', study_id=study.id)
+
+    context = {
+        'study': study,
+    }
+
+    return render(request, 'services/bible_study/bible_study_cancel_registration.html', context)
+
+
+@login_required
+def my_bible_studies(request):
+    """View for displaying Bible studies the user is registered for or leading"""
+    # Get studies the user is registered for
+    registered_studies = BibleStudy.objects.filter(
+        registrations__participant=request.user,
+        registrations__active=True
+    ).order_by('-start_date')
+
+    # Get studies the user is leading
+    leading_studies = BibleStudy.objects.filter(
+        leaders=request.user
+    ).order_by('-start_date')
+
+    # Get studies the user created
+    created_studies = BibleStudy.objects.filter(
+        created_by=request.user
+    ).order_by('-start_date')
+
+    context = {
+        'registered_studies': registered_studies,
+        'leading_studies': leading_studies,
+        'created_studies': created_studies,
+    }
+
+    return render(request, 'services/bible_study/my_bible_studies.html', context)
+
+
+@login_required
+def transition_child_to_adult(request, child_id):
+    """Allow a child to create their own user account"""
+    child = get_object_or_404(Child, id=child_id, parent=request.user)
+
+    if not child.is_adult:
+        messages.error(request, f"{child.first_name} is not yet an adult.")
+        return redirect('services:child_detail', child_id=child_id)
+
+    if child.user_account:
+        messages.error(request, f"{child.first_name} already has a user account.")
+        return redirect('services:child_detail', child_id=child_id)
+
+    if request.method == 'POST':
+        form = ChildTransitionForm(request.POST)
+        if form.is_valid():
+            # Create a new user account
+            user = User.objects.create_user(
+                username=form.cleaned_data['username'],
+                email=form.cleaned_data['email'],
+                password=form.cleaned_data['password'],
+                first_name=child.first_name,
+                last_name=child.last_name
+            )
+
+            # Link the child record to the new user account
+            child.user_account = user
+            child.save()
+
+            messages.success(request, f"Account created for {child.first_name}. They can now log in.")
+            return redirect('services:child_detail', child_id=child_id)
+    else:
+        form = ChildTransitionForm(
+            initial={'email': '', 'username': f"{child.first_name.lower()}{child.last_name.lower()}"})
+
+    return render(request, 'services/children/transition_child.html', {
+        'form': form,
+        'child': child
+    })
+
+
+@login_required
+def confirm_delete_child(request, child_id):
+    child = get_object_or_404(Child, id=child_id, parent=request.user)
+    enrollments_count = ChildProgramEnrollment.objects.filter(child=child).count()
+
+    return render(request, 'services/children/confirm_delete_child.html', {
+        'child': child,
+        'enrollments_count': enrollments_count
+    })
+
+
+@login_required
+@require_POST
+def delete_child(request, child_id):
+    child = get_object_or_404(Child, id=child_id, parent=request.user)
+    child_name = f"{child.first_name} {child.last_name}"
+
+    # Delete the child
+    child.delete()
+
+    messages.success(request, f"{child_name} has been deleted successfully.")
+    return redirect('services:child_list')

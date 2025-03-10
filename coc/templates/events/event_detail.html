@@ -1,169 +1,276 @@
-{% extends 'events/base_events.html' %}
+{% extends 'base_dashboard.html' %}
 {% load static %}
 
-{% block event_content %}
-<div class="row">
-    <div class="col-lg-8">
-        <!-- Event Header -->
-        {% if event.banner %}
-        <img alt="{{ event.title }}" class="img-fluid rounded mb-4" src="{{ event.banner.url }}">
+{% block content %}
+    <div class="container py-4">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'events:events_list' %}">Events</a></li>
+                <li class="breadcrumb-item active">{{ event.title }}</li>
+            </ol>
+        </nav>
+
+        {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
 
-        <h1 class="mb-4">{{ event.title }}</h1>
+        <div class="row">
+            <!-- Event Details -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    {% if event.image %}
+                        <img src="{{ event.image.url }}" class="card-img-top" alt="{{ event.title }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h1 class="card-title mb-0">{{ event.title }}</h1>
+                            <span class="badge bg-primary">{{ event.get_event_type_display }}</span>
+                        </div>
 
-        <!-- Event Status -->
-        <div class="mb-4">
-            <span class="badge bg-{{ event.status_color }}">{{ event.get_status_display }}</span>
-            {% if event.is_featured %}
-            <span class="badge bg-warning">Featured</span>
-            {% endif %}
-        </div>
+                        <div class="mb-4">
+                            <p class="card-text">{{ event.description|linebreaks }}</p>
+                        </div>
 
-        <!-- Event Details -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Event Details</h5>
-                <div class="row">
-                    <div class="col-md-6">
-                        <p><i class="bi bi-calendar"></i> {{ event.start_date|date:"F j, Y" }}</p>
-                        <p><i class="bi bi-clock"></i> {{ event.start_date|date:"g:i A" }} - {{ event.end_date|date:"g:i
-                            A" }}</p>
-                        <p><i class="bi bi-geo-alt"></i> {{ event.location }}</p>
-                        {% if event.address %}
-                        <p><i class="bi bi-map"></i> {{ event.address }}</p>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h5>Event Details</h5>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span><i class="bi bi-calendar-event me-2"></i>Start Date</span>
+                                        <span class="badge bg-primary rounded-pill">{{ event.start_date|date:"F j, Y" }}</span>
+                                    </li>
+                                    {% if event.end_date %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span><i class="bi bi-calendar-event me-2"></i>End Date</span>
+                                            <span class="badge bg-primary rounded-pill">{{ event.end_date|date:"F j, Y" }}</span>
+                                        </li>
+                                    {% endif %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span><i class="bi bi-clock me-2"></i>Time</span>
+                                        <span class="badge bg-primary rounded-pill">
+                                        {{ event.start_time|time:"g:i A" }} - {{ event.end_time|time:"g:i A" }}
+                                    </span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span><i class="bi bi-geo-alt me-2"></i>Location</span>
+                                        <span class="badge bg-primary rounded-pill">
+                                        {% if event.is_online %}
+                                            Online
+                                        {% else %}
+                                            {{ event.location }}
+                                        {% endif %}
+                                    </span>
+                                    </li>
+                                    {% if event.is_online and event.online_link %}
+                                        <li class="list-group-item">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span><i class="bi bi-link me-2"></i>Meeting Link</span>
+                                                {% if user.is_authenticated and user in event.participants.all %}
+                                                    <a href="{{ event.online_link }}" target="_blank"
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        Join Meeting
+                                                    </a>
+                                                {% else %}
+                                                    <span class="text-muted">Available after registration</span>
+                                                {% endif %}
+                                            </div>
+                                        </li>
+                                    {% endif %}
+                                    {% if event.registration_required %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span><i class="bi bi-people me-2"></i>Participants</span>
+                                            <span class="badge bg-primary rounded-pill">
+                                        {{ event.participants.count }}{% if event.max_participants %}/
+                                            {{ event.max_participants }}{% endif %}
+                                    </span>
+                                        </li>
+                                        {% if event.registration_deadline %}
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span><i
+                                                        class="bi bi-calendar-check me-2"></i>Registration Deadline</span>
+                                                <span class="badge bg-primary rounded-pill">{{ event.registration_deadline|date:"F j, Y g:i A" }}</span>
+                                            </li>
+                                        {% endif %}
+                                    {% endif %}
+                                </ul>
+                            </div>
+
+                            <div class="col-md-6">
+                                {% if event.speakers.exists %}
+                                    <h5>Speakers</h5>
+                                    <div class="list-group">
+                                        {% for speaker in event.speakers.all %}
+                                            <div class="list-group-item">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="flex-shrink-0">
+                                                        {% if speaker.profile.avatar %}
+                                                            <img src="{{ speaker.profile.avatar.url }}"
+                                                                 alt="{{ speaker.get_full_name }}"
+                                                                 class="rounded-circle" width="40" height="40">
+                                                        {% else %}
+                                                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                                                 style="width: 40px; height: 40px;">
+                                                                {{ speaker.first_name|first }}{{ speaker.last_name|first }}
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="flex-grow-1 ms-3">
+                                                        <h6 class="mb-0">{{ speaker.get_full_name }}</h6>
+                                                        <small class="text-muted">{{ speaker.profile.title|default:"Speaker" }}</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if user.is_authenticated and user == event.creator or user.is_staff %}
+                            <div class="mt-4 d-flex gap-2">
+                                <a href="{% url 'events:edit_event' event.id %}" class="btn btn-outline-primary">
+                                    <i class="bi bi-pencil me-2"></i>Edit Event
+                                </a>
+                                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal"
+                                        data-bs-target="#deleteModal">
+                                    <i class="bi bi-trash me-2"></i>Delete Event
+                                </button>
+                            </div>
                         {% endif %}
                     </div>
-                    <div class="col-md-6">
-                        <p><i class="bi bi-person"></i> Organized by: {{ event.organizer.get_full_name }}</p>
-                        {% if event.ministry %}
-                        <p><i class="bi bi-people"></i> Ministry: {{ event.ministry.name }}</p>
-                        {% endif %}
-                        {% if event.registration_deadline %}
-                        <p><i class="bi bi-clock-history"></i> Registration Deadline: {{
-                            event.registration_deadline|date:"F j, Y" }}</p>
+                </div>
+            </div>
+
+            <!-- Registration Sidebar -->
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Event Registration</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if event.is_past %}
+                            <div class="alert alert-secondary">
+                                <i class="bi bi-calendar-x me-2"></i>This event has ended.
+                            </div>
+                        {% elif event.registration_required %}
+                            {% if user.is_authenticated %}
+                                {% if user in event.participants.all %}
+                                    <div class="alert alert-success">
+                                        <i class="bi bi-check-circle me-2"></i>You are registered for this event.
+                                    </div>
+
+                                    {% if event.is_online and event.online_link %}
+                                        <div class="mb-3">
+                                            <a href="{{ event.online_link }}" target="_blank"
+                                               class="btn btn-primary w-100">
+                                                <i class="bi bi-box-arrow-up-right me-2"></i>Join Online Event
+                                            </a>
+                                        </div>
+                                    {% endif %}
+
+                                    <form method="post" action="{% url 'events:unregister' event.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger w-100">
+                                            <i class="bi bi-x-circle me-2"></i>Cancel Registration
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    {% with can_register=event.get_can_register %}
+                                        {% if can_register.0 %}
+                                            <form method="post" action="{% url 'events:register' event.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-primary w-100">
+                                                    <i class="bi bi-calendar-check me-2"></i>Register for Event
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <div class="alert alert-warning">
+                                                <i class="bi bi-exclamation-triangle me-2"></i>{{ can_register.1 }}
+                                            </div>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endif %}
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>Please log in to register for this event.
+                                </div>
+                                <a href="{% url 'login' %}?next={% url 'events:detail' event.id %}"
+                                   class="btn btn-primary w-100">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>Log In to Register
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>No registration required for this event.
+                            </div>
                         {% endif %}
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Event Description -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">About This Event</h5>
-                {{ event.description|linebreaks }}
-            </div>
-        </div>
+                {% if event.participants.exists %}
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">Participants</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ event.participants.count }} people attending</p>
 
-        <!-- Schedule -->
-        {% if event.schedule %}
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Event Schedule</h5>
-                {{ event.schedule|linebreaks }}
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Speakers -->
-        {% if event.speakers.exists %}
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Speakers</h5>
-                <div class="row">
-                    {% for speaker in event.speakers.all %}
-                    <div class="col-md-4 text-center mb-3">
-                        <img class="rounded-circle mb-2" height="100" src="{{ speaker.profile.avatar.url }}"
-                             width="100">
-                        <h6>{{ speaker.get_full_name }}</h6>
+                            {% if user.is_authenticated and user == event.creator or user.is_staff %}
+                                <div class="list-group">
+                                    {% for participant in event.participants.all %}
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                {{ participant.get_full_name|default:participant.username }}
+                                            </div>
+                                            {% if user == event.creator or user.is_staff %}
+                                                <form method="post"
+                                                      action="{% url 'events:remove_participant' event.id participant.id %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-        {% endif %}
-    </div>
-
-    <div class="col-lg-4">
-        <!-- Registration Card -->
-        <div class="card mb-4">
-            <div class="card-body">
-                {% if event.registration_required %}
-                {% if event.is_full %}
-                <div class="alert alert-warning">
-                    This event is full. No more registrations accepted.
-                </div>
-                {% elif event.registration_open %}
-                <h5 class="card-title">Register for this Event</h5>
-                {% if event.registration_fee > 0 %}
-                <p class="text-muted mb-3">Registration Fee: ${{ event.registration_fee }}</p>
-                {% endif %}
-                <form action="{% url 'events:register_event' event.slug %}" method="post">
-                    {% csrf_token %}
-                    <button class="btn btn-primary w-100" type="submit">Register Now</button>
-                </form>
-                {% else %}
-                <div class="alert alert-info">
-                    Registration is closed for this event.
-                </div>
-                {% endif %}
-                {% else %}
-                <div class="alert alert-info">
-                    No registration required for this event.
-                </div>
-                {% endif %}
-
-                {% if event.spots_available %}
-                <p class="text-muted mt-3">
-                    {{ event.spots_available }} spots remaining
-                </p>
                 {% endif %}
             </div>
-        </div>
-
-        <!-- Resources -->
-        {% if event.resources %}
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Event Resources</h5>
-                <a class="btn btn-outline-primary w-100" href="{{ event.resources.url }}">
-                    <i class="bi bi-download"></i> Download Resources
-                </a>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Online Meeting Link -->
-        {% if event.is_online and event.meeting_link %}
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Online Meeting</h5>
-                <a class="btn btn-success w-100" href="{{ event.meeting_link }}" target="_blank">
-                    <i class="bi bi-camera-video"></i> Join Meeting
-                </a>
-            </div>
-        </div>
-        {% endif %}
     </div>
 </div>
 
-<!-- Feedback Section -->
-{% if event.is_past %}
-<div class="card mt-4">
-    <div class="card-body">
-        <h5 class="card-title">Event Feedback</h5>
-        {% if user_feedback %}
-        <div class="alert alert-info">
-            You've already provided feedback for this event.
-        </div>
-        {% else %}
-        <form action="{% url 'events:submit_feedback' event.slug %}" method="post">
-            {% csrf_token %}
-            {{ feedback_form|crispy }}
-            <button class="btn btn-primary" type="submit">Submit Feedback</button>
-        </form>
-        {% endif %}
+    <!-- Delete Confirmation Modal -->
+    {% if user.is_authenticated and user == event.creator or user.is_staff %}
+        <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete <strong>{{ event.title }}</strong>?</p>
+                        <p>This action cannot be undone and will remove all registrations.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form method="post" action="{% url 'events:delete_event' event.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Delete Event</button>
+                        </form>
+                    </div>
+                </div>
     </div>
 </div>
 {% endif %}
-{% endblock %} 
+{% endblock %}

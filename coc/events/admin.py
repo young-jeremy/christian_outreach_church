@@ -8,7 +8,7 @@ from .models import (
     Newsletter,
     Announcement,
     TestimonialVideo,
-    AudioMessage
+    AudioMessage, Event
 )
 from .models import VideoCategory, ArchivedVideo, LiveStream
 
@@ -174,3 +174,5 @@ class LiveStreamAdmin(admin.ModelAdmin):
 admin.site.site_header = 'COC Media Administration'
 admin.site.site_title = 'COC Media Admin Portal'
 admin.site.index_title = 'Media Management'
+
+admin.site.register(Event)

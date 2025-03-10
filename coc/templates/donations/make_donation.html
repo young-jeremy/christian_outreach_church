@@ -1,0 +1,763 @@
+{% extends 'base_dashboard.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Make a Donation</h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">Support the church's ministries with your generous donation.</p>
+
+                        <form method="post" id="donationForm">
+                            {% csrf_token %}
+
+                            <div class="mb-4">
+                                <h5>Donation Details</h5>
+
+                                <div class="mb-3">
+                                    <label for="donationType" class="form-label">Donation Type</label>
+                                    <select class="form-select {% if form.donation_type.errors %}is-invalid{% endif %}"
+                                            id="donationType" name="donation_type">
+                                        <option value="tithe"
+                                                {% if form.donation_type.value == 'tithe' %}selected{% endif %}>Tithe
+                                        </option>
+                                        <option value="missions"
+                                                {% if form.donation_type.value == 'missions' %}selected{% endif %}>
+                                            Missions Fund
+                                        </option>
+                                        <option value="building"
+                                                {% if form.donation_type.value == 'building' %}selected{% endif %}>
+                                            Building Fund
+                                        </option>
+                                        <option value="other"
+                                                {% if form.donation_type.value == 'other' %}selected{% endif %}>Other
+                                        </option>
+                                    </select>
+                                    {% if form.donation_type.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.donation_type.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3" id="otherPurposeContainer"
+                                     style="display: {% if form.donation_type.value == 'other' %}block{% else %}none{% endif %};">
+                                    <label for="otherPurpose" class="form-label">Purpose</label>
+                                    <input type="text" class="form-control" id="otherPurpose" name="other_purpose"
+                                           placeholder="Specify donation purpose"
+                                           value="{{ other_purpose|default:'' }}">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="donationAmount" class="form-label">Amount</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number"
+                                               class="form-control {% if form.amount.errors %}is-invalid{% endif %}"
+                                               id="donationAmount" name="amount"
+                                               value="{{ form.amount.value|default:'0.00' }}" step="0.01" min="0">
+                                        {% if form.amount.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.amount.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="makeRecurring"
+                                               name="recurring" {% if form.recurring.value %}checked{% endif %}>
+                                        <label class="form-check-label" for="makeRecurring">
+                                            Make this a recurring donation
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div id="recurringOptionsContainer"
+                                     style="display: {% if form.recurring.value %}block{% else %}none{% endif %};">
+                                    <div class="mb-3">
+                                        <label for="recurringFrequency" class="form-label">Frequency</label>
+                                        <select class="form-select" id="recurringFrequency" name="recurring_frequency">
+                                            <option value="weekly"
+                                                    {% if recurring_frequency == 'weekly' %}selected{% endif %}>Weekly
+                                            </option>
+                                            <option value="biweekly"
+                                                    {% if recurring_frequency == 'biweekly' %}selected{% endif %}>
+                                                Bi-weekly
+                                            </option>
+                                            <option value="monthly"
+                                                    {% if recurring_frequency == 'monthly' or not recurring_frequency %}selected{% endif %}>
+                                                Monthly
+                                            </option>
+                                            <option value="quarterly"
+                                                    {% if recurring_frequency == 'quarterly' %}selected{% endif %}>
+                                                Quarterly
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h5>Payment Method</h5>
+
+                                {% if saved_payment_methods %}
+                                    <div class="mb-3">
+                                        <label class="form-label">Select a saved payment method</label>
+                                        {% for method in saved_payment_methods %}
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="payment_method"
+                                                       id="paymentMethod{{ forloop.counter }}" value="{{ method.id }}"
+                                                       {% if forloop.first %}checked{% endif %}>
+                                                <label class="form-check-label"
+                                                       for="paymentMethod{{ forloop.counter }}">
+                                                    {{ method.card_type }} ending in {{ method.last_four }}
+                                                    {% if method.expiry_date %}(expires {{ method.expiry_date }}
+                                                        ){% endif %}
+                                                    {% if method.is_default %}
+                                                        <span class="badge bg-primary ms-2">Default</span>{% endif %}
+                                                </label>
+                                            </div>
+                                        {% endfor %}
+
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="payment_method"
+                                                   id="newPaymentMethod" value="new">
+                                            <label class="form-check-label" for="newPaymentMethod">
+                                                Use a new payment method
+                                            </label>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                <div id="newPaymentContainer"
+                                     {% if saved_payment_methods %}style="display: none;"{% endif %}>
+                                    <div class="mb-3">
+                                        <label for="paymentType" class="form-label">Payment Type</label>
+                                        <select class="form-select" id="paymentType" name="payment_type">
+                                            <option value="creditCard">Credit/Debit Card</option>
+                                            <option value="bankAccount">Bank Account (ACH)</option>
+                                        </select>
+                                    </div>
+
+                                    <div id="creditCardForm">
+                                        <div class="mb-3">
+                                            <label for="cardNumber" class="form-label">Card Number</label>
+                                            <input type="text" class="form-control" id="cardNumber" name="card_number"
+                                                   placeholder="XXXX XXXX XXXX XXXX">
+                                            <div class="invalid-feedback" id="cardNumberError" style="display: none;">
+                                                Please enter a valid card number.
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="expiryDate" class="form-label">Expiry Date</label>
+                                                <input type="text" class="form-control" id="expiryDate"
+                                                       name="expiry_date" placeholder="MM/YY">
+                                                <div class="invalid-feedback" id="expiryDateError"
+                                                     style="display: none;">
+                                                    Please enter a valid expiry date (MM/YY).
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="cvv" class="form-label">CVV</label>
+                                                <input type="text" class="form-control" id="cvv" name="cvv"
+                                                       placeholder="XXX">
+                                                <div class="invalid-feedback" id="cvvError" style="display: none;">
+                                                    Please enter a valid CVV code.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="nameOnCard" class="form-label">Name on Card</label>
+                                            <input type="text" class="form-control" id="nameOnCard" name="name_on_card">
+                                            <div class="invalid-feedback" id="nameOnCardError" style="display: none;">
+                                                Please enter the name as it appears on your card.
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="bankAccountForm" style="display: none;">
+                                        <div class="mb-3">
+                                            <label for="accountName" class="form-label">Account Holder Name</label>
+                                            <input type="text" class="form-control" id="accountName"
+                                                   name="account_name">
+                                            <div class="invalid-feedback" id="accountNameError" style="display: none;">
+                                                Please enter the account holder name.
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="routingNumber" class="form-label">Routing Number</label>
+                                            <input type="text" class="form-control" id="routingNumber"
+                                                   name="routing_number">
+                                            <div class="invalid-feedback" id="routingNumberError"
+                                                 style="display: none;">
+                                                Please enter a valid 9-digit routing number.
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="accountNumber" class="form-label">Account Number</label>
+                                            <input type="text" class="form-control" id="accountNumber"
+                                                   name="account_number">
+                                            <div class="invalid-feedback" id="accountNumberError"
+                                                 style="display: none;">
+                                                Please enter a valid account number.
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="accountType" class="form-label">Account Type</label>
+                                            <select class="form-select" id="accountType" name="account_type">
+                                                <option value="checking">Checking</option>
+                                                <option value="savings">Savings</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="savePaymentMethod"
+                                                   name="save_payment_method">
+                                            <label class="form-check-label" for="savePaymentMethod">
+                                                Save this payment method for future donations
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h5>Billing Information</h5>
+
+                                <div class="mb-3">
+                                    <label for="billingName" class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="billingName" name="billing_name"
+                                           value="{{ user.username }}">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="billingEmail" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="billingEmail" name="billing_email"
+                                           value="{{ user.email }}">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="billingAddress" class="form-label">Address</label>
+                                    <input type="text" class="form-control" id="billingAddress" name="billing_address"
+                                           value="{{ user.profile.address|default:'' }}">
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="billingCity" class="form-label">City</label>
+                                        <input type="text" class="form-control" id="billingCity" name="billing_city"
+                                               value="{{ user.profile.city|default:'' }}">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="billingState" class="form-label">State</label>
+                                        <input type="text" class="form-control" id="billingState" name="billing_state"
+                                               value="{{ user.profile.state|default:'' }}">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="billingZip" class="form-label">ZIP Code</label>
+                                        <input type="text" class="form-control" id="billingZip" name="billing_zip"
+                                               value="{{ user.profile.zip|default:'' }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <div class="d-flex">
+                                    <div class="me-3">
+                                        <i class="bi bi-shield-lock-fill fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="alert-heading">Secure Donation</h5>
+                                        <p class="mb-0">
+                                            Your payment information is encrypted and secure. We never store your full
+                                            credit card details on our servers.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h5>Or Pay with PayPal</h5>
+                                <p class="text-muted">You'll be redirected to PayPal to complete your donation.</p>
+
+                                <div class="d-grid gap-2">
+                                    <a href="{% url 'payments:paypal_create_payment' %}" class="btn btn-primary"
+                                       id="paypalButton">
+                                        <i class="bi bi-paypal"></i> Pay with PayPal
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitDonation">Complete
+                                    Donation
+                                </button>
+                                <a href="{% url 'accounts:accounts_settings_and_privacy' %}"
+                                   class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Toggle other purpose field
+            const donationType = document.getElementById('donationType');
+            const otherPurposeContainer = document.getElementById('otherPurposeContainer');
+
+            donationType.addEventListener('change', function () {
+                otherPurposeContainer.style.display = this.value === 'other' ? 'block' : 'none';
+            });
+
+            // Toggle recurring options
+            const makeRecurring = document.getElementById('makeRecurring');
+            const recurringOptionsContainer = document.getElementById('recurringOptionsContainer');
+
+            makeRecurring.addEventListener('change', function () {
+                recurringOptionsContainer.style.display = this.checked ? 'block' : 'none';
+            });
+
+            // Toggle payment method form
+            {% if saved_payment_methods %}
+                const newPaymentMethod = document.getElementById('newPaymentMethod');
+                const savedPaymentMethods = document.querySelectorAll('input[name="payment_method"]');
+                const newPaymentContainer = document.getElementById('newPaymentContainer');
+
+                for (const method of savedPaymentMethods) {
+                    method.addEventListener('change', function () {
+                        newPaymentContainer.style.display = newPaymentMethod.checked ? 'block' : 'none';
+                    });
+                }
+            {% endif %}
+
+            // Toggle payment type forms
+            const paymentType = document.getElementById('paymentType');
+            const creditCardForm = document.getElementById('creditCardForm');
+            const bankAccountForm = document.getElementById('bankAccountForm');
+
+            paymentType.addEventListener('change', function () {
+                if (this.value === 'creditCard') {
+                    creditCardForm.style.display = 'block';
+                    bankAccountForm.style.display = 'none';
+                } else {
+                    creditCardForm.style.display = 'none';
+                    bankAccountForm.style.display = 'block';
+                }
+            });
+
+            // Form validation
+            const donationForm = document.getElementById('donationForm');
+            const donationAmount = document.getElementById('donationAmount');
+
+            // Credit card validation functions
+            function validateCardNumber(cardNumber) {
+                // Remove spaces and dashes
+                cardNumber = cardNumber.replace(/[\s-]/g, '');
+
+                // Check if the card number contains only digits
+                if (!/^\d+$/.test(cardNumber)) {
+                    return false;
+                }
+
+                // Check length (13-19 digits for most cards)
+                if (cardNumber.length < 13 || cardNumber.length > 19) {
+                    return false;
+                }
+
+                // Luhn algorithm for card number validation
+                let sum = 0;
+                let doubleUp = false;
+
+                for (let i = cardNumber.length - 1; i >= 0; i--) {
+                    let digit = parseInt(cardNumber.charAt(i));
+
+                    if (doubleUp) {
+                        digit *= 2;
+                        if (digit > 9) {
+                            digit -= 9;
+                        }
+                    }
+
+                    sum += digit;
+                    doubleUp = !doubleUp;
+                }
+
+                return (sum % 10) === 0;
+            }
+
+            function validateExpiryDate(expiryDate) {
+                // Check format (MM/YY)
+                if (!/^\d{2}\/\d{2}$/.test(expiryDate)) {
+                    return false;
+                }
+
+                const parts = expiryDate.split('/');
+                const month = parseInt(parts[0], 10);
+                const year = parseInt('20' + parts[1], 10);
+
+                // Check if month is valid
+                if (month < 1 || month > 12) {
+                    return false;
+                }
+
+                // Get current date
+                const now = new Date();
+                const currentYear = now.getFullYear();
+                const currentMonth = now.getMonth() + 1; // JavaScript months are 0-based
+
+                // Check if the card is not expired
+                if (year < currentYear || (year === currentYear && month < currentMonth)) {
+                    return false;
+                }
+
+                return true;
+            }
+
+            function validateCVV(cvv) {
+                // CVV should be 3-4 digits
+                return /^\d{3,4}$/.test(cvv);
+            }
+
+            // Bank account validation functions
+            function validateRoutingNumber(routingNumber) {
+                // Routing number should be 9 digits
+                if (!/^\d{9}$/.test(routingNumber)) {
+                    return false;
+                }
+
+                // Check digit validation for routing numbers
+                const digits = routingNumber.split('').map(Number);
+                const sum =
+                    3 * (digits[0] + digits[3] + digits[6]) +
+                    7 * (digits[1] + digits[4] + digits[7]) +
+                    1 * (digits[2] + digits[5] + digits[8]);
+
+                return sum % 10 === 0;
+            }
+
+            function validateAccountNumber(accountNumber) {
+                // Account number should be digits only and at least 5 digits
+                return /^\d{5,17}$/.test(accountNumber);
+            }
+
+            donationForm.addEventListener('submit', function (event) {
+                let isValid = true;
+
+                // Validate amount
+                if (parseFloat(donationAmount.value) <= 0) {
+                    donationAmount.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    donationAmount.classList.remove('is-invalid');
+                }
+
+                // Validate payment method
+                const paymentMethodRadios = document.querySelectorAll('input[name="payment_method"]');
+                let selectedPaymentMethod = null;
+
+                for (const radio of paymentMethodRadios) {
+                    if (radio.checked) {
+                        selectedPaymentMethod = radio.value;
+                        break;
+                    }
+                }
+
+                if (selectedPaymentMethod === 'new' || !selectedPaymentMethod) {
+                    // Validate new payment method details
+                    if (paymentType.value === 'creditCard') {
+                        const cardNumber = document.getElementById('cardNumber');
+                        const expiryDate = document.getElementById('expiryDate');
+                        const cvv = document.getElementById('cvv');
+                        const nameOnCard = document.getElementById('nameOnCard');
+
+                        // Validate card number
+                        if (!cardNumber.value || !validateCardNumber(cardNumber.value)) {
+                            cardNumber.classList.add('is-invalid');
+                            document.getElementById('cardNumberError').style.display = 'block';
+                            isValid = false;
+                        } else {
+                            cardNumber.classList.remove('is-invalid');
+                            document.getElementById('cardNumberError').style.display = 'none';
+                        }
+
+                        // Validate expiry date
+                        if (!expiryDate.value || !validateExpiryDate(expiryDate.value)) {
+                            expiryDate.classList.add('is-invalid');
+                            document.getElementById('expiryDateError').style.display = 'block';
+                            isValid = false;
+                        } else {
+                            expiryDate.classList.remove('is-invalid');
+                            document.getElementById('expiryDateError').style.display = 'none';
+                        }
+
+                        // Validate CVV
+                        if (!cvv.value || !validateCVV(cvv.value)) {
+                            cvv.classList.add('is-invalid');
+                            document.getElementById('cvvError').style.display = 'block';
+                            isValid = false;
+                        } else {
+                            cvv.classList.remove('is-invalid');
+                            document.getElementById('cvvError').style.display = 'none';
+                        }
+
+                        // Validate name on card
+                        if (!nameOnCard.value) {
+                            nameOnCard.classList.add('is-invalid');
+                            document.getElementById('nameOnCardError').style.display = 'block';
+                            isValid = false;
+                        } else {
+                            nameOnCard.classList.remove('is-invalid');
+                            document.getElementById('nameOnCardError').style.display = 'none';
+                        }
+                    } else {
+                        const accountName = document.getElementById('accountName');
+                        const routingNumber = document.getElementById('routingNumber');
+                        const accountNumber = document.getElementById('accountNumber');
+
+                        // Validate account name
+                        if (!accountName.value) {
+                            accountName.classList.add('is-invalid');
+                            document.getElementById('accountNameError').style.display = 'block';
+                            isValid = false;
+                        } else {
+                            accountName.classList.remove('is-invalid');
+                            document.getElementById('accountNameError').style.display = 'none';
+                        }
+
+                        // Validate routing number
+                        if (!routingNumber.value || !validateRoutingNumber(routingNumber.value)) {
+                            routingNumber.classList.add('is-invalid');
+                            document.getElementById('routingNumberError').style.display = 'block';
+                            isValid = false;
+                        } else {
+                            routingNumber.classList.remove('is-invalid');
+                            document.getElementById('routingNumberError').style.display = 'none';
+                        }
+
+                        // Validate account number
+                        if (!accountNumber.value || !validateAccountNumber(accountNumber.value)) {
+                            accountNumber.classList.add('is-invalid');
+                            document.getElementById('accountNumberError').style.display = 'block';
+                            isValid = false;
+                        } else {
+                            accountNumber.classList.remove('is-invalid');
+                            document.getElementById('accountNumberError').style.display = 'none';
+                        }
+                    }
+                }
+
+                if (!isValid) {
+                    event.preventDefault();
+
+                    // Scroll to the first error
+                    const firstError = document.querySelector('.is-invalid');
+                    if (firstError) {
+                        firstError.scrollIntoView({behavior: 'smooth', block: 'center'});
+                    }
+                } else {
+                    // Disable submit button to prevent double submission
+                    document.getElementById('submitDonation').disabled = true;
+                    document.getElementById('submitDonation').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+                }
+            });
+        });
+    </script>
+
+    {% block extra_head %}
+        <script src="https://js.stripe.com/v3/"></script>
+        <style>
+            .StripeElement {
+                box-sizing: border-box;
+                height: 40px;
+                padding: 10px 12px;
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                background-color: white;
+            }
+
+            .StripeElement--focus {
+                border-color: #80bdff;
+                outline: 0;
+                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            }
+
+            .StripeElement--invalid {
+                border-color: #dc3545;
+            }
+        </style>
+    {% endblock %}
+
+    <!-- Replace the credit card form with Stripe Elements -->
+    <div id="creditCardForm">
+        <div class="mb-3">
+            <label for="card-element" class="form-label">Credit or debit card</label>
+            <div id="card-element" class="form-control">
+                <!-- Stripe Elements will be inserted here -->
+            </div>
+            <div id="card-errors" role="alert" class="invalid-feedback" style="display: none;"></div>
+        </div>
+
+        <div class="mb-3">
+            <label for="nameOnCard" class="form-label">Name on Card</label>
+            <input type="text" class="form-control" id="nameOnCard" name="name_on_card">
+        </div>
+    </div>
+
+    <script>
+        // Initialize Stripe Elements
+        document.addEventListener('DOMContentLoaded', function () {
+            // Create a Stripe client
+            var stripe = Stripe('{{ stripe_publishable_key }}');
+
+            // Create an instance of Elements
+            var elements = stripe.elements();
+
+            // Create a card Element and mount it to the card-element div
+            var cardElement = elements.create('card');
+            cardElement.mount('#card-element');
+
+            // Handle real-time validation errors from the card Element
+            cardElement.addEventListener('change', function (event) {
+                var displayError = document.getElementById('card-errors');
+                if (event.error) {
+                    displayError.textContent = event.error.message;
+                    displayError.style.display = 'block';
+                } else {
+                    displayError.textContent = '';
+                    displayError.style.display = 'none';
+                }
+            });
+
+            // Handle form submission
+            var form = document.getElementById('donationForm');
+            form.addEventListener('submit', function (event) {
+                if (document.getElementById('newPaymentMethod').checked &&
+                    document.getElementById('paymentType').value === 'creditCard') {
+                    event.preventDefault();
+
+                    // Disable the submit button to prevent repeated clicks
+                    document.getElementById('submitDonation').disabled = true;
+                    document.getElementById('submitDonation').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+
+                    var nameOnCard = document.getElementById('nameOnCard').value;
+
+                    // Create a token or payment method
+                    stripe.createPaymentMethod({
+                        type: 'card',
+                        card: cardElement,
+                        billing_details: {
+                            name: nameOnCard
+                        }
+                    }).then(function (result) {
+                        if (result.error) {
+                            // Show error to your customer
+                            var errorElement = document.getElementById('card-errors');
+                            errorElement.textContent = result.error.message;
+                            errorElement.style.display = 'block';
+
+                            // Re-enable the submit button
+                            document.getElementById('submitDonation').disabled = false;
+                            document.getElementById('submitDonation').innerHTML = 'Complete Donation';
+                        } else {
+                            // Send the payment method ID to your server
+                            stripeTokenHandler(result.paymentMethod.id);
+                        }
+                    });
+                }
+            });
+
+            function stripeTokenHandler(paymentMethodId) {
+                // Insert the payment method ID into the form so it gets submitted to the server
+                var form = document.getElementById('donationForm');
+                var hiddenInput = document.createElement('input');
+                hiddenInput.setAttribute('type', 'hidden');
+                hiddenInput.setAttribute('name', 'stripe_payment_method_id');
+                hiddenInput.setAttribute('value', paymentMethodId);
+                form.appendChild(hiddenInput);
+
+                // Submit the form
+                form.submit();
+            }
+        });
+
+        // Set up Payment Request Button
+        var paymentRequest = stripe.paymentRequest({
+            country: 'US',
+            currency: 'usd',
+            total: {
+                label: 'Church Donation',
+                amount: amount * 100, // amount in cents
+            },
+            requestPayerName: true,
+            requestPayerEmail: true,
+        });
+
+        var prButton = elements.create('paymentRequestButton', {
+            paymentRequest: paymentRequest,
+        });
+
+        // Check if the Payment Request is available
+        paymentRequest.canMakePayment().then(function (result) {
+            if (result) {
+                prButton.mount('#payment-request-button');
+            } else {
+                document.getElementById('payment-request-button').style.display = 'none';
+            }
+        });
+
+        // Handle payment request completion
+        paymentRequest.on('paymentmethod', function (ev) {
+            // Send the payment method ID to your server
+            fetch('/process-payment', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    payment_method_id: ev.paymentMethod.id,
+                    amount: amount,
+                }),
+            }).then(function (response) {
+                return response.json();
+            }).then(function (responseJson) {
+                if (responseJson.error) {
+                    // Show error and complete the payment with failure
+                    ev.complete('fail');
+                } else {
+                    // Complete the payment successfully
+                    ev.complete('success');
+                    window.location.href = '/donation-success';
+                }
+            });
+        });
+
+    </script>
+
+{% endblock %}

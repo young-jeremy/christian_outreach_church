@@ -1,0 +1,126 @@
+{% extends 'base_dashboard.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Security Settings</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {% for error in form.non_field_errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                            <div class="mb-3">
+                                <label for="{{ form.old_password.id_for_label }}" class="form-label">Current
+                                    Password</label>
+                                {{ form.old_password }}
+                                {% if form.old_password.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.old_password.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Enter your current password to confirm your identity.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.new_password1.id_for_label }}" class="form-label">New
+                                    Password</label>
+                                {{ form.new_password1 }}
+                                {% if form.new_password1.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.new_password1.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <ul>
+                                        <li>Your password can't be too similar to your other personal information.</li>
+                                        <li>Your password must contain at least 8 characters.</li>
+                                        <li>Your password can't be a commonly used password.</li>
+                                        <li>Your password can't be entirely numeric.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.new_password2.id_for_label }}" class="form-label">Confirm New
+                                    Password</label>
+                                {{ form.new_password2 }}
+                                {% if form.new_password2.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.new_password2.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Enter the same password as before, for verification.</div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Update Password</button>
+                                <a href="{% url 'accounts:accounts_settings_and_privacy' %}"
+                                   class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h4>Login Activity</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Recent login activity for your account:</p>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Device</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% if login_history %}
+                                    {% for login in login_history %}
+                                        <tr>
+                                            <td>{{ login.date }}</td>
+                                            <td>{{ login.device }}</td>
+                                            <td>{{ login.location }}</td>
+                                            <td>
+                                                {% if login.successful %}
+                                                    <span class="badge bg-success">Successful</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Failed</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No recent login activity</td>
+                                    </tr>
+                                {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

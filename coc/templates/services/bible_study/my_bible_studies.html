@@ -1,0 +1,237 @@
+{% extends 'ministries/base_ministry.html' %}
+{% load static %}
+
+{% block extra_css %}
+    {{ block.super }}
+    <style>
+        .bible-study-card {
+            transition: transform 0.3s ease;
+        }
+
+        .bible-study-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: var(--bs-primary);
+        }
+
+        .empty-state {
+            padding: 3rem 1rem;
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+
+{% block ministry_content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">My Bible Studies</h1>
+        <a href="{% url 'services:bible_study_list' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Back to Bible Studies
+        </a>
+    </div>
+
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <ul class="nav nav-pills mb-4" id="myBibleStudiesTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="registered-tab" data-bs-toggle="tab" data-bs-target="#registered"
+                    type="button" role="tab" aria-controls="registered" aria-selected="true">
+                <i class="bi bi-person-check"></i> Registered ({{ registered_studies.count }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="leading-tab" data-bs-toggle="tab" data-bs-target="#leading" type="button"
+                    role="tab" aria-controls="leading" aria-selected="false">
+                <i class="bi bi-people"></i> Leading ({{ leading_studies.count }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="created-tab" data-bs-toggle="tab" data-bs-target="#created" type="button"
+                    role="tab" aria-controls="created" aria-selected="false">
+                <i class="bi bi-plus-circle"></i> Created ({{ created_studies.count }})
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="myBibleStudiesTabContent">
+        <!-- Registered Studies Tab -->
+        <div class="tab-pane fade show active" id="registered" role="tabpanel" aria-labelledby="registered-tab">
+            <div class="row g-4">
+                {% for study in registered_studies %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 bible-study-card">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ study.title }}</h5>
+                                <div class="mb-2">
+                                    <span class="badge bg-primary">{{ study.get_study_type_display }}</span>
+                                    {% if study.is_recurring %}
+                                        <span class="badge bg-info">Recurring</span>
+                                    {% endif %}
+                                </div>
+                                <p class="card-text text-muted">
+                                    <i class="bi bi-calendar"></i> {{ study.start_date|date:"M d, Y" }}
+                                    <br>
+                                    <i class="bi bi-clock"></i> {{ study.time|time:"g:i A" }}
+                                    <br>
+                                    <i class="bi bi-geo-alt"></i> {{ study.location }}
+                                </p>
+                                <div class="d-grid gap-2">
+                                    <a href="{% url 'services:bible_study_detail' study.id %}"
+                                       class="btn btn-outline-primary">
+                                        View Details
+                                    </a>
+                                    <a href="{% url 'services:cancel_registration' study.id %}"
+                                       class="btn btn-outline-danger">
+                                        <i class="bi bi-x-circle"></i> Cancel Registration
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body empty-state">
+                                <i class="bi bi-journal-text display-1 text-muted"></i>
+                                <h3 class="mt-3">Not Registered for Any Bible Studies</h3>
+                                <p class="text-muted">Browse available Bible studies and join one that interests
+                                    you.</p>
+                                <a href="{% url 'services:bible_study_list' %}" class="btn btn-primary mt-3">
+                                    <i class="bi bi-search"></i> Browse Bible Studies
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Leading Studies Tab -->
+        <div class="tab-pane fade" id="leading" role="tabpanel" aria-labelledby="leading-tab">
+            <div class="row g-4">
+                {% for study in leading_studies %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 bible-study-card">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ study.title }}</h5>
+                                <div class="mb-2">
+                                    <span class="badge bg-primary">{{ study.get_study_type_display }}</span>
+                                    {% if study.is_recurring %}
+                                        <span class="badge bg-info">Recurring</span>
+                                    {% endif %}
+                                </div>
+                                <p class="card-text text-muted">
+                                    <i class="bi bi-calendar"></i> {{ study.start_date|date:"M d, Y" }}
+                                    <br>
+                                    <i class="bi bi-clock"></i> {{ study.time|time:"g:i A" }}
+                                    <br>
+                                    <i class="bi bi-people"></i> {{ study.registered_participants_count }}
+                                    / {{ study.max_participants }} participants
+                                </p>
+                                <div class="d-grid gap-2">
+                                    <a href="{% url 'services:bible_study_detail' study.id %}"
+                                       class="btn btn-outline-primary">
+                                        View Details
+                                    </a>
+                                    <a href="{% url 'services:edit_bible_study' study.id %}"
+                                       class="btn btn-outline-secondary">
+                                        <i class="bi bi-pencil"></i> Edit Study
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body empty-state">
+                                <i class="bi bi-people display-1 text-muted"></i>
+                                <h3 class="mt-3">Not Leading Any Bible Studies</h3>
+                                <p class="text-muted">You are not currently leading any Bible studies.</p>
+                                {% if user.is_staff %}
+                                    <a href="{% url 'services:create_bible_study' %}" class="btn btn-primary mt-3">
+                                        <i class="bi bi-plus-circle"></i> Create a Bible Study
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Created Studies Tab -->
+        <div class="tab-pane fade" id="created" role="tabpanel" aria-labelledby="created-tab">
+            <div class="row g-4">
+                {% for study in created_studies %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 bible-study-card">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ study.title }}</h5>
+                                <div class="mb-2">
+                                    <span class="badge bg-primary">{{ study.get_study_type_display }}</span>
+                                    {% if study.is_recurring %}
+                                        <span class="badge bg-info">Recurring</span>
+                                    {% endif %}
+                                    {% if study.is_featured %}
+                                        <span class="badge bg-warning text-dark">Featured</span>
+                                    {% endif %}
+                                </div>
+                                <p class="card-text text-muted">
+                                    <i class="bi bi-calendar"></i> {{ study.start_date|date:"M d, Y" }}
+                                    <br>
+                                    <i class="bi bi-clock"></i> {{ study.time|time:"g:i A" }}
+                                    <br>
+                                    <i class="bi bi-people"></i> {{ study.registered_participants_count }}
+                                    / {{ study.max_participants }} participants
+                                </p>
+                                <div class="d-grid gap-2">
+                                    <a href="{% url 'services:bible_study_detail' study.id %}"
+                                       class="btn btn-outline-primary">
+                                        View Details
+                                    </a>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'services:edit_bible_study' study.id %}"
+                                           class="btn btn-outline-secondary">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </a>
+                                        <a href="{% url 'services:delete_bible_study' study.id %}"
+                                           class="btn btn-outline-danger">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body empty-state">
+                                <i class="bi bi-plus-circle display-1 text-muted"></i>
+                                <h3 class="mt-3">No Bible Studies Created</h3>
+                                <p class="text-muted">You haven't created any Bible studies yet.</p>
+                                {% if user.is_staff %}
+                                    <a href="{% url 'services:create_bible_study' %}" class="btn btn-primary mt-3">
+                                        <i class="bi bi-plus-circle"></i> Create Your First Bible Study
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

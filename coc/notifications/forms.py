@@ -2,6 +2,25 @@
 from .models import Notifications
 from django import forms
 from accounts.models import *
+# notifications/forms.py
+from django import forms
+from .models import NotificationSettings
+# notifications/forms.py
+from django import forms
+from .models import NotificationSettings
+
+
+class NotificationsSettingsForm(forms.ModelForm):
+    """Form for updating notification settings"""
+
+    class Meta:
+        model = NotificationSettings
+        fields = [
+            'email_notifications', 'password_change_notifications',
+            'weekly_newsletter', 'sermon_notifications',
+            'prayer_requests', 'ministry_updates', 'event_reminders',
+            'volunteer_opportunities', 'bible_studies', 'devotionals'
+        ]
 
 
 class NotificationSettingsForm(forms.Form):

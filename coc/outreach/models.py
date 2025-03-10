@@ -435,7 +435,7 @@ class Donation(models.Model):
     )
 
     campaign = models.ForeignKey(CharityCampaign, on_delete=models.CASCADE, related_name='donations')
-    donor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='donations')
+    donor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='church_donations')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     message = models.TextField(blank=True)
     anonymous = models.BooleanField(default=False)

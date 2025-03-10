@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
@@ -263,6 +264,7 @@ class Event(models.Model):
         ('social', 'Social Event'),
         ('other', 'Other'),
     ]
+    participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='events')
 
     title = models.CharField(max_length=200)
     event_type = models.CharField(max_length=20, choices=EVENT_TYPES)
@@ -279,6 +281,8 @@ class Event(models.Model):
     is_online = models.BooleanField(default=False)
     location = models.CharField(max_length=200, blank=True)
     online_link = models.URLField(blank=True, null=True)
+    can_register = models.BooleanField(default=True)
+
     
     # Registration fields
     registration_required = models.BooleanField(default=False)
@@ -317,6 +321,44 @@ class Event(models.Model):
 
             return event_end < now
         return False  # Default case if date or time is missing
+
+    def get_can_register(self, user):
+        """
+        Check if a user can register for this event.
+
+        Args:
+            user: The user to check registration eligibility for
+
+        Returns:
+            tuple: (bool, str) where the bool indicates if registration is possible
+                  and the string provides a reason if registration is not possible.
+        """
+        # Check if registration is required
+        if not self.registration_required:
+            return False, "Registration is not required for this event."
+
+        # Check if event is in the past
+        if self.is_past:
+            return False, "This event has already ended."
+
+        # Check if registration deadline has passed
+        if self.registration_deadline:
+            now = timezone.now()
+            if now > self.registration_deadline:
+                return False, "Registration deadline has passed."
+
+        # Check if event is at maximum capacity
+        if self.max_participants is not None:
+            current_participants = self.participants.count()
+            if current_participants >= self.max_participants:
+                return False, "This event has reached maximum capacity."
+
+        # Check if user is already registered
+        if user.is_authenticated and user in self.participants.all():
+            return False, "You are already registered for this event."
+
+        # If all checks pass, user can register
+        return True, ""
 
 
 class EventSpeakers(models.Model):

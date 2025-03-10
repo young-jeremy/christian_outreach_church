@@ -191,7 +191,7 @@
                             </li>
                             <li>
                                 <i class="fas fa-user me-2"></i>
-                                <strong>Created by:</strong> {{ material.created_by.get_full_name }}
+                                <strong>Created by:</strong> {{ material.created_by.get_display_name }}
                             </li>
                         </ul>
                     </div>
@@ -219,7 +219,7 @@
                             {% for fb in feedback|slice:":5" %}
                                 <div class="list-group-item">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <strong>{{ fb.teacher.get_full_name }}</strong>
+                                        <strong>{{ fb.teacher.get_display_name }}</strong>
                                         <div>
                                             {% for i in "12345"|make_list %}
                                                 <i class="fas fa-star {% if forloop.counter <= fb.rating %}text-warning{% else %}text-muted{% endif %}"></i>

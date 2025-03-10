@@ -1,0 +1,90 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h4 class="mb-0">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            Confirm Deletion
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-4">
+                            {% if child.image %}
+                                <img src="{{ child.image.url }}" alt="{{ child.first_name }}"
+                                     class="rounded-circle mb-3"
+                                     style="width: 120px; height: 120px; object-fit: cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-3"
+                                     style="width: 120px; height: 120px;">
+                                    <span class="display-4 text-white">{{ child.first_name|first }}{{ child.last_name|first }}</span>
+                                </div>
+                            {% endif %}
+                            <h3>{{ child.first_name }} {{ child.last_name }}</h3>
+                            <p class="text-muted">Age: {{ child.age }} years</p>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <h5 class="alert-heading">Warning!</h5>
+                            <p>You are about to delete <strong>{{ child.first_name }} {{ child.last_name }}</strong>
+                                from the system. This action cannot be undone.</p>
+                            <hr>
+                            <p class="mb-0">All associated records, including program enrollments and attendance
+                                history, will be permanently removed.</p>
+                        </div>
+
+                        {% if enrollments_count > 0 %}
+                            <div class="alert alert-danger mb-4">
+                                <p class="mb-0">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    This child is currently enrolled in <strong>{{ enrollments_count }}</strong>
+                                    program(s). Deleting this record will remove all enrollments.
+                                </p>
+                            </div>
+                        {% endif %}
+
+                        <form method="post" action="{% url 'services:delete_child' child.id %}">
+                            {% csrf_token %}
+
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                                <label class="form-check-label" for="confirmDelete">
+                                    I understand that this action cannot be undone.
+                                </label>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'services:child_detail' child.id %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left me-2"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
+                                    <i class="bi bi-trash me-2"></i>Delete Permanently
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block extra_js %}
+        <script>
+            $(document).ready(function () {
+                // Enable/disable delete button based on checkbox
+                $('#confirmDelete').change(function () {
+                    if ($(this).is(':checked')) {
+                        $('#deleteButton').prop('disabled', false);
+                    } else {
+                        $('#deleteButton').prop('disabled', true);
+                    }
+                });
+            });
+        </script>
+    {% endblock %}
+
+{% endblock %}

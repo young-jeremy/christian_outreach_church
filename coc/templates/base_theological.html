@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% extends 'base_dashboard.html' %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -17,7 +18,7 @@
 <!-- Navigation -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container">
-        <a class="navbar-brand" href="{% url 'education:resource_list' %}">
+        <a class="navbar-brand" href="{% url 'education:theological_resource_list' %}">
             <i class="fas fa-book-bible me-2"></i>Theological Resources
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -26,7 +27,7 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'education:resource_list' %}">
+                    <a class="nav-link" href="{% url 'education:theological_resource_list' %}">
                         <i class="fas fa-home me-1"></i>Home
                     </a>
                 </li>
@@ -38,7 +39,7 @@
                     </li>
                 {% endif %}
             </ul>
-            <form class="d-flex" method="get" action="{% url 'education:resource_list' %}">
+            <form class="d-flex" method="get" action="{% url 'education:theological_resource_list' %}">
                 <input class="form-control me-2" type="search" name="q" placeholder="Search resources...">
                 <button class="btn btn-light" type="submit">
                     <i class="fas fa-search"></i>

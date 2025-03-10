@@ -23,7 +23,7 @@
                             {% if testimony.is_anonymous %}
                                 Anonymous
                             {% else %}
-                                {{ testimony.author.get_full_name|default:testimony.author.username }}
+                                {{ testimony.author.username|default:testimony.author.username }}
                             {% endif %}
                             on {{ testimony.created_at|date:"F d, Y" }}
                         </small>

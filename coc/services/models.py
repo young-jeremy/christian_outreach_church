@@ -6,6 +6,7 @@ from django.core.validators import (
     RegexValidator
 )
 from django.shortcuts import redirect, get_object_or_404
+from django.template.context_processors import static
 from django_summernote.fields import SummernoteTextField
 
 from dashboard.views import blank
@@ -339,6 +340,20 @@ class BibleStudy(models.Model):
         return self.registered_participants_count >= self.max_participants
 
 
+class BibleStudyRegistration(models.Model):
+    study = models.ForeignKey(BibleStudy, on_delete=models.CASCADE, related_name='registrations')
+    participant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                    related_name='bible_study_registrations')
+    registration_date = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('study', 'participant')
+
+    def __str__(self):
+        return f"{self.participant.username} - {self.study.title}"
+
+
 class ChildRegistration(models.Model):
     child_name = models.CharField(max_length=100)
     age = models.PositiveIntegerField(
@@ -377,124 +392,10 @@ class Testimony(models.Model):
         return self.title
 
 
-class Child(models.Model):
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    date_of_birth = models.DateField()
-    parent = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='children'
-    )
-    allergies = models.TextField(blank=True)
-    medical_notes = models.TextField(blank=True)
-    emergency_contact = models.CharField(max_length=200)
-    photo_permission = models.BooleanField(default=False)
-    special_needs = models.TextField(blank=True)
-    pickup_allowed_by = models.TextField(help_text="Names of people allowed to pick up the child", null=True)
-
-    def __str__(self):
-        return f"{self.first_name} {self.last_name}"
-
-    @property
-    def age(self):
-        today = date.today()
-        return today.year - self.date_of_birth.year - (
-            (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
-        )
 
 
-class ChildrensMinistry(models.Model):
-    AGE_GROUP_CHOICES = [
-        ('2-4', 'Toddlers (2-4)'),
-        ('5-7', 'Early Elementary (5-7)'),
-        ('8-10', 'Elementary (8-10)'),
-        ('11-12', 'Pre-Teens (11-12)')
-    ]
-
-    PROGRAM_TYPE_CHOICES = [
-        ('SUNDAY_SCHOOL', 'Sunday School'),
-        ('BIBLE_CLUB', 'Bible Club'),
-        ('VACATION_BIBLE', 'Vacation Bible School'),
-        ('CHOIR', 'Children\'s Choir'),
-        ('ARTS_CRAFTS', 'Arts & Crafts'),
-        ('DRAMA', 'Drama Ministry'),
-        ('MISSIONS', 'Kids Missions')
-    ]
-
-    title = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True, blank=True)
-    description = models.TextField()
-    age_group = models.CharField(max_length=20, choices=AGE_GROUP_CHOICES)
-    program_type = models.CharField(max_length=50, choices=PROGRAM_TYPE_CHOICES)
-    leader = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='led_childrens_ministries'
-    )
-    teachers = models.ManyToManyField(
-        settings.AUTH_USER_MODEL,
-        related_name='teaching_ministries',
-        blank=True
-    )
-    children = models.ManyToManyField(
-        'Child',
-        related_name='enrolled_programs',
-        through='ChildEnrollment'
-    )
-    meeting_time = models.DateTimeField()
-    location = models.CharField(max_length=200)
-    image = models.ImageField(upload_to='childrens_ministry/', blank=True, null=True)
-    max_capacity = models.PositiveIntegerField(null=True, blank=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    curriculum = models.FileField(upload_to='curriculum/', blank=True, null=True)
-    safety_guidelines = models.TextField(blank=True)
-    allergies_aware = models.BooleanField(default=True)
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.title)
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.title
 
 
-class ChildEnrollment(models.Model):
-    child = models.ForeignKey(Child, on_delete=models.CASCADE)
-    program = models.ForeignKey(ChildrensMinistry, on_delete=models.CASCADE)
-    enrollment_date = models.DateTimeField(auto_now_add=True)
-    active = models.BooleanField(default=True)
-    attendance_record = models.ManyToManyField(
-        'ChildAttendance',
-        related_name='enrollments',
-        blank=True
-    )
-    notes = models.TextField(blank=True)
-
-class ChildAttendance(models.Model):
-    child = models.ForeignKey(Child, on_delete=models.CASCADE)
-    program = models.ForeignKey(ChildrensMinistry, on_delete=models.CASCADE)
-    date = models.DateField()
-    check_in_time = models.TimeField()
-    check_out_time = models.TimeField(null=True, blank=True)
-    checked_in_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='checkins_performed'
-    )
-    checked_out_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='checkouts_performed'
-    )
-    pickup_person = models.CharField(max_length=200, blank=True)
-    notes = models.TextField(blank=True)
 
 
 class NotificationPreferences(models.Model):
@@ -527,7 +428,8 @@ class PrayerRequest(models.Model):
         ('archived', 'Archived')
     ]
 
-    requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='prayer_requests')
+    requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='prayer_requests',
+                                  blank=True)
     title = models.CharField(max_length=200)
     request = models.TextField()
     category = models.CharField(max_length=20, choices=PRAYER_CATEGORIES)
@@ -889,6 +791,7 @@ class YouthMinistry(models.Model):
 
 
 class ChildrenProgram(models.Model):
+
     PROGRAM_TYPES = [
         ('sunday_school', 'Sunday School'),
         ('vbs', 'Vacation Bible School'),
@@ -917,8 +820,9 @@ class ChildrenProgram(models.Model):
     age_group = models.CharField(max_length=10, choices=AGE_GROUPS)
     max_children = models.PositiveIntegerField()
     description = models.TextField()
+    registrations = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='registrations', blank=True)
     curriculum = models.TextField()
-    teachers = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='children_programs')
+    teachers = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='children_programs', blank=True)
     materials_needed = models.TextField(blank=True)
     image = models.ImageField(upload_to='children_programs/', blank=True, null=True)
     registration_deadline = models.DateTimeField()
@@ -926,6 +830,7 @@ class ChildrenProgram(models.Model):
     recurring_pattern = models.CharField(max_length=20, choices=RECURRING_PATTERNS, blank=True, null=True)
     parent_instructions = models.TextField(blank=True)
     special_needs_support = models.TextField(blank=True)
+    active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
                                    related_name='created_children_programs')
@@ -949,6 +854,285 @@ class ChildrenProgram(models.Model):
     @property
     def spots_available(self):
         return self.max_children - self.registered_children_count
+
+
+class Child(models.Model):
+    GENDER_CHOICES = [
+        ('M', 'Male'),
+        ('F', 'Female'),
+        ('O', 'Other'),
+    ]
+
+    first_name = models.CharField(max_length=100, null=True, blank=True)
+    last_name = models.CharField(max_length=100, null=True, blank=True)
+    date_of_birth = models.DateField()
+    parent = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='children'
+    )
+    # Optional: link to user account if child becomes an adult with their own account
+    user_account = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='child_profile'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
+
+    @property
+    def age(self):
+        from datetime import date
+        today = date.today()
+        return today.year - self.date_of_birth.year - (
+                (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
+        )
+
+    @property
+    def is_adult(self):
+        return self.age >= 18
+
+
+class ChildAttendance(models.Model):
+    """
+    Model to track attendance of children at church programs and events.
+    """
+    CHECKOUT_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('absent', 'Absent'),
+        ('early', 'Early Departure'),
+    ]
+
+    # Core relationships
+    child = models.ForeignKey(
+        'Child',
+        on_delete=models.CASCADE,
+        related_name='attendance_records'
+    )
+    program = models.ForeignKey(
+        'ChildrenProgram',
+        on_delete=models.CASCADE,
+        related_name='attendance_records'
+    )
+
+    # Attendance dates and times
+    date = models.DateField(default=timezone.now)
+    check_in_time = models.DateTimeField(default=timezone.now)
+    check_out_time = models.DateTimeField(null=True, blank=True)
+
+    # Who checked the child in and out
+    checked_in_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='child_checkins'
+    )
+    checked_out_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='child_checkouts'
+    )
+
+    # Additional fields
+    checkout_status = models.CharField(
+        max_length=20,
+        choices=CHECKOUT_STATUS_CHOICES,
+        default='pending'
+    )
+    security_code = models.CharField(max_length=10, blank=True)
+    notes = models.TextField(blank=True)
+
+    # For tracking illness or incidents
+    health_check_passed = models.BooleanField(default=True)
+    health_notes = models.TextField(blank=True)
+
+    # For tracking who is authorized to pick up the child
+    authorized_pickup_person = models.CharField(max_length=100, blank=True)
+    pickup_verification = models.BooleanField(default=False)
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date', '-check_in_time']
+        # Ensure a child can only be checked in once per program per day
+        unique_together = ['child', 'program', 'date']
+        verbose_name = 'Child Attendance'
+        verbose_name_plural = 'Child Attendance Records'
+
+    def __str__(self):
+        return f"{self.child.first_name} {self.child.last_name} - {self.program.title} - {self.date}"
+
+    def save(self, *args, **kwargs):
+        # Generate a security code if one doesn't exist
+        if not self.security_code:
+            import random
+            import string
+            chars = string.ascii_uppercase + string.digits
+            self.security_code = ''.join(random.choice(chars) for _ in range(6))
+
+        # If checking out, update the checkout status
+        if self.check_out_time and self.checkout_status == 'pending':
+            self.checkout_status = 'completed'
+
+        super().save(*args, **kwargs)
+
+    @property
+    def is_checked_out(self):
+        """Return whether the child has been checked out."""
+        return self.check_out_time is not None
+
+    @property
+    def attendance_duration(self):
+        """Return the duration of attendance in hours."""
+        if not self.check_out_time:
+            return None
+
+        duration = self.check_out_time - self.check_in_time
+        return round(duration.total_seconds() / 3600, 2)  # Convert to hours
+
+    @property
+    def is_late_checkout(self):
+        """Check if the checkout was after the program's scheduled end time."""
+        if not self.check_out_time or not hasattr(self.program, 'end_time'):
+            return False
+
+        program_end = timezone.make_aware(
+            datetime.combine(self.date, self.program.time)
+        ) + timezone.timedelta(hours=2)  # Assuming 2-hour programs
+
+        return self.check_out_time > program_end
+
+    def check_out(self, user, notes=''):
+        """Check out the child."""
+        if self.is_checked_out:
+            return False
+
+        self.check_out_time = timezone.now()
+        self.checked_out_by = user
+        self.checkout_status = 'completed'
+        if notes:
+            self.notes += f"\nCheckout notes: {notes}"
+        self.save()
+        return True
+
+    def mark_absent(self, user, notes=''):
+        """Mark the child as absent."""
+        self.checkout_status = 'absent'
+        if notes:
+            self.notes += f"\nAbsence notes: {notes}"
+        self.save()
+        return True
+
+
+class ChildResource(models.Model):
+    RESOURCE_TYPE_CHOICES = [
+        ('pdf', 'PDF Document'),
+        ('video', 'Video'),
+        ('link', 'External Link'),
+        ('activity', 'Activity Sheet'),
+    ]
+
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    resource_type = models.CharField(max_length=20, choices=RESOURCE_TYPE_CHOICES)
+    file = models.FileField(upload_to='children_resources/', blank=True, null=True)
+    url = models.URLField(blank=True, null=True)
+    age_group = models.CharField(max_length=20, choices=ChildrenProgram.AGE_GROUPS)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+
+class ChildProgramEnrollment(models.Model):
+    # Add these two foreign keys
+    children_ministry = models.ForeignKey('ChildrensMinistry', on_delete=models.CASCADE)
+    child = models.ForeignKey('Child', on_delete=models.CASCADE)
+    attended = models.BooleanField(default=False)
+    program = models.ForeignKey(ChildrenProgram, on_delete=models.CASCADE, related_name='enrollments')
+    enrolled_date = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)
+    check_in_time = models.DateTimeField(null=True, blank=True)
+    check_out_time = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('child', 'program')
+
+    def __str__(self):
+        return f"{self.child} enrolled in {self.program}"
+
+
+class ChildrensMinistry(models.Model):
+    AGE_GROUP_CHOICES = [
+        ('2-4', 'Toddlers (2-4)'),
+        ('5-7', 'Early Elementary (5-7)'),
+        ('8-10', 'Elementary (8-10)'),
+        ('11-12', 'Pre-Teens (11-12)')
+    ]
+
+    PROGRAM_TYPE_CHOICES = [
+        ('SUNDAY_SCHOOL', 'Sunday School'),
+        ('BIBLE_CLUB', 'Bible Club'),
+        ('VACATION_BIBLE', 'Vacation Bible School'),
+        ('CHOIR', 'Children\'s Choir'),
+        ('ARTS_CRAFTS', 'Arts & Crafts'),
+        ('DRAMA', 'Drama Ministry'),
+        ('MISSIONS', 'Kids Missions')
+    ]
+
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True, blank=True)
+    description = models.TextField()
+    age_group = models.CharField(max_length=20, choices=AGE_GROUP_CHOICES)
+    program_type = models.CharField(max_length=50, choices=PROGRAM_TYPE_CHOICES)
+    leader = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='led_childrens_ministries'
+    )
+    teachers = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='teaching_ministries',
+        blank=True
+    )
+    children = models.ManyToManyField(
+        'Child',
+        related_name='enrolled_programs',
+        through='ChildProgramEnrollment'
+    )
+    meeting_time = models.DateTimeField()
+    location = models.CharField(max_length=200)
+    image = models.ImageField(upload_to='childrens_ministry/', blank=True, null=True)
+    max_capacity = models.PositiveIntegerField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    curriculum = models.FileField(upload_to='curriculum/', blank=True, null=True)
+    safety_guidelines = models.TextField(blank=True)
+    allergies_aware = models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+
+
+
 
 
 class SongRequest(models.Model):
@@ -1812,28 +1996,7 @@ class ParentingResource(models.Model):
             self.slug = slugify(self.title)
         super().save(*args, **kwargs)
 
-    class CoupleProfile(models.Model):
-        MARRIAGE_STAGE_CHOICES = [
-            ('NEWLYWED', 'Newlywed (0-2 years)'),
-            ('EARLY', 'Early Years (3-7 years)'),
-            ('ESTABLISHED', 'Established (8-15 years)'),
-            ('SEASONED', 'Seasoned (15+ years)'),
-        ]
 
-        # ... existing fields ...
-
-        # Add these fields for reading streak
-        reading_streak = models.IntegerField(default=0)
-        last_reading_date = models.DateField(null=True, blank=True)
-
-        def update_reading_streak(self):
-            today = timezone.now().date()
-            if self.last_reading_date == today - timezone.timedelta(days=1):
-                self.reading_streak += 1
-            elif self.last_reading_date != today:
-                self.reading_streak = 1
-            self.last_reading_date = today
-            self.save()
 
 
 class FamilyCounseling(models.Model):
@@ -2044,7 +2207,7 @@ class DiscipleshipTrack(models.Model):
             self.slug = slugify(self.title)
         super().save(*args, **kwargs)
 
-    class CoupleProfile(models.Model):
+    """class CoupleProfile(models.Model):
         MARRIAGE_STAGE_CHOICES = [
             ('NEWLYWED', 'Newlywed (0-2 years)'),
             ('EARLY', 'Early Years (3-7 years)'),
@@ -2118,6 +2281,17 @@ class DiscipleshipTrack(models.Model):
         # Metadata
         created_at = models.DateTimeField(auto_now_add=True)
         updated_at = models.DateTimeField(auto_now=True)
+        reading_streak = models.IntegerField(default=0)
+        last_reading_date = models.DateField(null=True, blank=True)
+
+        def update_reading_streak(self):
+            today = timezone.now().date()
+            if self.last_reading_date == today - timezone.timedelta(days=1):
+                self.reading_streak += 1
+            elif self.last_reading_date != today:
+                self.reading_streak = 1
+            self.last_reading_date = today
+            self.save()
 
         def __str__(self):
             return f"{self.user.get_full_name()}'s Couple Profile"
@@ -2138,7 +2312,7 @@ class DiscipleshipTrack(models.Model):
             if self.status == 'approved' and not self.is_approved:
                 self.is_approved = True
                 self.approval_date = timezone.now()
-            super().save(*args, **kwargs)
+            super().save(*args, **kwargs)"""
 
 
 class DiscipleshipModule(models.Model):
@@ -2717,11 +2891,6 @@ class TransportationRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-class PrayerPartner(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='prayer_partnerships')
-    partner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='prayer_partners')
-    created_at = models.DateTimeField(auto_now_add=True)
-    active = models.BooleanField(default=True)
 
 class HealthResource(models.Model):
     title = models.CharField(max_length=200)

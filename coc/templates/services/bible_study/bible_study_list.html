@@ -1,5 +1,72 @@
 {% extends 'ministries/base_ministry.html' %}
 {% load static %}
+{% load service_filters %}
+
+{% block extra_css %}
+    {{ block.super }}
+    <style>
+        .bible-study-card {
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, .125);
+        }
+
+        .bible-study-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .badge-study-type {
+            font-size: 0.75rem;
+        }
+
+        .study-meta {
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .study-description {
+            height: 4.5rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .empty-state {
+            padding: 3rem 1rem;
+        }
+
+        .filter-card {
+            position: sticky;
+            top: 1rem;
+        }
+
+        .capacity-indicator {
+            height: 6px;
+            border-radius: 3px;
+            background-color: #e9ecef;
+            margin-top: 5px;
+        }
+
+        .capacity-fill {
+            height: 100%;
+            border-radius: 3px;
+        }
+
+        .capacity-low {
+            background-color: #28a745;
+        }
+
+        .capacity-medium {
+            background-color: #ffc107;
+        }
+
+        .capacity-high {
+            background-color: #dc3545;
+        }
+    </style>
+{% endblock %}
 
 {% block ministry_content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -7,50 +74,303 @@
         <h1 class="h2">Bible Studies</h1>
         <p class="text-muted">Join our Bible study groups and grow in faith</p>
     </div>
-    {% if user.is_staff %}
-    <a href="{% url 'services:create_bible_study' %}" class="btn btn-primary">
-        <i class="bi bi-plus-lg"></i> Create Bible Study
-    </a>
-    {% endif %}
+    <div>
+        <a href="{% url 'services:my_bible_studies' %}" class="btn btn-outline-primary me-2">
+            <i class="bi bi-person"></i> My Bible Studies
+        </a>
+        {% if user.is_staff %}
+            <a href="{% url 'services:create_bible_study' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Create Bible Study
+            </a>
+        {% endif %}
+    </div>
 </div>
 
-<!-- Bible Studies Grid -->
-<div class="row g-4">
-    {% for study in bible_studies %}
-    <div class="col-md-6 col-lg-4">
-        <div class="card h-100">
-            <div class="card-body">
-                <h5 class="card-title">{{ study.title }}</h5>
-                <p class="card-text text-muted">
-                    <i class="bi bi-person"></i> Led by: {{ study.teacher.get_full_name }}
-                    <br>
-                    <i class="bi bi-calendar"></i> {{ study.date|date:"l, F j, Y" }}
-                    <br>
-                    <i class="bi bi-clock"></i> {{ study.date|date:"g:i A" }}
-                    <br>
-                    <i class="bi bi-geo-alt"></i> {{ study.location }}
-                </p>
-                <div class="mb-3">
-                    <span class="badge bg-primary">{{ study.get_study_type_display }}</span>
-                    {% if study.is_recurring %}
-                    <span class="badge bg-info">Recurring</span>
-                    {% endif %}
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
-                <a href="{% url 'ministries:bible_study_detail' study.id %}" class="btn btn-primary">
-                    View Details
-                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-md-3 mb-4">
+            <div class="card filter-card">
+                <div class="card-header">
+                    <h5 class="mb-0">Filter Bible Studies</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="{% url 'services:bible_study_list' %}" id="filterForm">
+                        <div class="mb-3">
+                            <label for="search" class="form-label">Search</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="search" name="search"
+                                       placeholder="Search studies..." value="{{ request.GET.search|default:'' }}">
+                                <button class="btn btn-outline-secondary" type="submit">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="study_type" class="form-label">Study Type</label>
+                            <select class="form-select" id="study_type" name="study_type">
+                                <option value="">All Types</option>
+                                {% for value, label in study_types %}
+                                    <option value="{{ value }}"
+                                            {% if request.GET.study_type == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="target_group" class="form-label">Target Group</label>
+                            <select class="form-select" id="target_group" name="target_group">
+                                <option value="">All Groups</option>
+                                {% for value, label in target_groups %}
+                                    <option value="{{ value }}"
+                                            {% if request.GET.target_group == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="upcoming_only" name="upcoming_only"
+                                   {% if request.GET.upcoming_only %}checked{% endif %}>
+                            <label class="form-check-label" for="upcoming_only">
+                                Upcoming Only
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Apply Filters</button>
+                            {% if request.GET %}
+                                <a href="{% url 'services:bible_study_list' %}" class="btn btn-outline-secondary">Clear
+                                    Filters</a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
-    {% empty %}
-    <div class="col-12 text-center py-5">
-        <div class="empty-state">
-            <i class="bi bi-book display-1 text-muted"></i>
-            <h3 class="mt-3">No Bible Studies Available</h3>
-            <p class="text-muted">Check back later for upcoming studies</p>
+
+        <!-- Bible Studies Grid -->
+        <div class="col-md-9">
+            <div class="row g-4">
+                {% for study in bible_studies %}
+                    <div class="col-md-6 col-lg-6">
+                        <div class="card h-100 bible-study-card">
+                            {% if study.is_featured %}
+                                <div class="position-absolute top-0 end-0 p-2">
+                        <span class="badge bg-warning text-dark">
+                            <i class="bi bi-star-fill"></i> Featured
+                        </span>
+                                </div>
+                            {% endif %}
+
+                            <div class="card-body">
+                                <h5 class="card-title">{{ study.title }}</h5>
+                                <div class="mb-2">
+                                    <span class="badge bg-primary badge-study-type">{{ study.get_study_type_display }}</span>
+                                    <span class="badge bg-secondary badge-study-type">{{ study.get_target_group_display }}</span>
+                                    {% if study.is_recurring %}
+                                        <span class="badge bg-info badge-study-type">
+                                {% if study.recurring_pattern %}{{ study.get_recurring_pattern_display }}{% else %}
+                                    Recurring{% endif %}
+                            </span>
+                                    {% endif %}
+                                    {% if study.is_online %}
+                                        <span class="badge bg-success badge-study-type">Online</span>
+                                    {% endif %}
+                                </div>
+
+                                <p class="card-text study-description">{{ study.description }}</p>
+
+                                <div class="study-meta">
+                                    <p class="mb-1"><i
+                                            class="bi bi-calendar"></i> {{ study.start_date|date:"l, F j, Y" }}</p>
+                                    <p class="mb-1"><i class="bi bi-clock"></i> {{ study.time|time:"g:i A" }}
+                                        ({{ study.duration|format_duration }})</p>
+                                    <p class="mb-1"><i class="bi bi-geo-alt"></i> {{ study.location }}</p>
+
+                                    {% if study.leaders.all %}
+                                        <p class="mb-1">
+                                            <i class="bi bi-people"></i> Led by:
+                                            {% for leader in study.leaders.all %}
+                                                {% if forloop.first %}
+                                                    {{ leader.username|default:leader.username }}{% else %}
+                                                    {% if forloop.last %} and {% else %}, {% endif %}
+                                                    {{ leader.username|default:leader.username }}{% endif %}
+                                            {% endfor %}
+                                        </p>
+                                    {% endif %}
+
+                                    <p class="mb-1">
+                                        <i class="bi bi-person-plus"></i>
+                                        {{ study.registered_participants_count }} / {{ study.max_participants }}
+                                        participants
+                                    </p>
+
+                                    <!-- Capacity indicator -->
+                                    <div class="capacity-indicator">
+                                        {% with percentage=study.registered_participants_count|floatformat:0|divisibleby:study.max_participants|floatformat:2 %}
+                                            <div class="capacity-fill
+                                    {% if percentage < 50 %}capacity-low
+                                    {% elif percentage < 80 %}capacity-medium
+                                    {% else %}capacity-high{% endif %}"
+                                                 style="width: {{ percentage }}%;">
+                                            </div>
+                                        {% endwith %}
+                                    </div>
+
+                                    {% if study.registration_required and study.registration_deadline %}
+                                        <p class="mb-1 mt-2">
+                                            <i class="bi bi-calendar-check"></i> Registration deadline:
+                                            {{ study.registration_deadline|date:"M d, Y" }}
+                                            {% if study.registration_deadline < now %}
+                                                <span class="badge bg-danger">Closed</span>
+                                            {% endif %}
+                                        </p>
+                                    {% endif %}
+                                </div>
+
+                                <div class="d-flex justify-content-between mt-3">
+                                    <a href="{% url 'services:bible_study_detail' study.id %}" class="btn btn-primary">
+                                        View Details
+                                    </a>
+
+                                    {% if request.user == study.created_by or request.user in study.leaders.all or user.is_staff %}
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+                                                    id="dropdownMenuButton{{ study.id }}" data-bs-toggle="dropdown"
+                                                    aria-expanded="false">
+                                                <i class="bi bi-gear"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end"
+                                                aria-labelledby="dropdownMenuButton{{ study.id }}">
+                                                <li>
+                                                    <a class="dropdown-item"
+                                                       href="{% url 'services:edit_bible_study' study.id %}">
+                                                        <i class="bi bi-pencil"></i> Edit
+                                                    </a>
+                                                </li>
+                                                {% if request.user == study.created_by or user.is_staff %}
+                                                    <li>
+                                                        <a class="dropdown-item text-danger"
+                                                           href="{% url 'services:delete_bible_study' study.id %}">
+                                                            <i class="bi bi-trash"></i> Delete
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                            </ul>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body text-center empty-state">
+                                <i class="bi bi-book display-1 text-muted"></i>
+                                <h3 class="mt-3">No Bible Studies Available</h3>
+                                <p class="text-muted">
+                                    {% if request.GET %}
+                                        No Bible studies match your filter criteria. Try adjusting your filters.
+                                    {% else %}
+                                        Check back later for upcoming studies.
+                                    {% endif %}
+                                </p>
+
+                                {% if user.is_staff %}
+                                    <a href="{% url 'services:create_bible_study' %}" class="btn btn-primary mt-3">
+                                        <i class="bi bi-plus-circle"></i> Create the First Bible Study
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% if is_paginated %}
+                <nav aria-label="Bible study pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1
+                                        {% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                                   aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=
+                                        {{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                                   aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=
+                                            {{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=
+                                        {{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                                   aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=
+                                        {{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                                   aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
         </div>
     </div>
-    {% endfor %}
-</div>
+{% endblock %}
 
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Auto-submit filter form when select changes
+            const filterSelects = document.querySelectorAll('#filterForm select');
+            const filterCheckboxes = document.querySelectorAll('#filterForm input[type="checkbox"]');
+
+            filterSelects.forEach(select => {
+                select.addEventListener('change', function () {
+                    this.form.submit();
+                });
+            });
+
+            filterCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function () {
+                    this.form.submit();
+                });
+            });
+        });
+    </script>
 {% endblock %}

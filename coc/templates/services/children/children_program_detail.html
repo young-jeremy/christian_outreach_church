@@ -1,0 +1,245 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block title %}{{ programs.title }} - Children's Program{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <!-- Program Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="display-4 mb-2">{{ programs.title }}</h1>
+                <div class="d-flex align-items-center mb-3">
+                <span class="badge {% if programs.program_type == 'sunday_school' %}bg-primary{% elif programs.program_type == 'vbs' %}bg-success{% elif programs.program_type == 'camp' %}bg-warning{% else %}bg-info{% endif %} me-2">
+                    {{ programs.get_program_type_display }}
+                </span>
+                    <span class="badge bg-secondary me-2">{{ programs.get_age_group_display }}</span>
+                    {% if programs.is_featured %}
+                        <span class="badge bg-danger">Featured Program</span>
+                    {% endif %}
+                </div>
+
+                {% if programs.is_past %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-calendar-times"></i> This program has already taken place.
+                    </div>
+                {% else %}
+                    <div class="alert {% if programs.spots_available > 0 %}alert-success{% else %}alert-danger{% endif %}">
+                        {% if programs.spots_available > 0 %}
+                            <i class="fas fa-check-circle"></i> Registration open! {{ programs.spots_available }} spots
+                            available.
+                        {% else %}
+                            <i class="fas fa-exclamation-circle"></i> This program is fully booked.
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-md-4 text-md-end">
+                {% csrf_token %}
+                {% if not programs.is_past and programs.spots_available > 0 %}
+                    <a href="{% url 'services:register_child' %}" onclick="confirmEnrollment({{ program.id }}, event)"
+                       class="btn btn-primary btn-lg">
+                        <i class="fas fa-user-plus"></i> Register Now
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Program Details -->
+        <div class="row">
+            <!-- Left Column - Image and Key Details -->
+            <div class="col-md-5 mb-4">
+                {% if programs.image %}
+                    <img src="{{ programs.image.url }}" alt="{{ programs.title }}" class="img-fluid rounded shadow mb-4"
+                         style="max-height: 350px; width: 100%; object-fit: cover;">
+                {% else %}
+                    <div class="bg-light rounded shadow mb-4 d-flex align-items-center justify-content-center"
+                         style="height: 350px;">
+                        <i class="fas fa-child fa-5x text-muted"></i>
+                    </div>
+                {% endif %}
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="h5 mb-0"><i class="fas fa-info-circle"></i> Program Details</h3>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span><i class="fas fa-calendar"></i> Date:</span>
+                            <strong>{{ programs.date|date:"F j, Y" }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span><i class="fas fa-clock"></i> Time:</span>
+                            <strong>{{ programs.time|time:"g:i A" }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span><i class="fas fa-map-marker-alt"></i> Location:</span>
+                            <strong>{{ programs.location }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span><i class="fas fa-users"></i> Age Group:</span>
+                            <strong>{{ programs.get_age_group_display }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span><i class="fas fa-user-check"></i> Registration:</span>
+                            <strong>{{ programs.registered_children_count }} / {{ programs.max_children }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span><i class="fas fa-hourglass-end"></i> Deadline:</span>
+                            <strong>{{ programs.registration_deadline|date:"F j, Y" }}
+                                at {{ programs.registration_deadline|time:"g:i A" }}</strong>
+                        </li>
+                        {% if programs.is_recurring %}
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-sync"></i> Recurring:</span>
+                                <strong>{{ programs.get_recurring_pattern_display }}</strong>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                {% if programs.teachers.exists %}
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-success text-white">
+                            <h3 class="h5 mb-0"><i class="fas fa-chalkboard-teacher"></i> Teachers</h3>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            {% for teacher in programs.teachers.all %}
+                                <li class="list-group-item">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            {% if teacher.profile.image %}
+                                                <img src="{{ teacher.profile.image.url }}"
+                                                     alt="{{ teacher.get_full_name }}" class="rounded-circle" width="40"
+                                                     height="40">
+                                            {% else %}
+                                                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                                                     style="width: 40px; height: 40px;">
+                                                    <i class="fas fa-user"></i>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="ms-3">
+                                            <h6 class="mb-0">{{ teacher.username }}</h6>
+                                            {% if teacher.profile.role %}
+                                                <small class="text-muted">{{ teacher.profile.role }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Column - Description and Additional Info -->
+            <div class="col-md-7">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h3 class="h5 mb-0"><i class="fas fa-align-left"></i> Program Description</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>{{ programs.description|linebreaks }}</p>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h3 class="h5 mb-0"><i class="fas fa-book"></i> Curriculum</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>{{ programs.curriculum|linebreaks }}</p>
+                    </div>
+                </div>
+
+                {% if programs.materials_needed %}
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-secondary text-white">
+                            <h3 class="h5 mb-0"><i class="fas fa-list-ul"></i> Materials Needed</h3>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ programs.materials_needed|linebreaks }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if programs.parent_instructions %}
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-danger text-white">
+                            <h3 class="h5 mb-0"><i class="fas fa-exclamation-circle"></i> Parent Instructions</h3>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ programs.parent_instructions|linebreaks }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if programs.special_needs_support %}
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h3 class="h5 mb-0"><i class="fas fa-hands-helping"></i> Special Needs Support</h3>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ programs.special_needs_support|linebreaks }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'services:children_ministry_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Programs
+                    </a>
+
+                    {% csrf_token %}
+                    {% if not programs.is_past and programs.spots_available > 0 %}
+
+                        <form method="post" action="{% url 'services:register_child_for_program' programs.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="child_id" value="{{ child.id }}">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-plus"></i> Register Now
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+
+        function registerChildForEvent(eventId, childId) {
+            console.log(`Sending registration request for child ${childId} to event ${eventId}`);
+
+            if (!childId || childId <= 0) {
+                alert("Error: Invalid child ID. Please try again.");
+                return;
+            }
+
+            $.ajax({
+                // Update this URL to match your pattern
+                url: `/services/childrens/program/${eventId}/register/`,
+                type: 'POST',
+                data: {
+                    child_id: childId,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function (response) {
+                    console.log("Registration response:", response);
+                    if (response.status === 'success') {
+                        alert(response.message || "Registration successful!");
+                        location.reload();
+                    } else {
+                        alert(response.message || "Registration failed. Please try again.");
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("Registration error:", error);
+                    console.error("Response:", xhr.responseText);
+                    alert("An error occurred during registration. Please try again later.");
+                }
+            });
+        }
+    </script>
+{% endblock %}
+

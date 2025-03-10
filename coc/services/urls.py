@@ -25,8 +25,17 @@ urlpatterns = [
 
     # Bible Study URLs
     path('bible-studies/', views.bible_study_list, name='bible_study_list'),
-    path('bible-studies/<int:pk>/', views.bible_study_detail, name='bible_study_detail'),
     path('bible-studies/create/', views.create_bible_study, name='create_bible_study'),
+
+    # Bible Study URLs
+    path('bible-studies/', views.bible_study_list, name='bible_study_list'),
+    path('bible-studies/create/', views.create_bible_study, name='create_bible_study'),
+    path('bible-studies/<int:study_id>/', views.bible_study_detail, name='bible_study_detail'),
+    path('bible-studies/<int:study_id>/edit/', views.edit_bible_study, name='edit_bible_study'),
+    path('bible-studies/<int:study_id>/delete/', views.delete_bible_study, name='delete_bible_study'),
+    path('bible-studies/<int:study_id>/register/', views.register_for_bible_study, name='register_for_bible_study'),
+    path('bible-studies/<int:study_id>/cancel-registration/', views.cancel_registration, name='cancel_registration'),
+    path('my-bible-studies/', views.my_bible_studies, name='my_bible_studies'),
     path('events/', views.events_view, name='events_view'),
 
     # Worship Service URLs
@@ -39,11 +48,33 @@ urlpatterns = [
     path('youth/create/', views.create_youth_event, name='create_youth_event'),
     path('youth/events/', views.youth_events_list, name='youth_events_list'),
 
-    # Children's Ministry URLs
-    path('children/', views.children_ministry_list, name='children_ministry_list'),
+    # Main children's ministry page
 
-    path('children/register/', views.register_child, name='register_child'),
-    path('ministries/children/create/', views.create_children_program, name='create_children_program'),
+    # Program management
+    path('children/program/create/', views.create_children_program, name='create_children_program'),
+    path('children/program/<int:pk>/edit/', views.edit_children_program, name='edit_children_program'),
+    path('children/program/<int:pk>/delete/', views.delete_children_program, name='delete_children_program'),
+
+    # Child registration and management
+    path('register/', views.register_child, name='register_child'),
+    path('childrens/program/<int:program_id>/register/', views.register_child_for_program,
+         name='register_child_for_program'),
+    path('children/checkin/', views.child_checkin, name='child_checkin'),
+
+    # Parent portal
+    path('children/parent-portal/', views.parent_portal, name='parent_portal'),
+    path('services/program/<int:program_id>/', views.children_program_detail, name='children_program_detail'),
+    path('children/<int:child_id>/confirm-delete/', views.confirm_delete_child, name='confirm_delete_child'),
+
+    path('children/<int:child_id>/delete/', views.delete_child, name='delete_child'),
+
+    # Events and resources
+    path('children/events/', views.children_ministry_list, name='children_ministry_list'),
+    path('children/resources/', views.children_resources, name='children_resources'),
+
+    # Enrollment API endpoint
+
+
 
     # Testimony URLs
     path('testimonies/', views.testimony_list, name='testimony_list'),
@@ -52,7 +83,7 @@ urlpatterns = [
     path('testimonies/<int:pk>/approve/', views.approve_testimony, name='approve_testimony'),
     path('add_testimony/<int:pk>/', views.add_testimony, name='add_testimony'),
 
-    path('prayer-requests/', views.prayer_requests_list, name='prayer_requests'),
+    path('prayer-requests/', views.prayer_requests, name='prayer_requests'),
     path('prayer-requests/create/', views.create_prayer_request, name='create_prayer_request'),
     path('prayer-requests/<int:pk>/', views.prayer_request_detail, name='prayer_request_detail'),
     path('prayer-requests/<int:pk>/update/', views.add_prayer_update, name='add_prayer_update'),
@@ -176,12 +207,10 @@ urlpatterns = [
     path('youth/', views.youth_program_list, name='youth_program_list'),
     path('youth/create/', views.youth_program_create, name='youth_program_create'),
     path('youth/<slug:slug>/', views.youth_program_detail, name='youth_program_detail'),
-    path('youth/<slug:program_slug>/event/create/', views.youth_event_create, name='youth_event_create'),
     path('youth/program/<int:program_id>/toggle-membership/', views.toggle_program_membership, name='youth_program_toggle_membership'),
 
     # ... your other URLs ...
     path('youth/', views.youth_program_list, name='youth_program_list'),
-    path('youth/create/', views.youth_program_create, name='youth_program_create'),
 
     # ... your existing URLs ...
 

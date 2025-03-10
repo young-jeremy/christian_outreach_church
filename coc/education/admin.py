@@ -16,7 +16,7 @@ from .models import (
     ChristianMentorProfile,
     ChristianMentorshipSession,
     ChristianMentorshipApplication,
-    ChristianMentorshipFeedback
+    ChristianMentorshipFeedback, ChristianEducationLevel
 )
 from .models import (
     LeadershipTraining, TrainingModule, TrainingSession,
@@ -417,3 +417,5 @@ def make_inactive(modeladmin, request, queryset):
 
 # Add these actions to the BiblicalCourseAdmin
 BiblicalCourseAdmin.actions = [make_active, make_inactive]
+
+admin.site.register(ChristianEducationLevel)

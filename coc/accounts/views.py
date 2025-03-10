@@ -83,6 +83,282 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.db.models import Q
+# accounts/views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .forms import (
+    UserProfileForm,
+    UserSettingsForm,
+    PrivacyForm,
+    MinistryPreferencesForm,
+    ContentSettingsForm,
+    AdvancedSettingsForm
+)
+from django.contrib.auth import logout as auth_logout
+
+
+# Add these to accounts/views.py
+
+
+@login_required
+def content_settings(request):
+    """Handle content settings updates"""
+    content_settings, created = ContentSettings.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST':
+        form = ContentSettingsForm(request.POST, instance=content_settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your content settings have been updated successfully.')
+            return redirect('accounts:accounts_settings_and_privacy')
+    else:
+        form = ContentSettingsForm(instance=content_settings)
+
+    return render(request, 'content_settings_form.html', {
+        'form': form
+    })
+
+
+@login_required
+def ministry_preferences(request):
+    """Handle ministry preferences updates"""
+    ministry_preferences, created = MinistryPreferences.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST':
+        form = MinistryPreferencesForm(request.POST, instance=ministry_preferences)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your ministry preferences have been updated successfully.')
+            return redirect('accounts:accounts_settings_and_privacy')
+    else:
+        form = MinistryPreferencesForm(instance=ministry_preferences)
+
+    return render(request, 'accounts/ministry_preferences_form.html', {
+        'form': form
+    })
+
+
+@login_required
+def security_settings(request):
+    """Handle security settings updates"""
+    security_settings, created = SecuritySettings.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST':
+        form = SecuritySettingsForm(request.POST, instance=security_settings)
+        if form.is_valid():
+            # Handle password change if provided
+            new_password = form.cleaned_data.get('new_password')
+            if new_password:
+                # Verify current password
+                current_password = form.cleaned_data.get('current_password')
+                if request.user.check_password(current_password):
+                    request.user.set_password(new_password)
+                    request.user.save()
+                    messages.success(request, 'Your password has been updated successfully.')
+                    # Update the session to prevent the user from being logged out
+                    update_session_auth_hash(request, request.user)
+                else:
+                    messages.error(request, 'Current password is incorrect.')
+                    return render(request, 'security_form.html', {'form': form})
+
+            form.save()
+            messages.success(request, 'Your security settings have been updated successfully.')
+            return redirect('accounts:accounts_settings_and_privacy')
+    else:
+        form = SecuritySettingsForm(instance=security_settings)
+
+    return render(request, 'accounts/security_form.html', {
+        'form': form
+    })
+
+
+@login_required
+def advanced_settings(request):
+    """Handle advanced settings updates"""
+    advanced_settings, created = AdvancedSettings.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST':
+        form = AdvancedSettingsForm(request.POST, instance=advanced_settings)
+        if form.is_valid():
+            form.save()
+
+            # Handle data export request
+            if form.cleaned_data.get('data_export'):
+                # Logic to generate and send data export
+                messages.info(request,
+                              'Your data export request has been received. You will receive an email with your data shortly.')
+
+            messages.success(request, 'Your advanced settings have been updated successfully.')
+            return redirect('accounts:accounts_settings_and_privacy')
+    else:
+        form = AdvancedSettingsForm(instance=advanced_settings)
+
+    return render(request, 'accounts/advanced_settings_form.html', {
+        'form': form
+    })
+
+
+@login_required
+def update_settings(request):
+    """Handle general settings updates"""
+    user_settings, created = UserSettings.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST':
+        form = UserSettingsForm(request.POST, instance=user_settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your settings have been updated successfully.')
+            return redirect('accounts:accounts_settings_and_privacy')
+    else:
+        form = UserSettingsForm(instance=user_settings)
+
+    return render(request, 'accounts/account_settings_and_privacy.html', {
+        'form': form
+    })
+
+
+@login_required
+def update_profile(request):
+    """Handle profile updates"""
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+
+            # Update user's name if provided
+            first_name = request.POST.get('first_name')
+            last_name = request.POST.get('last_name')
+            if first_name or last_name:
+                user = request.user
+                if first_name:
+                    user.first_name = first_name
+                if last_name:
+                    user.last_name = last_name
+                user.save()
+
+            messages.success(request, 'Your profile has been updated successfully.')
+            return redirect('accounts:accounts_settings_and_privacy')
+    else:
+        form = UserProfileForm(instance=profile)
+
+    return render(request, 'accounts/profile.html', {
+        'form': form
+    })
+
+
+@login_required
+def content_settings(request):
+    """Handle content settings updates"""
+    # Try to get the content settings, create if it doesn't exist
+    try:
+        content_settings = request.user.content_settings
+    except:
+        # Create content settings for the user if it doesn't exist
+        from .models import ContentSettings
+        content_settings = ContentSettings(user=request.user)
+        content_settings.save()
+
+    if request.method == 'POST':
+        form = ContentSettingsForm(request.POST, instance=content_settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your content settings have been updated successfully.')
+            return redirect('accounts:accounts_settings_and_privacy')
+    else:
+        form = ContentSettingsForm(instance=content_settings)
+
+    return render(request, 'content_settings_form.html', {
+        'form': form
+    })
+
+
+@login_required
+def deactivate_account(request):
+    """Handle account deactivation"""
+    if request.method == 'POST':
+        user = request.user
+        user.is_active = False
+        user.save()
+        messages.success(request, 'Your account has been deactivated. You can reactivate it by signing in again.')
+        return redirect('logout')
+    return redirect('accounts:accounts_settings_and_privacy')
+
+
+@login_required
+def delete_account(request):
+    """Handle account deletion"""
+    if request.method == 'POST':
+        user = request.user
+        # Perform any cleanup tasks before deletion
+        # For example, cancel recurring donations, remove from schedules, etc.
+
+        # Log the user out and delete the account
+        auth_logout(request)
+        user.delete()
+        messages.success(request, 'Your account has been permanently deleted.')
+        return redirect('account_login')  # Redirect to home page or login page
+    return redirect('accounts:accounts_settings_and_privacy')
+
+
+@login_required
+def accounts_settings_and_privacy(request):
+    """Main settings page view"""
+    return render(request, 'accounts/account_settings_and_privacy.html')
+
+
+@login_required
+def security_settings(request):
+    """Handle security settings updates"""
+    if request.method == 'POST':
+        form = SecuritySettingsForm(request.POST, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your security settings have been updated successfully.')
+            return redirect('accounts:accounts_settings_and_privacy')
+    else:
+        form = SecuritySettingsForm(user=request.user)
+
+    return render(request, 'accounts/security_form.html', {'form': form})
+
+
+@login_required
+def privacy_settings(request):
+    """Handle privacy settings updates"""
+    if request.method == 'POST':
+        form = PrivacyForm(request.POST, instance=request.user.privacy)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your privacy settings have been updated successfully.')
+            return redirect('accounts:accounts_settings_and_privacy')
+    else:
+        form = PrivacyForm(instance=request.user.privacy)
+
+    return render(request, 'accounts/privacy_form.html', {'form': form})
+
+
+@login_required
+def privacy_settings(request):
+    """Handle privacy settings updates"""
+    # Use get_or_create instead of try/except
+    privacy_settings, created = PrivacySettings.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST':
+        form = PrivacySettingsForm(request.POST, instance=privacy_settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your privacy settings have been updated successfully.')
+            return redirect('accounts:accounts_settings_and_privacy')
+    else:
+        form = PrivacySettingsForm(instance=privacy_settings)
+
+    return render(request, 'accounts/privacy_form.html', {
+        'form': form
+    })
+
+
 
 
 class MemberListView(LoginRequiredMixin, ListView):
@@ -220,10 +496,6 @@ def custom_password_reset_confirm(request, uidb64, token):
         return HttpResponse("Password reset link is invalid or expired.")
 
 
-def accounts_settings_and_privacy(request):
-    template_name = 'accounts/account_settings_and_privacy.html'
-    return render(request, template_name)
-
 
 def account_settings(request):
     template_name='accounts/settings.html'
@@ -308,28 +580,15 @@ def apps(request):
 @login_required()
 def create_profile(request):
     if request.method == 'POST':
-        form = ProfileForm(request.POST)
+        form = UserProfileForm(request.POST)
         if form.is_valid():
             profile_form = form.save(commit=False)
             profile_form.user = request.user
             profile_form.save()
             return redirect('accounts:profile')
     else:
-        form = ProfileForm
+        form = UserProfileForm
     return render(request, 'accounts/create_users.html', {'form': form})
-
-
-def update_profile(request):
-    template_name = 'accounts/update_profile.html'
-    user_profile = UserProfile.objects.filter(user=request.user)
-    if request.method == 'POST':
-        form = ProfileForm()
-        if form.is_valid():
-            form.save()
-            return redirect('accounts:profile')
-        else:
-            form = ProfileForm(instance=user_profile)
-        return render(request, template_name, {'form': form})
 
 
 def post_comment(request):
@@ -479,13 +738,13 @@ def logout_view(request):
 def profile(request):
     my_user_profile = UserProfile.objects.filter(email=request.user.profile).first()
     if request.method == 'POST':
-        form = ProfileForm(request.POST)
+        form = UserProfileForm(request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, 'Your Profile Was Updated Successfully!')
             return redirect('accounts:update_profile')
         messages.info(request, 'Click On  Edit Profile To Make Important Changes To Your Profile To Help Us track You')
-        return render(request, 'accountsaccountsaccounts/profile.html', {'form': form})
+        return render(request, 'accounts/profile.html', {'form': form})
     else:
         form = UserCreationForm(request.POST)
         return render(request, 'accounts/profile.html', {'form': form, 'my_user_profile': my_user_profile})

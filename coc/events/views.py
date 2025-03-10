@@ -1,8 +1,9 @@
+from outreach.models import Mission
 from .forms import *
-from services.forms import EventForm
+from services.forms import EventForm, EventRegistrationForm
 import time
-from .models import Event
 from datetime import datetime
+from services.models import Event
 from .models import LiveStream
 from .forms import LiveStreamForm, StreamChatForm
 import uuid
@@ -38,6 +39,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+
 
 from services.forms import EventForm
 from .forms import *
@@ -130,14 +132,14 @@ def announcement_delete(request, pk):
     # Check if user is the creator or has sufficient permissions
     if not (request.user == announcement.created_by or request.user.is_superuser):
         messages.error(request, 'You do not have permission to delete this announcement.')
-        return redirect('education:announcement_list')
+        return redirect('events:announcement_list')
 
     if request.method == 'POST':
         announcement.delete()
         messages.success(request, 'Announcement deleted successfully.')
-        return redirect('education:announcement_list')
+        return redirect('events:announcement_list')
 
-    return redirect('education:announcement_list')
+    return redirect('events:announcement_list')
 
 
 @login_required
@@ -601,7 +603,7 @@ def create_stream(request):
 
 @login_required
 def post_chat(request, stream_id):
-    if request.method == 'POST' and request.is_ajax():
+    if request.method == 'POST':
         stream = get_object_or_404(LiveStream, id=stream_id)
         form = StreamChatForm(request.POST)
         if form.is_valid():
@@ -694,7 +696,7 @@ def create_event(request):
 def event_detail(request, pk):
     event = get_object_or_404(Event, pk=pk)
     is_registered = request.user in event.participants.all()
-    can_register = event.can_register(request.user)
+    can_register = event.get_can_register(request.user)
 
     if request.method == 'POST' and can_register:
         form = EventRegistrationForm(request.POST)
@@ -806,7 +808,63 @@ def end_stream(request, stream_id):
 def missions_view(request):
     active_missions = Mission.objects.filter(end_date__gte=timezone.now()).order_by('start_date')
     past_missions = Mission.objects.filter(end_date__lt=timezone.now()).order_by('-end_date')
-    return render(request, 'outreach/missions.html', {
+    return render(request, 'outreach/missions/mission_list.html', {
         'active_missions': active_missions,
         'past_missions': past_missions
     })
+
+
+@login_required
+def edit_event(request, pk):
+    """View for editing an existing event"""
+    event = get_object_or_404(Event, pk=pk)
+
+    # Check if user has permission to edit this event
+    if request.user != event.creator and not request.user.is_staff:
+        messages.error(request, "You don't have permission to edit this event.")
+        return redirect('events:event_detail', pk=event.pk)
+
+    if request.method == 'POST':
+        form = EventForm(request.POST, request.FILES, instance=event)
+        if form.is_valid():
+            updated_event = form.save(commit=False)
+            # Any additional processing before saving
+            updated_event.save()
+
+            messages.success(request, f"Event '{event.title}' has been updated successfully.")
+            return redirect('events:event_detail', pk=event.pk)
+    else:
+        form = EventForm(instance=event)
+
+    context = {
+        'form': form,
+        'event': event,
+        'is_new': False,
+    }
+    return render(request, 'events/create_event.html', context)
+
+
+@login_required
+def delete_event(request, pk):
+    """View for deleting an existing event"""
+    event = get_object_or_404(Event, pk=pk)
+
+    # Check if user has permission to delete this event
+    if request.user != event.creator and not request.user.is_staff:
+        messages.error(request, "You don't have permission to delete this event.")
+        return redirect('events:event_detail', pk=event.pk)
+
+    # Store the event title for the success message
+    event_title = event.title
+
+    if request.method == 'POST':
+        # Actual deletion happens here
+        event.delete()
+        messages.success(request, f"Event '{event_title}' has been deleted successfully.")
+        return redirect('events:events_list')
+
+    # If it's a GET request, show the confirmation page
+    context = {
+        'event': event,
+    }
+    return render(request, 'events/event_confirm_delete.html', context)

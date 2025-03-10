@@ -76,12 +76,9 @@ urlpatterns = [
     path('visit/<int:pk>/edit/', views.VisitUpdateView.as_view(), name='visit_edit'),
 
     # Patient Requests
-    path('request/create/', views.patient_request_form, name='request_create'),
+    path('request/create/', views.patient_request_form, name='patient_request_create'),
     path('request/<int:pk>/', views.PatientRequestDetailView.as_view(), name='request_detail'),
 
-    path('settings/', views.donation_settings, name='settings'),
-    path('payment_view/', views.payment_view, name='payment_view'),
-    path('history/', views.donation_history, name='history'),
 
 
 

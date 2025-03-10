@@ -295,7 +295,7 @@ def my_videos(request):
     # Handle category filter
     category_id = request.GET.get('category')
     if category_id:
-        videos = videos.filter(category_id=category_id)
+        videos = videos.filter(category_id=id)
 
     # Pagination
     paginator = Paginator(videos, 12)  # 12 videos per page

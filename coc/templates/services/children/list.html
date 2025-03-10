@@ -11,10 +11,10 @@
         </div>
         {% if user.is_authenticated and user.is_staff %}
         <div>
-            <a href="{% url 'services:childrens_program_create' %}" class="btn btn-primary">
+            <a href="{% url 'services:create_children_program' %}" class="btn btn-primary">
                 <i class="bi bi-plus-circle"></i> Create Program
             </a>
-            <a href="{% url 'services:child_registration' %}" class="btn btn-success">
+            <a href="{% url 'services:register_child' %}" class="btn btn-success">
                 <i class="bi bi-person-plus"></i> Register Child
             </a>
         </div>
@@ -50,7 +50,7 @@
                 <div class="card-body text-center">
                     <i class="bi bi-calendar-event display-4"></i>
                     <h5 class="mt-2">Events</h5>
-                    <a href="{% url 'services:childrens_events' %}" class="btn btn-light mt-2">
+                    <a href="{% url 'services:children_ministry_list' %}" class="btn btn-light mt-2">
                         View Events
                     </a>
                 </div>
@@ -61,7 +61,7 @@
                 <div class="card-body text-center">
                     <i class="bi bi-file-earmark-text display-4"></i>
                     <h5 class="mt-2">Resources</h5>
-                    <a href="{% url 'services:childrens_resources' %}" class="btn btn-light mt-2">
+                    <a href="{% url 'services:children_resources' %}" class="btn btn-light mt-2">
                         View Resources
                     </a>
                 </div>
@@ -90,10 +90,7 @@
                 </div>
                 <div class="card-footer bg-transparent">
                     <div class="d-grid gap-2">
-                        <a href="{% url 'services:childrens_program_detail' slug=program.slug %}" 
-                           class="btn btn-outline-primary">
-                            View Details
-                        </a>
+
                         {% if user.is_authenticated %}
                         <button class="btn btn-outline-success enroll-child" 
                                 data-program-id="{{ program.id }}"
@@ -115,7 +112,7 @@
                 <h4 class="alert-heading">No Programs Available</h4>
                 <p>There are currently no children's ministry programs.</p>
                 {% if user.is_authenticated and user.is_staff %}
-                <a href="{% url 'services:childrens_program_create' %}" class="btn btn-primary">
+                    <a href="{% url 'services:create_children_program' %}" class="btn btn-primary">
                     Create First Program
                 </a>
                 {% endif %}

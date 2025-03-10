@@ -1,0 +1,146 @@
+{% extends 'base_dashboard.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Ministry Preferences</h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">Customize your involvement with different church ministries and
+                            activities.</p>
+
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="mb-4">
+                                <h5>Ministry Interests</h5>
+                                <p class="text-muted">Select the ministries you're interested in serving with.</p>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            {{ form.worship_team }}
+                                            <label class="form-check-label" for="{{ form.worship_team.id_for_label }}">
+                                                Worship Team
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check mb-2">
+                                            {{ form.children_ministry }}
+                                            <label class="form-check-label"
+                                                   for="{{ form.children_ministry.id_for_label }}">
+                                                Children's Ministry
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check mb-2">
+                                            {{ form.youth_ministry }}
+                                            <label class="form-check-label"
+                                                   for="{{ form.youth_ministry.id_for_label }}">
+                                                Youth Ministry
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            {{ form.outreach_ministry }}
+                                            <label class="form-check-label"
+                                                   for="{{ form.outreach_ministry.id_for_label }}">
+                                                Outreach & Missions
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check mb-2">
+                                            {{ form.prayer_team }}
+                                            <label class="form-check-label" for="{{ form.prayer_team.id_for_label }}">
+                                                Prayer Team
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check mb-2">
+                                            {{ form.hospitality_team }}
+                                            <label class="form-check-label"
+                                                   for="{{ form.hospitality_team.id_for_label }}">
+                                                Hospitality Team
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h5>Volunteer Availability</h5>
+                                <p class="text-muted">Let us know when you're available to serve.</p>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            {{ form.sunday_morning }}
+                                            <label class="form-check-label"
+                                                   for="{{ form.sunday_morning.id_for_label }}">
+                                                Sunday Morning
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check mb-2">
+                                            {{ form.sunday_evening }}
+                                            <label class="form-check-label"
+                                                   for="{{ form.sunday_evening.id_for_label }}">
+                                                Sunday Evening
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            {{ form.weekdays }}
+                                            <label class="form-check-label" for="{{ form.weekdays.id_for_label }}">
+                                                Weekdays
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check mb-2">
+                                            {{ form.special_events }}
+                                            <label class="form-check-label"
+                                                   for="{{ form.special_events.id_for_label }}">
+                                                Special Events
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h5>Spiritual Gifts</h5>
+                                <p class="text-muted">Select the spiritual gifts you believe you have (hold Ctrl/Cmd to
+                                    select multiple).</p>
+
+                                <div class="mb-3">
+                                    {{ form.spiritual_gifts }}
+                                    {% if form.spiritual_gifts.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.spiritual_gifts.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Hold Ctrl/Cmd to select multiple gifts</div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Save Preferences</button>
+                                <a href="{% url 'accounts:accounts_settings_and_privacy' %}"
+                                   class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

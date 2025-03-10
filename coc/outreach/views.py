@@ -80,7 +80,7 @@ class VisitCreateView(LoginRequiredMixin, CreateView):
     model = VisitSchedule
     form_class = VisitScheduleForm
     template_name = 'outreach/hospital/visit_form.html'
-    success_url = reverse_lazy('hospital:dashboard')
+    success_url = reverse_lazy('outreach:dashboard')
 
     def form_valid(self, form):
         visit = form.save(commit=False)
@@ -102,7 +102,7 @@ class VisitUpdateView(LoginRequiredMixin, UpdateView):
     model = VisitSchedule
     form_class = VisitScheduleForm
     template_name = 'outreach/hospital/visit_form.html'
-    success_url = reverse_lazy('hospital:dashboard')
+    success_url = reverse_lazy('outreach:dashboard')
 
     def get_queryset(self):
         # Only allow editing visits where the user is a volunteer

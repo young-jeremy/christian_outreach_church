@@ -1,4 +1,5 @@
 {% extends 'ministries/base_ministry.html' %}
+{% load crispy_forms_filters %}
 {% load static %}
 {% load crispy_forms_tags %}
 
@@ -63,10 +64,6 @@
                             {{ form.curriculum|as_crispy_field }}
                         </div>
 
-                        <!-- Teachers -->
-                        <div class="col-12">
-                            {{ form.teachers|as_crispy_field }}
-                        </div>
 
                         <!-- Materials and Instructions -->
                         <div class="col-12">
@@ -153,10 +150,6 @@
             time_24hr: false,
         });
 
-        // Initialize select2 for teachers field
-        $('#id_teachers').select2({
-            placeholder: 'Select teachers',
-            width: '100%'
         });
 
         // Toggle recurring fields

@@ -70,7 +70,7 @@
                                             <i class="fas fa-clock"></i>
                                             {{ stream.scheduled_time|date:"g:i A" }}
                                         </p>
-                                        <a href="{% url 'education:stream_detail' stream.id %}"
+                                        <a href="{% url 'events:stream_detail' stream.id %}"
                                            class="btn btn-outline-primary">
                                             Set Reminder
                                         </a>

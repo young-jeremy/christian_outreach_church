@@ -1,28 +1,27 @@
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.db import models
 from django.utils.timezone import now
-
 from videos.models import Content
-
-
-class VideoNotification(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='video_notifications')
-    video_title = models.CharField(max_length=255)
-    video_url = models.URLField()
-    message = models.TextField()
-    is_read = models.BooleanField(default=False)
-    timestamp = models.DateTimeField(default=now)
-
-    def __str__(self):
-        return f"{self.user.username} - {self.video_title} Notification"
-
+# notifications/models.py
+from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class NotificationSettings(models.Model):
-    # User associated with these settings
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-
+    """User notification settings model"""
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                related_name='notification_settings')
+    email_notifications = models.BooleanField(default=True)
+    password_change_notifications = models.BooleanField(default=True)
+    weekly_newsletter = models.BooleanField(default=True)
+    sermon_notifications = models.BooleanField(default=True)
+    prayer_requests = models.BooleanField(default=True)
+    ministry_updates = models.BooleanField(default=True)
+    event_reminders = models.BooleanField(default=True)
+    volunteer_opportunities = models.BooleanField(default=True)
+    bible_studies = models.BooleanField(default=True)
+    devotionals = models.BooleanField(default=True)
     # Notification preferences for various actions
     email_on_password_change = models.BooleanField(default=True)
     email_on_video_upload = models.BooleanField(default=True)
@@ -83,6 +82,29 @@ class NotificationSettings(models.Model):
             return self.send_notification_email
         return False  # Default is no notification
 
+    def __str__(self):
+        return f"{self.user.username}'s Notification Settings"
+
+    @receiver(post_save, sender=settings.AUTH_USER_MODEL)
+    def create_notification_settings(sender, instance, created, **kwargs):
+        if created:
+            NotificationSettings.objects.create(user=instance)
+
+    """@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+    def save_notification_settings(sender, instance, **kwargs):
+        instance.notification_settings.save()"""
+
+
+class VideoNotification(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='video_notifications')
+    video_title = models.CharField(max_length=255)
+    video_url = models.URLField()
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(default=now)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.video_title} Notification"
 
 
 

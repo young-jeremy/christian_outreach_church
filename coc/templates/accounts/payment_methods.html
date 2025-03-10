@@ -1,0 +1,73 @@
+{% extends 'base_dashboard.html' %}
+
+{% block content %}
+    <div class="container">
+        <h2>Payment Methods</h2>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Your Payment Methods</h5>
+            </div>
+            <div class="card-body">
+                {% if payment_methods %}
+                    <ul class="list-group">
+                        {% for method in payment_methods %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ method.get_display_name }}
+                                <div>
+                                    <button class="btn btn-sm btn-outline-primary">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger">Remove</button>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>You don't have any payment methods saved yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5>Add New Payment Method</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="paymentType" class="form-label">Payment Type</label>
+                        <select class="form-select" id="paymentType" name="payment_type">
+                            <option value="creditCard">Credit/Debit Card</option>
+                            <option value="bankAccount">Bank Account</option>
+                            <option value="paypal">PayPal</option>
+                        </select>
+                    </div>
+
+                    <div id="creditCardForm">
+                        <div class="mb-3">
+                            <label for="cardNumber" class="form-label">Card Number</label>
+                            <input type="text" class="form-control" id="cardNumber" name="card_number">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="expiryDate" class="form-label">Expiry Date</label>
+                                <input type="text" class="form-control" id="expiryDate" name="expiry_date"
+                                       placeholder="MM/YY">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="cvv" class="form-label">CVV</label>
+                                <input type="text" class="form-control" id="cvv" name="cvv">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="nameOnCard" class="form-label">Name on Card</label>
+                            <input type="text" class="form-control" id="nameOnCard" name="name_on_card">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Add Payment Method</button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

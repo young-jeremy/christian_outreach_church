@@ -1,4 +1,3 @@
-from .models import Mission, Project, ProjectUpdate
 from django.contrib import admin
 
 from .models import CharityCampaign, Donation, CharityEvent, EventRegistration
@@ -11,7 +10,7 @@ from .models import (
     VisitSchedule,
     PatientRequest,
     HospitalVisitReport,
-    HospitalVolunteer
+    HospitalVolunteer, EvangelismTool
 )
 from .models import Mission, Project, ProjectUpdate
 from .models import (PrisonFacility, InmateProgram, VolunteerApplication, MinistryResource, PrisonVisitReport)
@@ -417,3 +416,6 @@ class ProjectUpdateAdmin(admin.ModelAdmin):
             'fields': ('created_at',)
         }),
     )
+
+
+admin.site.register(EvangelismTool)

@@ -12,4 +12,6 @@ urlpatterns = [
     path('email_notifications/', views.email_notification, name='email_notifications'),
     path('video_notifications/', views.video_notifications, name='video_notifications_list'),
     path('mark_as_read/<int:notification_id>/', views.mark_notification_as_read, name='mark_notification_as_read'),
+
+    # path('notifications_settings/', views.notifications_settings, name='notifications_settings'),
 ]

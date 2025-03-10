@@ -20,10 +20,6 @@ from .models import (
 
 
 
-
-
-
-
 @admin.register(PrayerRequest)
 class PrayerRequestAdmin(admin.ModelAdmin):
     list_display = ('title', 'requester', 'category', 'status', 'created_at')
@@ -142,3 +138,4 @@ admin.site.register(YouthEvent)
 admin.site.register(CounselingRequest)
 admin.site.register(WomensMinistry)
 admin.site.register(MinistryEvent)
+admin.site.register(ChildrenProgram)

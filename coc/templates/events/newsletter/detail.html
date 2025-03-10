@@ -44,7 +44,7 @@
                                 <i class="fas fa-download"></i> Download Newsletter PDF
                             </a>
                             {% if perms.education.change_newsletter %}
-                                <a href="{% url 'events:newsletter_edit' newsletter.issue_number %}"
+                                <a href="{% url 'events:newsletter_detail' newsletter.issue_number %}"
                                    class="btn btn-outline-primary">
                                     <i class="fas fa-edit"></i> Edit Newsletter
                                 </a>

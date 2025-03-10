@@ -1,0 +1,219 @@
+{% extends 'base_dashboard.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Donation History</h2>
+                    <div>
+                        <a href="{% url 'donations:settings' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-gear"></i> Donation Settings
+                        </a>
+                        <a href="{% url 'donations:payment_view' %}" class="btn btn-outline-primary ms-2">
+                            <i class="bi bi-credit-card"></i> Payment Methods
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Your Giving Summary</h5>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                                    id="yearDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                {{ current_year|default:"2023" }}
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="yearDropdown">
+                                <li><a class="dropdown-item" href="?year=2023">2023</a></li>
+                                <li><a class="dropdown-item" href="?year=2022">2022</a></li>
+                                <li><a class="dropdown-item" href="?year=2021">2021</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-muted">Total Given This Year</h6>
+                                        <h3 class="mb-0">${{ yearly_total|default:"0.00" }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-muted">Total Given This Month</h6>
+                                        <h3 class="mb-0">${{ monthly_total|default:"0.00" }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-muted">Recurring Donations</h6>
+                                        <h3 class="mb-0">${{ recurring_total|default:"0.00" }}/month</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Donation Breakdown</h5>
+                        <a href="{% url 'donations:tax_statement' %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-download"></i> Download Tax Statement
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="position: relative; height:300px;">
+                            <canvas id="donationChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Transaction History</h5>
+                        <div class="input-group" style="width: 250px;">
+                            <input type="text" class="form-control form-control-sm"
+                                   placeholder="Search transactions...">
+                            <button class="btn btn-outline-secondary btn-sm" type="button">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if donations %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                        <th>Fund</th>
+                                        <th>Method</th>
+                                        <th>Status</th>
+                                        <th>Receipt</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for donation in donations %}
+                                        <tr>
+                                            <td>{{ donation.date|date:"M d, Y" }}</td>
+                                            <td>${{ donation.amount }}</td>
+                                            <td>
+                                                {% if donation.donation_type == 'tithe' %}
+                                                    <span class="badge bg-primary">Tithe</span>
+                                                {% elif donation.donation_type == 'missions' %}
+                                                    <span class="badge bg-success">Missions</span>
+                                                {% elif donation.donation_type == 'building' %}
+                                                    <span class="badge bg-info">Building Fund</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Other</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ donation.payment_method|default:"Credit Card" }}</td>
+                                            <td>
+                                                <span class="badge bg-success">Completed</span>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'donations:receipt' donation.id %}"
+                                                   class="btn btn-sm btn-outline-secondary">
+                                                    <i class="bi bi-file-text"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <nav aria-label="Donation history pagination">
+                                <ul class="pagination justify-content-center">
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                                    </li>
+                                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="#">Next</a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-cash-coin" style="font-size: 3rem; color: #ccc;"></i>
+                                <h4 class="mt-3">No Donations Yet</h4>
+                                <p class="text-muted">You haven't made any donations yet.</p>
+                                <a href="{% url 'donations:make_donation' %}" class="btn btn-primary mt-2">Make Your
+                                    First Donation</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if donations %}
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const ctx = document.getElementById('donationChart').getContext('2d');
+                const donationChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Tithe', 'Missions', 'Building Fund', 'Other'],
+                        datasets: [{
+                            data: [
+                                {{ tithe_total|default:"65" }},
+                                {{ missions_total|default:"20" }},
+                                {{ building_total|default:"10" }},
+                                {{ other_total|default:"5" }}
+                            ],
+                            backgroundColor: [
+                                'rgba(54, 162, 235, 0.7)',
+                                'rgba(75, 192, 192, 0.7)',
+                                'rgba(255, 206, 86, 0.7)',
+                                'rgba(153, 102, 255, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(153, 102, 255, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        label += '$' + context.raw;
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+        </script>
+    {% endif %}
+{% endblock %}

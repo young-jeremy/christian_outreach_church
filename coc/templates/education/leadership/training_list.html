@@ -70,7 +70,7 @@
                                         <p class="card-text text-muted">
                                             <span class="badge bg-{{ enrollment.status }}">{{ enrollment.get_status_display }}</span>
                                         </p>
-                                        <a href="{% url 'education:training_detail' enrollment.training.slug %}"
+                                        <a href="{% url 'education:training_detail' enrollment.slug %}"
                                            class="btn btn-outline-primary">
                                             Continue Training
                                         </a>

@@ -1,0 +1,325 @@
+{% extends 'base_dashboard.html' %}
+{% load widget_tweaks %}
+{% load static %}
+
+{% block title %}Create Children's Program{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        .required-field label:after {
+            content: " *";
+            color: red;
+        }
+
+        .form-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .form-section h4 {
+            margin-bottom: 20px;
+            color: #3a3a3a;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .teacher-selection {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            padding: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'videos:category_list' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'services:children_ministry_list' %}">Children's
+                            Ministry</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Create Program</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-0">Create Children's Program</h1>
+                <p class="text-muted">Create a new program for the children's ministry</p>
+            </div>
+        </div>
+
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                <h5 class="alert-heading">Please correct the errors below:</h5>
+                <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" id="program-form">
+            {% csrf_token %}
+
+            <!-- Basic Information Section -->
+            <div class="form-section">
+                <h4>Basic Information</h4>
+                <div class="row">
+                    <div class="col-md-6 required-field">
+                        <div class="mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">Program Title</label>
+                            {{ form.title|add_class:"form-control" }}
+                            <div class="form-text">Enter a descriptive title for the program</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 required-field">
+                        <div class="mb-3">
+                            <label for="{{ form.program_type.id_for_label }}" class="form-label">Program Type</label>
+                            {{ form.program_type|add_class:"form-select" }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 required-field">
+                        <div class="mb-3">
+                            <label for="{{ form.date.id_for_label }}" class="form-label">Date</label>
+                            {{ form.date|add_class:"form-control datepicker" }}
+                        </div>
+                    </div>
+                    <div class="col-md-6 required-field">
+                        <div class="mb-3">
+                            <label for="{{ form.time.id_for_label }}" class="form-label">Time</label>
+                            {{ form.time|add_class:"form-control timepicker" }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 required-field">
+                        <div class="mb-3">
+                            <label for="{{ form.location.id_for_label }}" class="form-label">Location</label>
+                            {{ form.location|add_class:"form-control" }}
+                            <div class="form-text">Where will this program take place?</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 required-field">
+                        <div class="mb-3">
+                            <label for="{{ form.age_group.id_for_label }}" class="form-label">Age Group</label>
+                            {{ form.age_group|add_class:"form-select" }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 required-field">
+                        <div class="mb-3">
+                            <label for="{{ form.max_children.id_for_label }}" class="form-label">Maximum
+                                Children</label>
+                            {{ form.max_children|add_class:"form-control" }}
+                            <div class="form-text">Maximum number of children that can attend</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 required-field">
+                        <div class="mb-3">
+                            <label for="{{ form.registration_deadline.id_for_label }}" class="form-label">Registration
+                                Deadline</label>
+                            {{ form.registration_deadline|add_class:"form-control datetimepicker" }}
+                            <div class="form-text">When registration will close</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Program Details Section -->
+            <div class="form-section">
+                <h4>Program Details</h4>
+                <div class="mb-3 required-field">
+                    <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                    {{ form.description|add_class:"form-control" }}
+                    <div class="form-text">Provide a detailed description of the program</div>
+                </div>
+
+                <div class="mb-3 required-field">
+                    <label for="{{ form.curriculum.id_for_label }}" class="form-label">Curriculum</label>
+                    {{ form.curriculum|add_class:"form-control" }}
+                    <div class="form-text">Describe the curriculum or lessons that will be taught</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.materials_needed.id_for_label }}" class="form-label">Materials Needed</label>
+                    {{ form.materials_needed|add_class:"form-control" }}
+                    <div class="form-text">List any materials that will be needed for this program</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.parent_instructions.id_for_label }}" class="form-label">Parent
+                        Instructions</label>
+                    {{ form.parent_instructions|add_class:"form-control" }}
+                    <div class="form-text">Special instructions for parents (what to bring, etc.)</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.special_needs_support.id_for_label }}" class="form-label">Special Needs
+                        Support</label>
+                    {{ form.special_needs_support|add_class:"form-control" }}
+                    <div class="form-text">Describe any accommodations or support available for children with special
+                        needs
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teachers and Recurring Options -->
+            <div class="form-section">
+                <h4>Teachers & Scheduling</h4>
+
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        {{ form.is_recurring|add_class:"form-check-input" }}
+                        <label class="form-check-label" for="{{ form.is_recurring.id_for_label }}">
+                            This is a recurring program
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mb-3 recurring-options" style="display: none;">
+                    <label for="{{ form.recurring_pattern.id_for_label }}" class="form-label">Recurring Pattern</label>
+                    {{ form.recurring_pattern|add_class:"form-select" }}
+                    <div class="form-text">How often this program will repeat</div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        {{ form.is_featured|add_class:"form-check-input" }}
+                        <label class="form-check-label" for="{{ form.is_featured.id_for_label }}">
+                            Feature this program on the homepage
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Program Image -->
+            <div class="form-section">
+                <h4>Program Image</h4>
+                <div class="mb-3">
+                    <label for="{{ form.image.id_for_label }}" class="form-label">Upload Image</label>
+                    {{ form.image|add_class:"form-control" }}
+                    <div class="form-text">Upload an image to represent this program (optional)</div>
+                    <div id="image-preview"></div>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                <a href="{% url 'services:children_ministry_list' %}"
+                   class="btn btn-outline-secondary me-md-2">Cancel</a>
+                <button type="submit" class="btn btn-primary">Create Program</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize date picker
+            flatpickr(".datepicker", {
+                dateFormat: "Y-m-d",
+                minDate: "today"
+            });
+
+            // Initialize time picker
+            flatpickr(".timepicker", {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: false
+            });
+
+            // Initialize datetime picker
+            flatpickr(".datetimepicker", {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                minDate: "today"
+            });
+
+            // Toggle recurring options
+            const isRecurringCheckbox = document.getElementById('{{ form.is_recurring.id_for_label }}');
+            const recurringOptions = document.querySelector('.recurring-options');
+
+            isRecurringCheckbox.addEventListener('change', function () {
+                if (this.checked) {
+                    recurringOptions.style.display = 'block';
+                } else {
+                    recurringOptions.style.display = 'none';
+                }
+            });
+
+            // Initial check for recurring options
+            if (isRecurringCheckbox.checked) {
+                recurringOptions.style.display = 'block';
+            }
+
+            // Image preview
+            const imageInput = document.getElementById('{{ form.image.id_for_label }}');
+            const imagePreview = document.getElementById('image-preview');
+
+            imageInput.addEventListener('change', function () {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+
+                    reader.onload = function (e) {
+                        imagePreview.innerHTML = `<img src="${e.target.result}" class="preview-image">`;
+                    }
+
+                    reader.readAsDataURL(this.files[0]);
+                } else {
+                    imagePreview.innerHTML = '';
+                }
+            });
+
+            // Form validation
+            const form = document.getElementById('program-form');
+
+            form.addEventListener('submit', function (event) {
+                let isValid = true;
+                const requiredFields = form.querySelectorAll('.required-field input, .required-field select, .required-field textarea');
+
+                requiredFields.forEach(function (field) {
+                    if (!field.value.trim()) {
+                        field.classList.add('is-invalid');
+                        isValid = false;
+                    } else {
+                        field.classList.remove('is-invalid');
+                    }
+                });
+
+                if (!isValid) {
+                    event.preventDefault();
+                    alert('Please fill in all required fields.');
+                    window.scrollTo(0, 0);
+                }
+            });
+        });
+    </script>
+{% endblock %}

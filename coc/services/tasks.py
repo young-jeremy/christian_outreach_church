@@ -2,16 +2,16 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.core.mail import send_mail
-from .models import BibleStudy, YouthMinistry, ChildrenMinistry
+from .models import BibleStudy, YouthMinistry, ChildrensMinistry
 from django.core.mail import send_mail
 
 from django.utils import timezone
 from datetime import timedelta
-from .models import BibleStudy, YouthMinistry, ChildrenMinistry
+from .models import BibleStudy, YouthMinistry, ChildrensMinistry
 from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import timedelta
-from .models import BibleStudy, YouthMinistry, ChildrenMinistry
+from .models import BibleStudy, YouthMinistry, ChildrensMinistry
 from celery import shared_task
 from django.core.mail import send_mail
 from django.template.loader import render_to_string

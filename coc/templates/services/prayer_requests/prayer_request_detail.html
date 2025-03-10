@@ -1,4 +1,5 @@
 {% extends 'base_dashboard.html' %}
+{% load crispy_forms_filters %}
 {% load static %}
 {% load crispy_forms_tags %}
 
@@ -24,7 +25,7 @@
                                 {% if prayer.is_anonymous %}
                                 Anonymous
                                 {% else %}
-                                {{ prayer.requester.get_full_name|default:prayer.requester.username }}
+                                    {{ prayer.requester.username|default:prayer.requester.username }}
                                 {% endif %}
                                 • {{ prayer.created_at|timesince }} ago
                             </div>
@@ -145,7 +146,7 @@
                         <div class="d-flex align-items-center">
                             <img src="{{ warrior.profile.avatar.url|default:'path/to/default-avatar.png' }}"
                                  class="rounded-circle me-1" width="32" height="32"
-                                 title="{{ warrior.get_full_name|default:warrior.username }}">
+                                 title="{{ warrior.username|default:warrior.username }}">
                         </div>
                         {% endfor %}
                     </div>

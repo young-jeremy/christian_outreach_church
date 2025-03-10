@@ -5,7 +5,7 @@ from django.core.validators import FileExtensionValidator
 from django_summernote.widgets import SummernoteWidget
 
 from accounts.models import User
-from .models import MensMinistry, MensEvent
+from .models import MensMinistry, MensEvent, ChildResource
 from .models import SeniorsMinistry, SeniorsEvent, TransportationRequest
 from .models import SinglesMinistry, SinglesEvent, MentorshipRequest, SinglesResource
 from .models import WomensMinistry, MinistryEvent
@@ -13,6 +13,131 @@ from .models import WomensMinistry, MinistryEvent
 from .models import WorshipService
 from .models import YouthEventPayment, PermissionSlip, AttendanceRecord
 from .models import YouthProgram
+from .models import (
+    # Core models
+    EventRegistration, EventFeedback,  # Bible Study related
+    BibleStudy, SermonCategory, SermonSeries, Sermon,
+    SermonComment, SermonNote, SermonTag,
+
+    # Service related
+    SongRequest,
+
+    # Youth and Children
+    YouthEvent, YouthMinistry, ChildrenProgram,
+    ChildrensMinistry, Child,
+
+    # Groups and Registration
+    SmallGroup, MinistryRegistration,
+
+    # Couples Ministry
+    CoupleEvent, CounselingSession,
+    CoupleResource, CoupleJournal, DateNightIdea,
+    CouplePrayerRequest,
+
+    # Prayer and Notifications
+    PrayerRequest, PrayerUpdate, NotificationPreferences,
+
+    # Forums and Topics
+    Topic, Post, ForumCategory,
+
+    # Family Ministry
+    FamilyGroup, FamilyEvent, ParentingResource,
+    FamilyCounseling, FamilyDiscussion, DiscussionComment,
+
+    # New Believers
+    NewBelieverProfile, DiscipleshipTrack, DiscipleshipModule,
+    MentorshipSession, PrayerJournal, BibleReadingPlan,
+
+    # Marriage Ministry
+    MarriageMinistry, MarriageEnrollment, MarriageResource,
+    MarriageCounseling, MarriageEvent,
+
+    # Volunteer
+    VolunteerOpportunity, VolunteerSignup,
+
+    # Video Related
+    WatchedVideo, DownloadedVideo, Category,
+    Testimony
+)
+
+# Video related models
+from videos.models import (
+    ShortVideo, Comments,
+    Playlist, PlaylistVideo, Queue, QueueItem
+)
+from django import forms
+from django.utils import timezone
+from datetime import datetime
+
+from .models import Event  # Ensure you import your Event model
+
+from django import forms
+from .models import CounselingRequest
+
+from django import forms
+from .models import CounselingRequest
+# services/forms.py
+from django import forms
+from .models import ChildrenProgram, Child
+from django import forms
+from .models import Child
+
+
+class ChildRegistrationForm(forms.ModelForm):
+    class Meta:
+        model = Child
+        fields = ['first_name', 'last_name', 'date_of_birth']
+        widgets = {
+            'date_of_birth': forms.DateInput(attrs={'type': 'date'})
+        }
+
+
+class ChildCheckInForm(forms.Form):
+    child = forms.ModelChoiceField(queryset=Child.objects.none(), empty_label="Select a child")
+    program = forms.ModelChoiceField(queryset=ChildrenProgram.objects.none(), empty_label="Select a program")
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        if user:
+            self.fields['child'].queryset = Child.objects.filter(parent=user)
+
+        today = timezone.now().date()
+        # Get programs happening today - use the date field directly
+        self.fields['program'].queryset = ChildrenProgram.objects.filter(
+            date=today
+        )
+
+        # If you want to further filter by time (e.g., only future programs today)
+        current_time = timezone.now().time()
+        # Optionally add this to only show programs that haven't started yet
+        # self.fields['program'].queryset = self.fields['program'].queryset.filter(
+        #     time__gte=current_time
+        # )
+
+
+class ResourceForm(forms.ModelForm):
+    class Meta:
+        model = ChildResource
+        fields = ['title', 'description', 'resource_type', 'file', 'url', 'age_group']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        resource_type = cleaned_data.get('resource_type')
+        file = cleaned_data.get('file')
+        url = cleaned_data.get('url')
+
+        if resource_type in ['pdf', 'activity'] and not file:
+            self.add_error('file', 'File is required for this resource type')
+
+        if resource_type in ['video', 'link'] and not url:
+            self.add_error('url', 'URL is required for this resource type')
+
+        return cleaned_data
 
 
 class WomensMinistryForm(forms.ModelForm):
@@ -24,6 +149,7 @@ class WomensMinistryForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 4}),
         }
 
+
 class MinistryEventForm(forms.ModelForm):
     class Meta:
         model = MinistryEvent
@@ -32,7 +158,6 @@ class MinistryEventForm(forms.ModelForm):
             'date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
             'description': forms.Textarea(attrs={'rows': 4}),
         }
-
 
 
 class WorshipServiceForm(forms.ModelForm):
@@ -71,70 +196,6 @@ class WorshipServiceForm(forms.ModelForm):
         self.helper.label_class = 'col-lg-2'
         self.helper.field_class = 'col-lg-8'
 
-
-from .models import (
-    # Core models
-    EventRegistration, EventFeedback,  # Bible Study related
-    BibleStudy, SermonCategory, SermonSeries, Sermon,
-    SermonComment, SermonNote, SermonTag,
-    
-    # Service related
-    SongRequest,
-    
-    # Youth and Children
-    YouthEvent, YouthMinistry, ChildrenProgram,
-    ChildrensMinistry, Child,
-    
-    # Groups and Registration
-    SmallGroup, MinistryRegistration,
-    
-    # Couples Ministry
-    CoupleEvent, CounselingSession,
-    CoupleResource, CoupleJournal, DateNightIdea,
-    CouplePrayerRequest,
-    
-    # Prayer and Notifications
-    PrayerRequest, PrayerUpdate, NotificationPreferences,
-    
-    # Forums and Topics
-    Topic, Post, ForumCategory,
-    
-    # Family Ministry
-    FamilyGroup, FamilyEvent, ParentingResource,
-    FamilyCounseling, FamilyDiscussion, DiscussionComment,
-    
-    # New Believers
-    NewBelieverProfile, DiscipleshipTrack, DiscipleshipModule,
-    MentorshipSession, PrayerJournal, BibleReadingPlan,
-
-    # Marriage Ministry
-    MarriageMinistry, MarriageEnrollment, MarriageResource,
-    MarriageCounseling, MarriageEvent,
-    
-    # Volunteer
-    VolunteerOpportunity, VolunteerSignup,
-    
-    # Video Related
-    WatchedVideo, DownloadedVideo, Category,
-    Testimony
-)
-
-# Video related models
-from videos.models import (
-    ShortVideo, Comments,
-    Playlist, PlaylistVideo, Queue, QueueItem
-)
-from django import forms
-from django.utils import timezone
-from datetime import datetime
-
-from .models import Event  # Ensure you import your Event model
-
-from django import forms
-from .models import CounselingRequest
-
-from django import forms
-from .models import CounselingRequest
 
 
 class CounselingRequestForm(forms.ModelForm):
@@ -289,7 +350,7 @@ class EventForm(forms.ModelForm):
             'title', 'description', 'event_type', 'image',
             'start_date', 'start_time', 'end_date', 'end_time',
             'is_online', 'online_link', 'location',
-            'registration_required', 'is_published', 'max_participants',
+            'is_published', 'max_participants',
             'is_recurring', 'registration_deadline', 'speakers'
         ]
         widgets = {
@@ -349,35 +410,6 @@ class EventForm(forms.ModelForm):
             if registration_deadline >= event_start:
                 raise forms.ValidationError("Registration deadline must be before event start")
 
-    def clean(self):
-        cleaned_data = super().clean()
-
-        start_date = cleaned_data.get('start_date')
-        end_date = cleaned_data.get('end_date')
-        start_time = cleaned_data.get('start_time')
-        end_time = cleaned_data.get('end_time')
-        registration_deadline = cleaned_data.get('registration_deadline')
-
-        # Ensure start_date is compared correctly
-        if start_date and timezone.now().date() != start_date:  # Convert timezone.now() to date()
-            raise forms.ValidationError("Event cannot start in the past")
-
-        # Ensure end_date is compared correctly
-        if end_date and start_date and end_date < start_date:
-            raise forms.ValidationError("End date must be after start date")
-
-        # Ensure time comparison is valid
-        if start_time and end_time and start_time >= end_time:
-            raise forms.ValidationError("End time must be after start time")
-
-        # Ensure registration_deadline is before event start
-        if registration_deadline and start_date and start_time:
-            # Convert start_date & start_time to datetime
-            event_start = timezone.make_aware(datetime.combine(start_date, start_time))
-
-            if registration_deadline >= event_start:
-                raise forms.ValidationError("Registration deadline must be before event start time")
-
         return cleaned_data
 
 
@@ -436,7 +468,7 @@ class PrayerUpdateForm(forms.ModelForm):
 class PrayerRequestForm(forms.ModelForm):
     class Meta:
         model = PrayerRequest
-        exclude = ['couple', 'created_at', 'is_answered', 'answer_testimony']
+        exclude = ['created_at', 'updated_at', 'prayer_warriors', 'testimony', 'status']
         widgets = {
             'request': forms.Textarea(attrs={'rows': 4}),
         }
@@ -502,7 +534,7 @@ class YouthEventForm(forms.ModelForm):
 class ChildrenProgramForm(forms.ModelForm):
     class Meta:
         model = ChildrenProgram
-        exclude = ['created_by', 'created_at', 'updated_at']
+        exclude = ['created_by', 'created_at', 'updated_at', 'teachers']
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),
             'time': forms.TimeInput(attrs={'type': 'time'}),
@@ -535,7 +567,7 @@ class SongRequestForm(forms.ModelForm):
 class BibleStudyForm(forms.ModelForm):
     class Meta:
         model = BibleStudy
-        exclude = ['teacher', 'participants', 'created_at', 'updated_at']
+        exclude = ['teacher', 'participants', 'created_at', 'updated_at', 'created_by']
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'time': forms.TimeInput(attrs={'type': 'time'}),
@@ -580,25 +612,6 @@ class ChildrensProgramForm(forms.ModelForm):
             ),
         }
 
-class ChildRegistrationForm(forms.ModelForm):
-    class Meta:
-        model = Child
-        fields = [
-            'first_name', 'last_name', 'date_of_birth',
-            'allergies', 'medical_notes', 'emergency_contact',
-            'photo_permission', 'special_needs', 'pickup_allowed_by'
-        ]
-        widgets = {
-            'date_of_birth': forms.DateInput(
-                attrs={'type': 'date', 'class': 'form-control'}
-            ),
-            'allergies': forms.Textarea(
-                attrs={'rows': 2, 'class': 'form-control'}
-            ),
-            'medical_notes': forms.Textarea(
-                attrs={'rows': 2, 'class': 'form-control'}
-            ),
-        }
 
 
 class MinistryRegistrationForm(forms.ModelForm):

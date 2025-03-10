@@ -1,0 +1,92 @@
+{% extends 'base_dashboard.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Content Guidelines & Preferences</h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">Customize the content you see and share within our church community
+                            platform.</p>
+
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="mb-4">
+                                <h5>Content Preferences</h5>
+                                <p class="text-muted">Choose what types of content appear in your feed.</p>
+
+                                <div class="form-check mb-2">
+                                    {{ form.show_sermons }}
+                                    <label class="form-check-label" for="{{ form.show_sermons.id_for_label }}">
+                                        Show sermon content in my feed
+                                    </label>
+                                </div>
+
+                                <div class="form-check mb-2">
+                                    {{ form.show_devotionals }}
+                                    <label class="form-check-label" for="{{ form.show_devotionals.id_for_label }}">
+                                        Show daily devotionals in my feed
+                                    </label>
+                                </div>
+
+                                <div class="form-check mb-2">
+                                    {{ form.show_bible_studies }}
+                                    <label class="form-check-label" for="{{ form.show_bible_studies.id_for_label }}">
+                                        Show Bible study materials in my feed
+                                    </label>
+                                </div>
+
+                                <div class="form-check mb-2">
+                                    {{ form.show_community_posts }}
+                                    <label class="form-check-label" for="{{ form.show_community_posts.id_for_label }}">
+                                        Show community posts in my feed
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h5>Content Guidelines</h5>
+                                <div class="card p-3 mb-3 bg-light">
+                                    <h6>Church Community Content Guidelines</h6>
+                                    <ul>
+                                        <li>All content should reflect Christian values and principles</li>
+                                        <li>Be respectful and encouraging in all communications</li>
+                                        <li>Avoid controversial political discussions</li>
+                                        <li>Do not share confidential prayer requests without permission</li>
+                                        <li>Content should be appropriate for all ages</li>
+                                        <li>Focus on building up the church community</li>
+                                        <li>Scripture should be accurately quoted with proper references</li>
+                                    </ul>
+
+                                    <div class="form-check mt-2">
+                                        {{ form.agree_guidelines }}
+                                        <label class="form-check-label" for="{{ form.agree_guidelines.id_for_label }}">
+                                            I have read and agree to follow these content guidelines
+                                        </label>
+                                    </div>
+                                    {% if form.agree_guidelines.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.agree_guidelines.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Save Content Settings</button>
+                                <a href="{% url 'accounts:accounts_settings_and_privacy' %}"
+                                   class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -10,9 +10,7 @@ urlpatterns = [
          views.training_list,
          name='training_list'),
 
-    path('training/<slug:slug>/',
-         views.training_detail,
-         name='training_detail'),
+    path('training/<slug:slug>/', views.training_detail, name='training_detail'),
 
     path('training/<slug:slug>/enroll/',
          views.enroll_training,
@@ -45,9 +43,7 @@ urlpatterns = [
          views.LeadershipTrainingListView.as_view(),
          name='training_list'),
 
-    path('training/<slug:slug>/',
-         views.LeadershipTrainingDetailView.as_view(),
-         name='training_detail'),
+    # path('training/<slug:slug>/',views.LeadershipTrainingDetailView.as_view(),name='training_detail'),
 
     path('training/<slug:slug>/enroll/',
          views.EnrollTrainingView.as_view(),
@@ -124,9 +120,7 @@ urlpatterns = [
          name='education_level_delete'),
 
     # Christian Course URLs
-    path('courses/',
-         views.ChristianCourseListView.as_view(),
-         name='course_list'),
+    # path('courses/',views.ChristianCourseListView.as_view(),name='course_list'),
     path('course/add/',
          views.ChristianCourseCreateView.as_view(),
          name='course_add'),

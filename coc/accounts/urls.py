@@ -62,6 +62,18 @@ urlpatterns = [
 
     path('member_list/', views.MemberListView.as_view(), name='member_list'),
 
+    path('accounts_settings_and_privacy/', views.accounts_settings_and_privacy, name='accounts_settings_and_privacy'),
+    path('update_profile/', views.update_profile, name='update_profile'),
+    path('update_settings/', views.update_settings, name='update_settings'),
+    path('security_settings/', views.security_settings, name='security_settings'),
+    path('privacy_settings/', views.privacy_settings, name='privacy_settings'),
+    path('ministry_preferences/', views.ministry_preferences, name='ministry_preferences'),
+    path('content_settings/', views.content_settings, name='content_settings'),
+    path('advanced_settings/', views.advanced_settings, name='advanced_settings'),
+
+    # Add these to accounts/urls.py
+    path('deactivate/', views.deactivate_account, name='deactivate_account'),
+    path('delete/', views.delete_account, name='delete_account'),
 
 
 

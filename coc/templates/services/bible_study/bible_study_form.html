@@ -1,0 +1,436 @@
+{% extends 'ministries/base_ministry.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block extra_css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+    <style>
+        .error-feedback {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .form-error-summary {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 0.25rem;
+            color: #721c24;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .select2-container--default .select2-selection--multiple {
+            border-color: #ced4da;
+        }
+
+        .select2-container--default.select2-container--focus .select2-selection--multiple {
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+    </style>
+{% endblock %}
+
+{% block ministry_content %}
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{% if is_new %}Create{% else %}Edit{% endif %} Bible Study</h5>
+                    <a href="
+                            {% if is_new %}{% url 'services:bible_study_list' %}{% else %}{% url 'services:bible_study_detail' study.id %}{% endif %}"
+                       class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if form.errors %}
+                        <div class="form-error-summary mb-4">
+                            <h6 class="mb-2"><i class="bi bi-exclamation-triangle"></i> Please correct the following
+                                errors:</h6>
+                            <ul class="mb-0">
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <li>{{ field.label }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data" id="bibleStudyForm">
+                        {% csrf_token %}
+                        <!-- Hidden field to ensure created_by is set -->
+                        <input type="hidden" name="created_by" value="{{ request.user.id }}">
+
+                        <!-- Basic Information -->
+                        <div class="card mb-4 form-section">
+                            <div class="card-header">
+                                <h6 class="mb-0">Basic Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        {{ form.title|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form.study_type|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form.target_group|as_crispy_field }}
+                                    </div>
+                                    <div class="col-12">
+                                        {{ form.description|as_crispy_field }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Schedule -->
+                        <div class="card mb-4 form-section">
+                            <div class="card-header">
+                                <h6 class="mb-0">Schedule</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        {{ form.start_date|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form.time|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form.duration|as_crispy_field }}
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="id_is_recurring"
+                                                   name="is_recurring"
+                                                   {% if form.is_recurring.value %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_is_recurring">
+                                                Is this a recurring Bible study?
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div id="recurringFields" class="col-12" style="display: none;">
+                                        {{ form.recurring_pattern|as_crispy_field }}
+                                        {{ form.end_date|as_crispy_field }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Location and Capacity -->
+                        <div class="card mb-4 form-section">
+                            <div class="card-header">
+                                <h6 class="mb-0">Location & Capacity</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-8">
+                                        {{ form.location|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ form.max_participants|as_crispy_field }}
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="id_is_online"
+                                                   name="is_online" {% if form.is_online.value %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_is_online">
+                                                Is this an online Bible study?
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div id="onlineFields" class="col-12" style="display: none;">
+                                        {{ form.meeting_link|as_crispy_field }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Study Details -->
+                        <div class="card mb-4 form-section">
+                            <div class="card-header">
+                                <h6 class="mb-0">Study Details</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        {{ form.scripture_focus|as_crispy_field }}
+                                    </div>
+                                    <div class="col-12">
+                                        {{ form.study_outline|as_crispy_field }}
+                                    </div>
+                                    <div class="col-12">
+                                        {{ form.materials|as_crispy_field }}
+                                    </div>
+                                    <div class="col-12">
+                                        {{ form.leaders|as_crispy_field }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Registration -->
+                        <div class="card mb-4 form-section">
+                            <div class="card-header">
+                                <h6 class="mb-0">Registration Settings</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox"
+                                                   id="id_registration_required" name="registration_required"
+                                                   {% if form.registration_required.value %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_registration_required">
+                                                Is registration required?
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div id="registrationFields" class="col-12" style="display: none;">
+                                        {{ form.registration_deadline|as_crispy_field }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Settings -->
+                        <div class="card mb-4 form-section">
+                            <div class="card-header">
+                                <h6 class="mb-0">Additional Settings</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="id_is_featured"
+                                           name="is_featured" {% if form.is_featured.value %}checked{% endif %}>
+                                    <label class="form-check-label" for="id_is_featured">
+                                        Feature this Bible study on the homepage
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> {% if is_new %}Create{% else %}Update{% endif %} Bible Study
+                            </button>
+                            <a href="
+                                    {% if is_new %}{% url 'services:bible_study_list' %}{% else %}{% url 'services:bible_study_detail' study.id %}{% endif %}"
+                               class="btn btn-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize date pickers
+            flatpickr("#id_start_date", {
+                dateFormat: "Y-m-d",
+                minDate: "today",
+            });
+
+            flatpickr("#id_end_date", {
+                dateFormat: "Y-m-d",
+                minDate: "today",
+            });
+
+            // Initialize time picker
+            flatpickr("#id_time", {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: false,
+            });
+
+            // Initialize datetime picker for registration deadline
+            flatpickr("#id_registration_deadline", {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                minDate: "today",
+            });
+
+            // Initialize select2 for leaders field
+            $('#id_leaders').select2({
+                placeholder: 'Select leaders',
+                width: '100%'
+            });
+
+            // Pre-select current user as a leader
+            if ($('#id_leaders option[value="{{ request.user.id }}"]').length) {
+                if (!$('#id_leaders').val() || $('#id_leaders').val().length === 0) {
+                    $('#id_leaders').val(['{{ request.user.id }}']).trigger('change');
+                }
+            }
+
+            // Toggle recurring fields
+            const recurringCheckbox = document.getElementById('id_is_recurring');
+            const recurringFields = document.getElementById('recurringFields');
+
+            function toggleRecurringFields() {
+                recurringFields.style.display = recurringCheckbox.checked ? 'block' : 'none';
+            }
+
+            recurringCheckbox.addEventListener('change', toggleRecurringFields);
+            toggleRecurringFields(); // Initialize on page load
+
+            // Toggle online fields
+            const onlineCheckbox = document.getElementById('id_is_online');
+            const onlineFields = document.getElementById('onlineFields');
+
+            function toggleOnlineFields() {
+                onlineFields.style.display = onlineCheckbox.checked ? 'block' : 'none';
+            }
+
+            onlineCheckbox.addEventListener('change', toggleOnlineFields);
+            toggleOnlineFields(); // Initialize on page load
+
+            // Toggle registration fields
+            const registrationCheckbox = document.getElementById('id_registration_required');
+            const registrationFields = document.getElementById('registrationFields');
+
+            function toggleRegistrationFields() {
+                registrationFields.style.display = registrationCheckbox.checked ? 'block' : 'none';
+            }
+
+            registrationCheckbox.addEventListener('change', toggleRegistrationFields);
+            toggleRegistrationFields(); // Initialize on page load
+
+            // Form validation
+            const form = document.getElementById('bibleStudyForm');
+            form.addEventListener('submit', function (e) {
+                let hasErrors = false;
+                const errorMessages = [];
+
+                // Required fields validation
+                const requiredFields = [
+                    {id: 'id_title', name: 'Title'},
+                    {id: 'id_study_type', name: 'Study Type'},
+                    {id: 'id_target_group', name: 'Target Group'},
+                    {id: 'id_description', name: 'Description'},
+                    {id: 'id_start_date', name: 'Start Date'},
+                    {id: 'id_time', name: 'Time'},
+                    {id: 'id_location', name: 'Location'},
+                    {id: 'id_max_participants', name: 'Maximum Participants'}
+                ];
+
+                requiredFields.forEach(field => {
+                    const element = document.getElementById(field.id);
+                    if (!element.value.trim()) {
+                        hasErrors = true;
+                        errorMessages.push(`${field.name} is required`);
+
+                        // Add error class to the field
+                        const formGroup = element.closest('.form-group');
+                        if (formGroup) {
+                            formGroup.classList.add('has-error');
+
+                            // Check if error message already exists
+                            let errorDiv = formGroup.querySelector('.error-feedback');
+                            if (!errorDiv) {
+                                errorDiv = document.createElement('div');
+                                errorDiv.className = 'error-feedback';
+                                errorDiv.textContent = `${field.name} is required`;
+                                formGroup.appendChild(errorDiv);
+                            }
+                        }
+                    }
+                });
+
+                // Conditional validation
+                if (recurringCheckbox.checked) {
+                    const recurringPattern = document.getElementById('id_recurring_pattern');
+                    if (!recurringPattern.value) {
+                        hasErrors = true;
+                        errorMessages.push('Recurring Pattern is required when recurring is enabled');
+                    }
+
+                    const endDate = document.getElementById('id_end_date');
+                    if (!endDate.value) {
+                        hasErrors = true;
+                        errorMessages.push('End Date is required for recurring Bible studies');
+                    }
+                }
+
+                if (onlineCheckbox.checked) {
+                    const meetingLink = document.getElementById('id_meeting_link');
+                    if (!meetingLink.value) {
+                        hasErrors = true;
+                        errorMessages.push('Meeting Link is required for online Bible studies');
+                    }
+                }
+
+                if (registrationCheckbox.checked) {
+                    const deadline = document.getElementById('id_registration_deadline');
+                    if (!deadline.value) {
+                        hasErrors = true;
+                        errorMessages.push('Registration Deadline is required when registration is enabled');
+                    }
+                }
+
+                // Validate leaders
+                const leaders = $('#id_leaders').val();
+                if (!leaders || leaders.length === 0) {
+                    hasErrors = true;
+                    errorMessages.push('At least one leader must be selected');
+                }
+
+                if (hasErrors) {
+                    e.preventDefault();
+
+                    // Create error summary if it doesn't exist
+                    let errorSummary = document.querySelector('.form-error-summary');
+                    if (!errorSummary) {
+                        errorSummary = document.createElement('div');
+                        errorSummary.className = 'form-error-summary mb-4';
+
+                        const heading = document.createElement('h6');
+                        heading.className = 'mb-2';
+                        heading.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Please correct the following errors:';
+
+                        const ul = document.createElement('ul');
+                        ul.className = 'mb-0';
+
+                        errorMessages.forEach(msg => {
+                            const li = document.createElement('li');
+                            li.textContent = msg;
+                            ul.appendChild(li);
+                        });
+
+                        errorSummary.appendChild(heading);
+                        errorSummary.appendChild(ul);
+
+                        const cardBody = form.closest('.card-body');
+                        cardBody.insertBefore(errorSummary, form);
+                    }
+
+                    // Scroll to the top of the form
+                    window.scrollTo({
+                        top: form.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+{% endblock %}

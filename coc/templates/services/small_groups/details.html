@@ -105,11 +105,11 @@
                                 {% if member.profile.avatar %}
                                 <img src="{{ member.profile.avatar.url }}" 
                                      class="rounded-circle me-2" 
-                                     width="32" height="32" 
-                                     alt="{{ member.get_full_name }}">
+                                     width="32" height="32"
+                                     alt="{{ member.username }}">
                                 {% endif %}
                                 <div>
-                                    <h6 class="mb-0">{{ member.get_full_name }}</h6>
+                                    <h6 class="mb-0">{{ member.username }}</h6>
                                     <small class="text-muted">Member</small>
                                 </div>
                             </div>

@@ -1,4 +1,5 @@
 {% extends 'base_dashboard.html' %}
+{% load crispy_forms_filters %}
 {% load static %}
 {% load crispy_forms_tags %}
 
@@ -23,7 +24,7 @@
                     <select class="form-select" name="category">
                         <option value="">All Categories</option>
                         {% for code, name in categories %}
-                        <option %} %}selected{% code== current_category endif if value="{{ code }}" {%>
+                            <option value="{{ code }}" {% if code == current_category %}selected{% endif %}>
                             {{ name }}
                         </option>
                         {% endfor %}
@@ -33,7 +34,7 @@
                     <select class="form-select" name="status">
                         <option value="">All Statuses</option>
                         {% for code, name in statuses %}
-                        <option %} %}selected{% code== current_status endif if value="{{ code }}" {%>
+                            <option value="{{ code }}" {% if code == current_status %}selected{% endif %}>
                             {{ name }}
                         </option>
                         {% endfor %}
@@ -63,7 +64,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <small class="text-muted">
                             {% if not prayer.is_anonymous %}
-                            By {{ prayer.requester.get_full_name|default:prayer.requester.username }}
+                                By {{ prayer.requester.username|default:prayer.requester.username }}
                             {% else %}
                             Anonymous
                             {% endif %}
@@ -134,7 +135,7 @@
                 const prayerId = this.dataset.prayerId;
                 const isPraying = this.dataset.praying === 'true';
 
-                fetch(`/prayer-requests/${prayerId}/pray/`, {
+                fetch(`/services/prayer-requests/${prayerId}/pray/`, {
                     method: 'POST',
                     headers: {
                         'X-CSRFToken': getCookie('csrftoken'),
@@ -145,8 +146,8 @@
                 .then(data => {
                     if (data.success) {
                         this.dataset.praying = (!isPraying).toString();
-                        const countSpan = this.querySelector('span');
-                        countSpan.textContent = `(${data.prayer_count})`;
+                        const prayingText = this.querySelector('i').nextSibling;
+                        prayingText.textContent = ` Praying (${data.prayer_count})`;
 
                         if (isPraying) {
                             this.classList.remove('btn-primary');
@@ -159,6 +160,22 @@
                 });
             });
         });
+
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     });
 </script>
 {% endblock %}

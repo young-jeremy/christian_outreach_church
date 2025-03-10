@@ -1423,7 +1423,7 @@ def enroll_course(request, slug):
             enrollment.course = course
             enrollment.save()
             messages.success(request, f'Successfully enrolled in {course.title}')
-            return redirect('course_detail', slug=slug)
+            return redirect('education:course_detail', slug=slug)
     else:
         form = StudentEnrollmentForm()
 
@@ -1515,14 +1515,14 @@ class CourseCreateView(InstructorRequiredMixin, CreateView):
     model = BiblicalCourse
     form_class = BiblicalCourseForm
     template_name = 'education/courses/course_form.html'
-    success_url = reverse_lazy('course_list')
+    success_url = reverse_lazy('education:course_list')
 
 
 class CourseUpdateView(InstructorRequiredMixin, UpdateView):
     model = BiblicalCourse
     form_class = BiblicalCourseForm
     template_name = 'education/courses/course_form.html'
-    success_url = reverse_lazy('course_list')
+    success_url = reverse_lazy('education:course_list')
 
 
 @login_required
@@ -1531,7 +1531,7 @@ def grade_assignment(request, submission_id):
 
     if not request.user.is_staff:
         messages.error(request, 'You do not have permission to grade assignments.')
-        return redirect('course_list')
+        return redirect('education:course_list')
 
     if request.method == 'POST':
         form = AssignmentGradingForm(request.POST, instance=submission)

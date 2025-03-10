@@ -24,6 +24,87 @@ from .models import MemberProfile
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Row, Column, Submit
 
+# accounts/forms.py
+from django import forms
+from django.contrib.auth.forms import PasswordChangeForm
+from .models import UserProfile, UserSettings, PrivacySettings, MinistryPreferences, ContentSettings
+
+
+class PrivacySettingsForm(forms.ModelForm):
+    """Form for updating privacy settings"""
+
+    class Meta:
+        model = PrivacySettings
+        fields = ['show_email', 'show_phone', 'show_address', 'show_prayers', 'show_events']
+        widgets = {
+            'show_email': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'show_phone': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'show_address': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'show_prayers': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'show_events': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class UserSettingsForm(forms.ModelForm):
+    """Form for updating user settings"""
+
+    class Meta:
+        model = UserSettings
+        fields = ['show_bible_verses', 'show_prayer_requests', 'show_events', 'preferred_bible']
+        widgets = {
+            'preferred_bible': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+
+class SecuritySettingsForm(PasswordChangeForm):
+    """Form for updating security settings"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.update({'class': 'form-control'})
+
+
+class PrivacyForm(forms.ModelForm):
+    """Form for updating privacy settings"""
+
+    class Meta:
+        model = PrivacySettings
+        fields = ['show_email', 'show_phone', 'show_address', 'show_prayers', 'show_events']
+
+
+class MinistryPreferencesForm(forms.ModelForm):
+    """Form for updating ministry preferences"""
+
+    class Meta:
+        model = MinistryPreferences
+        fields = [
+            'worship_team', 'children_ministry', 'youth_ministry',
+            'outreach_ministry', 'prayer_team', 'hospitality_team',
+            'sunday_morning', 'sunday_evening', 'weekdays', 'special_events',
+            'spiritual_gifts'
+        ]
+        widgets = {
+            'spiritual_gifts': forms.SelectMultiple(attrs={'class': 'form-select'}),
+        }
+
+
+class ContentSettingsForm(forms.ModelForm):
+    """Form for updating content settings"""
+
+    class Meta:
+        model = ContentSettings
+        fields = [
+            'show_sermons', 'show_devotionals', 'show_bible_studies',
+            'show_community_posts', 'agree_guidelines'
+        ]
+
+
+class AdvancedSettingsForm(forms.Form):
+    """Form for advanced settings"""
+    data_export = forms.BooleanField(required=False)
+
+
 
 class UserForm(forms.ModelForm):
     class Meta:
@@ -92,6 +173,9 @@ class UserProfileForm(forms.ModelForm):
             'birth_date': forms.DateInput(attrs={'type': 'date'}),
 
             'bio': forms.Textarea(attrs={'rows': 4}),
+            'full_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'ministry': forms.Select(attrs={'class': 'form-select'}),
 
         }
 
@@ -110,11 +194,6 @@ class JoinCommunityForm(forms.Form):
     community_id = forms.IntegerField(widget=forms.HiddenInput())
 
 
-"""
-class ProfileForm(forms.ModelForm):
-    class Meta:
-        model = UserProfile
-        fields = '__all__'"""
 
 class UserRegisterForm(UserCreationForm):
     email = forms.EmailField()

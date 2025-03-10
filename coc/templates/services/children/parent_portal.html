@@ -1,0 +1,203 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1>Parent Portal</h1>
+                <p class="text-muted">Manage your children's ministry participation</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Your Children</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if children %}
+                            <div class="accordion" id="childrenAccordion">
+                                {% for child in children %}
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="heading{{ child.id }}">
+                                            <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}"
+                                                    type="button"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#collapse{{ child.id }}"
+                                                    aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}"
+                                                    aria-controls="collapse{{ child.id }}">
+                                                {{ child.first_name }} {{ child.last_name }} ({{ child.age }} years old)
+                                            </button>
+                                        </h2>
+                                        <div id="collapse{{ child.id }}"
+                                             class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
+                                             aria-labelledby="heading{{ child.id }}"
+                                             data-bs-parent="#childrenAccordion">
+                                            <div class="accordion-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <h5>Personal Information</h5>
+                                                        <p><strong>Date of Birth:</strong> {{ child.date_of_birth }}</p>
+                                                        <p><strong>Gender:</strong> {{ child.get_gender_display }}</p>
+                                                        <p>
+                                                            <strong>Allergies:</strong> {{ child.allergies|default:"None" }}
+                                                        </p>
+                                                        <p><strong>Special
+                                                            Needs:</strong> {{ child.special_needs|default:"None" }}</p>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <h5>Emergency Contact</h5>
+                                                        <p><strong>Name:</strong> {{ child.emergency_contact_name }}</p>
+                                                        <p><strong>Phone:</strong> {{ child.emergency_contact_phone }}
+                                                        </p>
+                                                        <p><strong>Photo Permission:</strong>
+                                                            {% if child.photo_permission %}Yes{% else %}No{% endif %}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <h5 class="mt-3">Program Enrollments</h5>
+                                                {% with enrollments=children_enrollments|get_item:child %}
+                                                    {% if enrollments %}
+                                                        <div class="table-responsive">
+                                                            <table class="table table-striped">
+                                                                <thead>
+                                                                <tr>
+                                                                    <th>Program</th>
+                                                                    <th>Meeting Time</th>
+                                                                    <th>Location</th>
+                                                                    <th>Actions</th>
+                                                                </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                {% for enrollment in enrollments %}
+                                                                    <tr>
+                                                                        <td>{{ enrollment.program.title }}</td>
+                                                                        <td>{{ enrollment.program.meeting_time|date:"l g:i A" }}</td>
+                                                                        <td>{{ enrollment.program.location }}</td>
+                                                                        <td>
+                                                                            <button class="btn btn-sm btn-outline-danger unenroll-btn"
+                                                                                    data-enrollment-id="{{ enrollment.id }}">
+                                                                                Unenroll
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                {% endfor %}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    {% else %}
+                                                        <div class="alert alert-info">
+                                                            <p>{{ child.first_name }} is not enrolled in any
+                                                                programs.</p>
+                                                        </div>
+                                                    {% endif %}
+                                                {% endwith %}
+
+                                                <div class="mt-3">
+                                                    <a href="{% url 'services:children' %}" class="btn btn-primary">
+                                                        Enroll in Programs
+                                                    </a>
+                                                    <a href="{% url 'services:edit_child' child.id %}"
+                                                       class="btn btn-outline-secondary">
+                                                        Edit Information
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <h5 class="alert-heading">No Children Registered</h5>
+                                <p>You haven't registered any children yet.</p>
+                                <a href="{% url 'services:register_child' %}" class="btn btn-primary">Register a
+                                    Child</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'services:register_child' %}" class="btn btn-success">
+                            <i class="bi bi-person-plus"></i> Register Another Child
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h4 class="mb-0">Quick Actions</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'services:child_checkin' %}" class="btn btn-primary">
+                                <i class="bi bi-calendar-check"></i> Check-In Children
+                            </a>
+                            <a href="{% url 'services:children' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-list-check"></i> View All Programs
+                            </a>
+                            <a href="{% url 'services:children_resources' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-file-earmark-text"></i> Access Resources
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">Upcoming Programs</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if upcoming_programs %}
+                            <div class="list-group">
+                                {% for program in upcoming_programs %}
+                                    <a href="{% url 'services:children' %}"
+                                       class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1">{{ program.title }}</h5>
+                                            <small>{{ program.get_program_type_display }}</small>
+                                        </div>
+                                        <p class="mb-1">{{ program.meeting_time|date:"l, F j" }}
+                                            at {{ program.meeting_time|time:"g:i A" }}</p>
+                                        <small>{{ program.location }}</small>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <p>No upcoming programs scheduled.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block extra_js %}
+        <script>
+            $(document).ready(function () {
+                $('.unenroll-btn').click(function () {
+                    const enrollmentId = $(this).data('enrollment-id');
+                    if (confirm('Are you sure you want to unenroll from this program?')) {
+                        $.post(`/services/children/unenroll/${enrollmentId}/`, {
+                            csrfmiddlewaretoken: '{{ csrf_token }}'
+                        })
+                            .done(function (response) {
+                                if (response.status === 'success') {
+                                    location.reload();
+                                } else {
+                                    alert(response.message);
+                                }
+                            });
+                    }
+                });
+            });
+        </script>
+    {% endblock %}
+
+{% endblock %}

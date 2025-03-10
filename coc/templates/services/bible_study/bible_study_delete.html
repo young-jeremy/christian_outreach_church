@@ -1,0 +1,44 @@
+{% extends 'ministries/base_ministry.html' %}
+{% load static %}
+
+{% block ministry_content %}
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Delete Bible Study</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-exclamation-triangle-fill text-danger display-1"></i>
+                        <h2 class="mt-3">Are you sure?</h2>
+                        <p class="lead">You are about to delete the Bible study: <strong>{{ study.title }}</strong></p>
+                        <p class="text-muted">This action cannot be undone.</p>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <h5><i class="bi bi-info-circle-fill me-2"></i> Important Information</h5>
+                        <ul class="mb-0">
+                            <li>All registrations for this Bible study will be deleted.</li>
+                            <li>Any materials uploaded for this study will be removed.</li>
+                            <li>All participants will lose access to this study.</li>
+                        </ul>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'services:bible_study_detail' study.id %}"
+                               class="btn btn-outline-secondary me-md-2">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Delete Bible Study
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

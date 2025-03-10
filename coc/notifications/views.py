@@ -28,6 +28,27 @@ from rest_framework.decorators import api_view
 from .forms import NotificationSettingsForm
 from .models import Notifications
 from .utils import send_email_notification
+# notifications/views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .forms import NotificationsSettingsForm
+
+
+@login_required
+def notifications_settings(request):
+    """Handle notifications settings updates"""
+    if request.method == 'POST':
+        form = NotificationsSettingsForm(request.POST, instance=request.user.notification_settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your notification settings have been updated successfully.')
+            return redirect('accounts:accounts_settings_and_privacy')
+    else:
+        form = NotificationsSettingsForm(instance=request.user.notification_settings)
+
+    return render(request, 'notifications/settings_form.html', {'form': form})
+
 
 
 @api_view(['GET'])

@@ -1,0 +1,91 @@
+{% extends 'base_dashboard.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Privacy Settings</h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">Control who can see your information within our church community.</p>
+
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="mb-4">
+                                <h5>Profile Visibility</h5>
+                                <p class="text-muted">Choose what personal information is visible to other church
+                                    members.</p>
+
+                                <div class="form-check form-switch mb-2">
+                                    {{ form.show_email }}
+                                    <label class="form-check-label" for="{{ form.show_email.id_for_label }}">
+                                        Show my email to other church members
+                                    </label>
+                                </div>
+
+                                <div class="form-check form-switch mb-2">
+                                    {{ form.show_phone }}
+                                    <label class="form-check-label" for="{{ form.show_phone.id_for_label }}">
+                                        Show my phone number to other church members
+                                    </label>
+                                </div>
+
+                                <div class="form-check form-switch mb-2">
+                                    {{ form.show_address }}
+                                    <label class="form-check-label" for="{{ form.show_address.id_for_label }}">
+                                        Show my address to other church members
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h5>Activity Visibility</h5>
+                                <p class="text-muted">Control what activities and contributions are visible to
+                                    others.</p>
+
+                                <div class="form-check form-switch mb-2">
+                                    {{ form.show_prayers }}
+                                    <label class="form-check-label" for="{{ form.show_prayers.id_for_label }}">
+                                        Make my prayer requests visible to the congregation
+                                    </label>
+                                </div>
+
+                                <div class="form-check form-switch mb-2">
+                                    {{ form.show_events }}
+                                    <label class="form-check-label" for="{{ form.show_events.id_for_label }}">
+                                        Show events I'm attending to other members
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <div class="d-flex">
+                                    <div class="me-3">
+                                        <i class="bi bi-info-circle-fill fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="alert-heading">Privacy Note</h5>
+                                        <p class="mb-0">
+                                            Your information is always kept private from the general public. These
+                                            settings only control
+                                            visibility within our church community to other registered members.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Save Privacy Settings</button>
+                                <a href="{% url 'accounts:accounts_settings_and_privacy' %}"
+                                   class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

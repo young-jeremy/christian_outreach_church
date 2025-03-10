@@ -110,7 +110,7 @@
                                class="list-group-item list-group-item-action">
                                 <i class="fas fa-calendar-plus me-2"></i>Schedule Visit
                             </a>
-                            <a href="{% url 'outreach:request_create' %}?hospital={{ hospital.id }}"
+                            <a href="{% url 'outreach:patient_request_create' %}?hospital={{ hospital.id }}"
                                class="list-group-item list-group-item-action">
                                 <i class="fas fa-plus me-2"></i>Submit Patient Request
                             </a>
@@ -128,7 +128,7 @@
                             <h5 class="card-title">Join Our Ministry</h5>
                             <p class="card-text">Please login to schedule visits or submit patient requests.</p>
                             <div class="d-grid gap-2">
-                                <a href="{% url 'login' %}?next={{ request.path }}"
+                                <a href="{% url 'account_login' %}?next={{ request.path }}"
                                    class="btn btn-primary">
                                     <i class="fas fa-sign-in-alt me-2"></i>Login
                                 </a>

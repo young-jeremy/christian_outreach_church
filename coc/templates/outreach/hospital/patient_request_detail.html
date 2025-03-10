@@ -104,7 +104,7 @@
                         {% if request.assigned_to %}
                             <div class="list-group-item">
                                 <small class="text-muted">Assigned to:</small><br>
-                                {{ request.assigned_to.get_full_name }}
+                                {{ request.assigned_to.username }}
                             </div>
                         {% endif %}
                         {% if request.completed_at %}
