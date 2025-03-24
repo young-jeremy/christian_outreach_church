@@ -1,45 +1,282 @@
 {% extends 'base_dashboard.html' %}
 {% load static %}
-{% load crispy_forms_tags %}
+
+{% block title %}Request Marriage Counseling{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">Request Marriage Counseling</h4>
+            <!-- Alert Messages -->
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+                {{ message }}
+                <button aria-label="Close" class="btn-close" data-bs-dismiss="alert" type="button"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- Profile Warning -->
+            {% if not has_profile %}
+            <div class="alert alert-warning mb-4">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <strong>Note:</strong> You need to create a couple profile before requesting counseling.
+                <a class="alert-link" href="{% url 'services:couple_profile_create' %}">Create your profile now</a>.
+            </div>
+            {% endif %}
+
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-heart me-2"></i>Request Marriage Counseling</h4>
                 </div>
                 <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="row">
+                    <p class="text-muted mb-4">
+                        Fill out this form to request a counseling session with one of our marriage counselors.
+                        We'll review your request and confirm the appointment.
+                    </p>
 
-                            <div class="col-md-6">
-                                {{ form.scheduled_time|as_crispy_field }}
+                    <!-- Form Errors -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger mb-4">
+                        <h5 class="alert-heading">Please correct the following errors:</h5>
+                        <ul class="mb-0">
+                            {% for field in form %}
+                            {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                            {% endfor %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        <!-- Counselor Selection -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 border-bottom pb-2">
+                                <i class="bi bi-person-badge me-2"></i>Counselor Information
+                            </h5>
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ form.counselor.id_for_label }}">
+                                    Counselor <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select {% if form.counselor.errors %}is-invalid{% endif %}" id="{{ form.counselor.id_for_label }}"
+                                        name="{{ form.counselor.name }}"
+                                        required>
+                                    <option value="">Select a counselor</option>
+                                    {% for value, text in form.fields.counselor.choices %}
+                                    <option %} %}selected{% endif form.counselor.value== if value value="{{ value }}"
+                                            {%>
+                                        {{ text }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.counselor.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.counselor.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Choose the counselor you'd like to meet with</div>
                             </div>
                         </div>
-                        {{ form.reason|as_crispy_field }}
-                        {{ form.notes|as_crispy_field }}
-                        {{ form.is_urgent|as_crispy_field }}
-                        <div class="mt-3">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-send"></i> Submit Request
-                            </button>
+
+                        <!-- Scheduling Information -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 border-bottom pb-2">
+                                <i class="bi bi-calendar-event me-2"></i>Scheduling Information
+                            </h5>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="{{ form.scheduled_time.id_for_label }}">
+                                        Preferred Date & Time <span class="text-danger">*</span>
+                                    </label>
+                                    <input class="form-control {% if form.scheduled_time.errors %}is-invalid{% endif %}"
+                                           id="{{ form.scheduled_time.id_for_label }}"
+                                           name="{{ form.scheduled_time.name }}"
+                                           required
+                                           type="datetime-local"
+                                           value="{{ form.scheduled_time.value|date:'Y-m-d\TH:i'|default:'' }}">
+                                    {% if form.scheduled_time.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.scheduled_time.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label d-block" for="{{ form.is_urgent.id_for_label }}">
+                                        Urgency
+                                    </label>
+                                    <div class="form-check form-switch">
+                                        <input %} %}checked{%
+                                               class="form-check-input"
+                                               endif
+                                               form.is_urgent.value id="{{ form.is_urgent.id_for_label }}" if name="{{ form.is_urgent.name }}" type="checkbox" {%>
+                                        <label class="form-check-label" for="{{ form.is_urgent.id_for_label }}">
+                                            This is an urgent request
+                                        </label>
+                                    </div>
+                                    <div class="form-text">Check this if you need counseling as soon as possible</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Meeting Details -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 border-bottom pb-2">
+                                <i class="bi bi-geo-alt me-2"></i>Meeting Details
+                            </h5>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ form.meeting_type.id_for_label }}">
+                                    Meeting Type <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select {% if form.meeting_type.errors %}is-invalid{% endif %}"
+                                        id="{{ form.meeting_type.id_for_label }}"
+                                        name="{{ form.meeting_type.name }}"
+                                        required>
+                                    {% for value, text in form.fields.meeting_type.choices %}
+                                    <option %} %}selected{% endif form.meeting_type.value== if value value="{{ value }}"
+                                            {%>
+                                        {{ text }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.meeting_type.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.meeting_type.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ form.reason.id_for_label }}">
+                                    Reason for Counseling <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control {% if form.reason.errors %}is-invalid{% endif %}"
+                                          id="{{ form.reason.id_for_label }}"
+                                          name="{{ form.reason.name }}"
+                                          required
+                                          rows="3">{{ form.reason.value|default:'' }}</textarea>
+                                {% if form.reason.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.reason.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Briefly describe why you're seeking counseling</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ form.notes.id_for_label }}">
+                                    Additional Notes
+                                </label>
+                                <textarea class="form-control {% if form.notes.errors %}is-invalid{% endif %}"
+                                          id="{{ form.notes.id_for_label }}"
+                                          name="{{ form.notes.name }}"
+                                          rows="3">{{ form.notes.value|default:'' }}</textarea>
+                                {% if form.notes.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.notes.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Any additional information that might help the counselor
+                                    prepare
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Privacy Notice -->
+                        <div class="alert alert-info mb-4">
+                            <h6 class="alert-heading"><i class="bi bi-shield-lock me-2"></i>Privacy Notice</h6>
+                            <p class="mb-0 small">
+                                All information shared in this form and during counseling sessions is kept confidential.
+                                Your information will only be accessible to your assigned counselor and authorized
+                                staff.
+                            </p>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between">
                             <a href="{% url 'services:marriage_list' %}" class="btn btn-outline-secondary">
-                                Cancel
+                                <i class="bi bi-arrow-left me-1"></i> Back
                             </a>
+                            <button %} %}disabled{% class="btn btn-primary" endif has_profile if not type="submit" {%>
+                                <i class="bi bi-send me-1"></i> Submit Request
+                            </button>
                         </div>
                     </form>
                 </div>
-                <div class="card-footer bg-light">
-                    <small class="text-muted">
-                        <i class="bi bi-info-circle"></i> Your request will be handled with strict confidentiality.
-                        A counselor will contact you within 24 hours.
-                    </small>
+            </div>
+
+            <!-- Help Information -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-question-circle me-2"></i>Need Help?</h5>
+                    <p class="card-text">
+                        If you need immediate assistance or have questions about the counseling process,
+                        please contact our marriage ministry coordinator at <a
+                            href="mailto:coctheblessedplace@gmail.com">marriage@coc.org</a>
+                        or call <a href="tel:+1234567890">(123) 456-7890</a>.
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set minimum date for scheduled time
+        const scheduledTimeInput = document.getElementById('{{ form.scheduled_time.id_for_label }}');
+        if (scheduledTimeInput) {
+            // Set minimum date to today
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const hours = String(today.getHours()).padStart(2, '0');
+            const minutes = String(today.getMinutes()).padStart(2, '0');
+
+            scheduledTimeInput.min = `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        // Meeting type toggle logic
+        const meetingTypeSelect = document.getElementById('{{ form.meeting_type.id_for_label }}');
+        if (meetingTypeSelect) {
+            meetingTypeSelect.addEventListener('change', function() {
+                // You can add logic here to show/hide fields based on meeting type
+                // For example, show a location field for in-person meetings
+            });
+        }
+
+        // Form validation
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            form.classList.add('was-validated');
+        });
+    });
+</script>
+{% endblock %}

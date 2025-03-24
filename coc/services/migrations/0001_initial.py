@@ -5,6 +5,16 @@ from django.conf import settings
 from django.db import migrations, models
 
 
+def create_default_ministry(apps, schema_editor):
+    MarriageMinistry = apps.get_model('services', 'MarriageMinistry')
+    if not MarriageMinistry.objects.exists():
+        MarriageMinistry.objects.create(
+            title="Marriage Ministry",
+            description="Our church's marriage ministry",
+            status="active"
+        )
+
+
 class Migration(migrations.Migration):
     initial = True
 

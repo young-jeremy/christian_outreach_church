@@ -1,0 +1,145 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .child-card {
+        transition: transform 0.2s;
+        height: 100%;
+    }
+    .child-card:hover {
+        transform: translateY(-5px);
+    }
+    .child-photo {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .child-photo-placeholder {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: #6c757d;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        border: 3px solid #fff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .badge-age {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    .empty-state-icon {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Your Children</h1>
+        <a class="btn btn-primary" href="{% url 'services:register_child' %}">
+            <i class="bi bi-person-plus me-2"></i>Register New Child
+        </a>
+    </div>
+
+    {% if messages %}
+    <div class="messages mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button aria-label="Close" class="btn-close" data-bs-dismiss="alert" type="button"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if children %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for child in children %}
+        <div class="col">
+            <div class="card shadow-sm child-card">
+                <div class="card-body">
+                    <span class="badge bg-primary badge-age">{{ child.age }} yrs</span>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            {% if child.photo %}
+                            <img alt="{{ child.first_name }}" class="child-photo" src="{{ child.photo.url }}">
+                            {% else %}
+                            <div class="child-photo-placeholder">
+                                {{ child.first_name|first }}{{ child.last_name|first }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="card-title mb-1">{{ child.first_name }} {{ child.last_name }}</h5>
+                            <p class="card-text text-muted mb-0">
+                                <small>Born: {{ child.date_of_birth|date:"F j, Y" }}</small>
+                            </p>
+                        </div>
+                    </div>
+
+                    {% if child.allergies or child.special_needs %}
+                    <div class="mb-3">
+                        {% if child.allergies %}
+                        <div class="d-flex align-items-center mb-1">
+                            <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                            <small class="text-muted">Allergies: {{ child.allergies|truncatechars:30 }}</small>
+                        </div>
+                        {% endif %}
+
+                        {% if child.special_needs %}
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-heart-fill text-danger me-2"></i>
+                            <small class="text-muted">Special needs: {{ child.special_needs|truncatechars:30 }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between mt-3">
+                        <a class="btn btn-outline-primary" href="{% url 'services:child_detail' child.id %}">
+                            <i class="bi bi-eye me-1"></i>View
+                        </a>
+                        <div>
+                            <a class="btn btn-outline-secondary me-1" href="{% url 'services:edit_child' child.id %}">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a class="btn btn-outline-danger" href="{% url 'services:confirm_delete_child' child.id %}">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card shadow-sm">
+        <div class="card-body empty-state">
+            <i class="bi bi-people empty-state-icon"></i>
+            <h4>No Children Registered</h4>
+            <p class="text-muted mb-4">You haven't registered any children yet.</p>
+            <a class="btn btn-primary" href="{% url 'services:register_child' %}">
+                <i class="bi bi-person-plus me-2"></i>Register Your First Child
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

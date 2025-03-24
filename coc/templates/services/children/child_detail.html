@@ -1,0 +1,405 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .child-photo {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 5px solid #fff;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .child-photo-placeholder {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background-color: #6c757d;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        border: 5px solid #fff;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .info-card {
+        height: 100%;
+        transition: transform 0.2s;
+    }
+    .info-card:hover {
+        transform: translateY(-5px);
+    }
+    .badge-age {
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+    }
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 2px;
+        background-color: #dee2e6;
+    }
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1.5rem;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -34px;
+        top: 0;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #007bff;
+        border: 2px solid #fff;
+    }
+    .timeline-item.past::before {
+        background-color: #6c757d;
+    }
+    .action-buttons .btn {
+        margin-right: 0.5rem;
+    }
+    .alert-special-needs {
+        border-left: 4px solid #dc3545;
+    }
+    .alert-allergies {
+        border-left: 4px solid #ffc107;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'services:child_list' %}">Children</a></li>
+            <li class="breadcrumb-item active">{{ child.first_name }} {{ child.last_name }}</li>
+        </ol>
+    </nav>
+
+    {% if messages %}
+    <div class="messages mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button aria-label="Close" class="btn-close" data-bs-dismiss="alert" type="button"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Child Profile Header -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-2 text-center">
+                    {% if child.photo %}
+                    <img alt="{{ child.first_name }}" class="child-photo" src="{{ child.photo.url }}">
+                    {% else %}
+                    <div class="child-photo-placeholder">
+                        {{ child.first_name|first }}{{ child.last_name|first }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-7">
+                    <h1 class="mb-2">{{ child.first_name }} {{ child.last_name }}</h1>
+                    <div class="d-flex flex-wrap align-items-center mb-3">
+                        <span class="badge bg-primary badge-age me-2">{{ child.age }} years old</span>
+                        <span class="text-muted me-3">Born: {{ child.date_of_birth|date:"F j, Y" }}</span>
+                        <span class="text-muted">Gender: {{ child.get_gender_display }}</span>
+                    </div>
+
+                    {% if child.allergies or child.special_needs %}
+                    <div class="mt-3">
+                        {% if child.allergies %}
+                        <div class="alert alert-warning alert-allergies mb-2 py-2">
+                            <strong><i class="bi bi-exclamation-triangle me-2"></i>Allergies:</strong> {{
+                            child.allergies }}
+                        </div>
+                        {% endif %}
+
+                        {% if child.special_needs %}
+                        <div class="alert alert-danger alert-special-needs py-2">
+                            <strong><i class="bi bi-heart me-2"></i>Special Needs:</strong> {{ child.special_needs }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3 text-md-end">
+                    <div class="action-buttons">
+                        <a class="btn btn-outline-primary" href="{% url 'services:edit_child' child.id %}">
+                            <i class="bi bi-pencil me-2"></i>Edit
+                        </a>
+                        <a class="btn btn-outline-danger" href="{% url 'services:confirm_delete_child' child.id %}">
+                            <i class="bi bi-trash me-2"></i>Delete
+                        </a>
+                    </div>
+
+                    {% if child.photo_permission %}
+                    <div class="mt-3">
+                        <span class="badge bg-success">
+                            <i class="bi bi-camera me-1"></i>Photo Permission Granted
+                        </span>
+                    </div>
+                    {% else %}
+                    <div class="mt-3">
+                        <span class="badge bg-secondary">
+                            <i class="bi bi-camera-video-off me-1"></i>No Photo Permission
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column: Child Information -->
+        <div class="col-lg-4">
+            <!-- Emergency Contact -->
+            <div class="card mb-4 shadow-sm info-card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-telephone me-2"></i>Emergency Contact</h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ child.emergency_contact_name }}</h6>
+                    <p class="mb-2">
+                        <a class="text-decoration-none" href="tel:{{ child.emergency_contact_phone }}">
+                            <i class="bi bi-telephone me-2"></i>{{ child.emergency_contact_phone }}
+                        </a>
+                    </p>
+                    {% if child.emergency_contact_relationship %}
+                    <p class="text-muted mb-0">Relationship: {{ child.emergency_contact_relationship }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Parent Information -->
+            <div class="card mb-4 shadow-sm info-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-people me-2"></i>Parent/Guardian</h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ child.parent.username }}</h6>
+                    <p class="mb-2">
+                        <a class="text-decoration-none" href="mailto:{{ child.parent.email }}">
+                            <i class="bi bi-envelope me-2"></i>{{ child.parent.email }}
+                        </a>
+                    </p>
+                    {% if child.parent.profile.phone %}
+                    <p class="mb-0">
+                        <a class="text-decoration-none" href="tel:{{ child.parent.profile.phone }}">
+                            <i class="bi bi-telephone me-2"></i>{{ child.parent.profile.phone }}
+                        </a>
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Registration Information -->
+            <div class="card shadow-sm info-card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Registration Info</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <strong>Registered:</strong> {{ child.created_at|date:"F j, Y" }}
+                    </p>
+                    <p class="mb-2">
+                        <strong>Last Updated:</strong> {{ child.updated_at|date:"F j, Y" }}
+                    </p>
+                    <p class="mb-0">
+                        <strong>Programs Enrolled:</strong> {{ upcoming_enrollments|length|add:past_enrollments|length
+                        }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Programs and Enrollments -->
+        <div class="col-lg-8">
+            <!-- Upcoming Programs -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Upcoming Programs</h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_enrollments %}
+                    <div class="timeline">
+                        {% for enrollment in upcoming_enrollments %}
+                        <div class="timeline-item">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h5 class="card-title mb-1">{{ enrollment.program.title }}</h5>
+                                            <p class="card-text text-muted mb-2">
+                                                <i class="bi bi-calendar me-1"></i>{{ enrollment.program.date|date:"F j,
+                                                Y" }}
+                                                <i class="bi bi-clock ms-2 me-1"></i>{{
+                                                enrollment.program.time|time:"g:i A" }}
+                                                <i class="bi bi-geo-alt ms-2 me-1"></i>{{ enrollment.program.location }}
+                                            </p>
+                                            <p class="card-text">{{ enrollment.program.description|truncatechars:100
+                                                }}</p>
+                                        </div>
+                                        <div class="ms-3">
+                                            <form action="{% url 'services:cancel_enrollment' enrollment.id %}"
+                                                  class="d-inline"
+                                                  method="post">
+                                                {% csrf_token %}
+                                                <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to cancel this enrollment?')"
+                                                        type="submit">
+                                                    <i class="bi bi-x-circle me-1"></i>Cancel
+                                                </button>
+                                            </form>
+                                            <a class="btn btn-sm btn-outline-primary ms-1"
+                                               href="{% url 'services:children_program_detail' enrollment.program.id %}">
+                                                <i class="bi bi-info-circle me-1"></i>Details
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-calendar-x" style="font-size: 3rem; color: #dee2e6;"></i>
+                        <p class="mt-3 mb-0">No upcoming programs</p>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-light">
+                    <button aria-expanded="false" class="btn btn-primary" data-bs-target="#availableProgramsCollapse"
+                            data-bs-toggle="collapse" type="button">
+                        <i class="bi bi-plus-circle me-2"></i>Enroll in Program
+                    </button>
+                </div>
+            </div>
+
+            <!-- Available Programs (Collapsed by default) -->
+            <div class="collapse mb-4" id="availableProgramsCollapse">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Available Programs</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if available_programs %}
+                        <div class="list-group">
+                            {% for program in available_programs %}
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ program.title }}</h6>
+                                        <p class="mb-1 text-muted small">
+                                            <i class="bi bi-calendar me-1"></i>{{ program.date|date:"F j, Y" }}
+                                            <i class="bi bi-clock ms-2 me-1"></i>{{ program.time|time:"g:i A" }}
+                                            <i class="bi bi-geo-alt ms-2 me-1"></i>{{ program.location }}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <form action="{% url 'services:enroll_child' child.id program.id %}"
+                                              method="post">
+                                            {% csrf_token %}
+                                            <button class="btn btn-sm btn-success" type="submit">
+                                                <i class="bi bi-plus-circle me-1"></i>Enroll
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>No available programs for this child's age group at
+                            this time.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Past Programs -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Past Programs</h5>
+                </div>
+                <div class="card-body">
+                    {% if past_enrollments %}
+                    <div class="timeline">
+                        {% for enrollment in past_enrollments %}
+                        <div class="timeline-item past">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h5 class="card-title mb-1">{{ enrollment.program.title }}</h5>
+                                            <p class="card-text text-muted mb-2">
+                                                <i class="bi bi-calendar me-1"></i>{{ enrollment.program.date|date:"F j,
+                                                Y" }}
+                                                <i class="bi bi-clock ms-2 me-1"></i>{{
+                                                enrollment.program.time|time:"g:i A" }}
+                                            </p>
+                                            {% if enrollment.attended %}
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle me-1"></i>Attended
+                                            </span>
+                                            {% if enrollment.check_in_time %}
+                                            <small class="text-muted ms-2">
+                                                Checked in: {{ enrollment.check_in_time|time:"g:i A" }}
+                                            </small>
+                                            {% endif %}
+                                            {% else %}
+                                            <span class="badge bg-secondary">
+                                                <i class="bi bi-x-circle me-1"></i>Did Not Attend
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           href="{% url 'services:children_program_detail' enrollment.program.id %}">
+                                            <i class="bi bi-info-circle me-1"></i>Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-clock-history" style="font-size: 3rem; color: #dee2e6;"></i>
+                        <p class="mt-3 mb-0">No past program history</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+</script>
+{% endblock %}

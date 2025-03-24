@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base_dashboard.html' %}
 {% load static %}
 
 {% block content %}
@@ -7,7 +7,7 @@
         <div class="col">
             <h1>Fellowship Forums</h1>
             {% if user.is_authenticated %}
-            <a href="{% url 'forums:create_topic' %}" class="btn btn-primary">
+            <a class="btn btn-primary" href="{% url 'services:create_topic' %}">
                 <i class="bi bi-plus-lg"></i> New Topic
             </a>
             {% endif %}
@@ -20,7 +20,7 @@
             <div class="d-flex align-items-center">
                 <i class="bi {{ category.icon }} fs-4 me-2"></i>
                 <h5 class="mb-0">
-                    <a href="{% url 'forums:topic_list' category.slug %}" class="text-decoration-none">
+                    <a class="text-decoration-none" href="{% url 'services:topic_list' category.slug %}">
                         {{ category.name }}
                     </a>
                 </h5>

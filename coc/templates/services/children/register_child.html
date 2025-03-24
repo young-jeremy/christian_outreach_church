@@ -1,64 +1,327 @@
 {% extends 'base_dashboard.html' %}
 {% load static %}
-{% load custom_tags %}
+{% load crispy_forms_tags %}
+
+{% block extra_css %}
+<style>
+    .required-field label::after {
+        content: " *";
+        color: red;
+    }
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #eee;
+    }
+    .form-section-title {
+        margin-bottom: 1.5rem;
+        color: #333;
+    }
+    .image-preview {
+        max-width: 150px;
+        max-height: 150px;
+        margin-top: 10px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .photo-permission-info {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0">Register for {{ program.title }}</h4>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-plus me-2"></i>Register a Child
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    <div class="messages mb-4">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                            {{ message }}
+                            <button aria-label="Close" class="btn-close" data-bs-dismiss="alert" type="button"></button>
+                        </div>
+                        {% endfor %}
                     </div>
-                    <div class="card-body">
-                        <div class="mb-4">
-                            <h5>Program Details</h5>
-                            <p><strong>Date:</strong> {{ program.date|date:"F j, Y" }}</p>
-                            <p><strong>Time:</strong> {{ program.time|time:"g:i A" }}</p>
-                            <p><strong>Location:</strong> {{ program.location }}</p>
-                            <p><strong>Age Group:</strong> {{ program.get_age_group_display }}</p>
-                            <p><strong>Spots Available:</strong> {{ program.spots_available }}
-                                of {{ program.max_children }}</p>
+                    {% endif %}
+
+                    <form enctype="multipart/form-data" id="childRegistrationForm" method="post">
+                        {% csrf_token %}
+
+                        <!-- Basic Information Section -->
+                        <div class="form-section">
+                            <h5 class="form-section-title">
+                                <i class="bi bi-person me-2"></i>Basic Information
+                            </h5>
+
+                            <div class="row">
+                                <div class="col-md-6 required-field mb-3">
+                                    <label class="form-label" for="id_first_name">First Name</label>
+                                    <input class="form-control" id="id_first_name" name="first_name" required
+                                           type="text">
+                                </div>
+
+                                <div class="col-md-6 required-field mb-3">
+                                    <label class="form-label" for="id_last_name">Last Name</label>
+                                    <input class="form-control" id="id_last_name" name="last_name" required type="text">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 required-field mb-3">
+                                    <label class="form-label" for="id_date_of_birth">Date of Birth</label>
+                                    <input class="form-control" id="id_date_of_birth" name="date_of_birth" required
+                                           type="date">
+                                </div>
+
+                                <div class="col-md-6 required-field mb-3">
+                                    <label class="form-label" for="id_gender">Gender</label>
+                                    <select class="form-select" id="id_gender" name="gender" required>
+                                        <option disabled selected value="">Select gender</option>
+                                        <option value="M">Male</option>
+                                        <option value="F">Female</option>
+                                        <option value="O">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="id_photo">Photo (Optional)</label>
+                                <input accept="image/*" class="form-control" id="id_photo" name="photo" type="file">
+                                <div id="photoPreview"></div>
+                            </div>
                         </div>
 
-                        {% if user.children.exists %}
-                            <form method="post">
-                                {% csrf_token %}
+                        <!-- Health Information Section -->
+                        <div class="form-section">
+                            <h5 class="form-section-title">
+                                <i class="bi bi-heart-pulse me-2"></i>Health Information
+                            </h5>
 
-                                <div class="mb-4">
-                                    <label for="{{ form.child.id_for_label }}" class="form-label">Select Child to
-                                        Register</label>
-                                    {{ form.child }}
-                                    {% if form.child.errors %}
-                                        <div class="text-danger">
-                                            {% for error in form.child.errors %}
-                                                {{ error }}
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-
-                                <div class="d-flex justify-content-between">
-                                    <a href="{% url 'services:children_program_detail' program.id %}"
-                                       class="btn btn-outline-secondary">
-                                        <i class="bi bi-arrow-left me-2"></i>Back to Program
-                                    </a>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-check-circle me-2"></i>Register Child
-                                    </button>
-                                </div>
-                            </form>
-                        {% else %}
-                            <div class="alert alert-warning">
-                                <p>You need to register a child before enrolling in programs.</p>
-                                <a href="{% url 'services:register_child' %}" class="btn btn-primary mt-2">
-                                    Register a Child
-                                </a>
+                            <div class="mb-3">
+                                <label class="form-label" for="id_allergies">Allergies</label>
+                                <textarea class="form-control" id="id_allergies" name="allergies" placeholder="List any allergies or write 'None' if not applicable"
+                                          rows="3"></textarea>
                             </div>
-                        {% endif %}
+
+                            <div class="mb-3">
+                                <label class="form-label" for="id_special_needs">Special Needs or Accommodations</label>
+                                <textarea class="form-control" id="id_special_needs" name="special_needs" placeholder="Describe any special needs, accommodations, or behavioral considerations"
+                                          rows="3"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Emergency Contact Section -->
+                        <div class="form-section">
+                            <h5 class="form-section-title">
+                                <i class="bi bi-telephone me-2"></i>Emergency Contact
+                            </h5>
+
+                            <div class="row">
+                                <div class="col-md-6 required-field mb-3">
+                                    <label class="form-label" for="id_emergency_contact_name">Emergency Contact
+                                        Name</label>
+                                    <input class="form-control" id="id_emergency_contact_name" name="emergency_contact_name"
+                                           required type="text">
+                                </div>
+
+                                <div class="col-md-6 required-field mb-3">
+                                    <label class="form-label" for="id_emergency_contact_phone">Emergency Contact
+                                        Phone</label>
+                                    <input class="form-control" id="id_emergency_contact_phone" name="emergency_contact_phone"
+                                           required type="tel">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="id_emergency_contact_relationship">Relationship to
+                                    Child</label>
+                                <input class="form-control" id="id_emergency_contact_relationship"
+                                       name="emergency_contact_relationship" placeholder="e.g., Grandparent, Aunt, Family Friend"
+                                       type="text">
+                            </div>
+                        </div>
+
+                        <!-- Permissions Section -->
+                        <div class="form-section">
+                            <h5 class="form-section-title">
+                                <i class="bi bi-shield-check me-2"></i>Permissions
+                            </h5>
+
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" id="id_photo_permission" name="photo_permission"
+                                       type="checkbox">
+                                <label class="form-check-label" for="id_photo_permission">
+                                    I give permission for photos of my child to be used in church publications and
+                                    social media
+                                </label>
+                                <div class="photo-permission-info">
+                                    Photos may be used in newsletters, website, social media, and printed materials to
+                                    showcase church activities.
+                                </div>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" id="id_emergency_treatment_permission"
+                                       name="emergency_treatment_permission" required type="checkbox">
+                                <label class="form-check-label required-field" for="id_emergency_treatment_permission">
+                                    I authorize emergency medical treatment if I cannot be reached
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Parent/Guardian Confirmation -->
+                        <div class="form-section">
+                            <h5 class="form-section-title">
+                                <i class="bi bi-check-circle me-2"></i>Confirmation
+                            </h5>
+
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" id="id_information_accurate" name="information_accurate"
+                                       required type="checkbox">
+                                <label class="form-check-label required-field" for="id_information_accurate">
+                                    I confirm that all information provided is accurate and complete
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a class="btn btn-outline-secondary" href="{% url 'services:children_ministry_list' %}">
+                                <i class="bi bi-arrow-left me-2"></i>Back to Children
+                            </a>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-person-plus me-2"></i>Register Child
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if user.children.exists %}
+            <div class="card mt-4 shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-people me-2"></i>Your Registered Children
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for child in user.children.all %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            {% if child.photo %}
+                                            <img alt="{{ child.first_name }}" class="rounded-circle"
+                                                 height="60" src="{{ child.photo.url }}" style="object-fit: cover;"
+                                                 width="60">
+                                            {% else %}
+                                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                                 style="width: 60px; height: 60px;">
+                                                {{ child.first_name|first }}{{ child.last_name|first }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h5 class="card-title mb-1">{{ child.first_name }} {{ child.last_name
+                                                }}</h5>
+                                            <p class="card-text text-muted mb-2">
+                                                Age: {{ child.age }} years
+                                                <br>
+                                                <small>Born: {{ child.date_of_birth|date:"F j, Y" }}</small>
+                                            </p>
+                                            <div class="btn-group btn-group-sm">
+                                                <a class="btn btn-outline-primary"
+                                                   href="{% url 'services:child_detail' child.id %}">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <a class="btn btn-outline-secondary"
+                                                   href="{% url 'services:edit_child' child.id %}">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <a class="btn btn-outline-danger"
+                                                   href="{% url 'services:confirm_delete_child' child.id %}">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
+            {% endif %}
         </div>
     </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Photo preview
+        const photoInput = document.getElementById('id_photo');
+        const photoPreview = document.getElementById('photoPreview');
+        
+        photoInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    photoPreview.innerHTML = `
+                        <img src="${e.target.result}" class="image-preview mt-2" alt="Child photo preview">
+                    `;
+                }
+                reader.readAsDataURL(file);
+            } else {
+                photoPreview.innerHTML = '';
+            }
+        });
+        
+        // Form validation
+        const form = document.getElementById('childRegistrationForm');
+        form.addEventListener('submit', function(e) {
+            const dob = new Date(document.getElementById('id_date_of_birth').value);
+            const today = new Date();
+            
+            // Check if date of birth is in the future
+            if (dob > today) {
+                e.preventDefault();
+                alert('Date of birth cannot be in the future');
+                return;
+            }
+            
+            // Check if child is too old (e.g., over 18)
+            const age = Math.floor((today - dob) / (365.25 * 24 * 60 * 60 * 1000));
+            if (age > 18) {
+                if (!confirm('This person appears to be over 18 years old. Are you sure you want to register them as a child?')) {
+                    e.preventDefault();
+                    return;
+                }
+            }
+            
+            // Phone number validation
+            const phoneRegex = /^[\d\s$$$$\-\+]+$/;
+            const phone = document.getElementById('id_emergency_contact_phone').value;
+            if (!phoneRegex.test(phone)) {
+                e.preventDefault();
+                alert('Please enter a valid phone number');
+                return;
+            }
+        });
+    });
+</script>
 {% endblock %}

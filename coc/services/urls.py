@@ -71,8 +71,10 @@ urlpatterns = [
     # Events and resources
     path('children/events/', views.children_ministry_list, name='children_ministry_list'),
     path('children/resources/', views.children_resources, name='children_resources'),
-
-    # Enrollment API endpoint
+    path('children/<int:child_id>/', views.child_detail, name='child_detail'),
+    path('children/<int:child_id>/edit/', views.edit_child, name='edit_child'),
+    path('enrollments/<int:enrollment_id>/cancel/', views.cancel_enrollment, name='cancel_enrollment'),
+    path('child_list/', views.child_list, name='child_list'),
 
 
 
@@ -96,11 +98,7 @@ urlpatterns = [
     path('small-groups/<int:pk>/', views.small_group_detail, name='small_group_detail'),
     path('small-groups/<int:pk>/leave/', views.leave_small_group, name='leave_small_group'),
 
-    # Forums URLs - Move these BEFORE the opportunity URLs
-    path('fellowship_forums/', views.ForumListView.as_view(), name='fellowship_forums'),
-    path('fellowship_forums/category/<slug:category_slug>/', views.ForumCategoryView.as_view(), name='forum_category'),
-    path('fellowship_forums/topic/<slug:slug>/', views.ForumTopicView.as_view(), name='forum_topic'),
-    path('fellowship_forums/create/', views.CreateForumTopicView.as_view(), name='create_forum_topic'),
+
 
     # Opportunity URLs - Keep these after the forums URLs
     path('opportunity_list/', views.OpportunityListView.as_view(), name='opportunity_list'),
@@ -123,15 +121,23 @@ urlpatterns = [
     path('fellowship_forums/category/<slug:category_slug>/', views.ForumCategoryView.as_view(), name='forum_category'),
     path('fellowship_forums/topic/<slug:slug>/', views.ForumTopicView.as_view(), name='forum_topic'),
     path('fellowship_forums/create/', views.CreateForumTopicView.as_view(), name='create_forum_topic'),
+    # Forums URLs - Move these BEFORE the opportunity URLs
+    path('fellowship_forums/', views.ForumListView.as_view(), name='fellowship_forums'),
+    path('fellowship_forums/category/<slug:category_slug>/', views.ForumCategoryView.as_view(), name='forum_category'),
+    path('fellowship_forums/topic/<slug:slug>/', views.ForumTopicView.as_view(), name='forum_topic'),
+    path('fellowship_forums/create/', views.CreateForumTopicView.as_view(), name='create_forum_topic'),
 
     # Marriage Ministry URLs
     path('marriage/', views.MarriageMinistryListView.as_view(), name='marriage_list'),
     path('marriage/<slug:slug>/', views.MarriageMinistryDetailView.as_view(), name='marriage_detail'),
     path('marriage/create/', views.MarriageMinistryCreateView.as_view(), name='marriage_create'),
     path('marriage/couple-profile/create/', views.create_couple_profile, name='couple_profile_create'),
-    path('marriage/resources/', views.MarriageResourceListView.as_view(), name='marriage_resources'),
+    path('marriage/resources/', views.MarriageResourcesView.as_view(), name='marriage_resources'),
     path('marriage/counseling/request/', views.MarriageCounselingCreateView.as_view(), name='counseling_request'),
     path('marriage/events/', views.MarriageEventListView.as_view(), name='marriage_events'),
+    path('marriage/<slug:slug>/register/', views.marriage_register, name='marriage_register'),
+
+    path('marriage/counseling/success/', views.counseling_success_view, name='counseling_success'),
 
     # Family Life URLs
     path('family/', views.FamilyLifeHomeView.as_view(), name='family_home'),
@@ -187,6 +193,7 @@ urlpatterns = [
  # Bible Reading Plans
     path('couples/reading-plans/create/', views.create_reading_plan, name='create_reading_plan'),  # Add this line
     path('couples/reading-plans/<int:pk>/', views.reading_plan_detail, name='reading_plan_detail'),
+    path('update_reading_progress/<int:pk>/', views.update_reading_progress, name='update_reading_progress'),
 
     # Add these to your existing urlpatterns
     path('womens-ministry/', views.womens_ministry_list, name='womens_ministry_list'),

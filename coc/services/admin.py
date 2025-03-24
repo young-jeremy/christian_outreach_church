@@ -70,12 +70,12 @@ class BibleStudyAdmin(admin.ModelAdmin):
     search_fields = ('title', 'description')
 
 # Marriage Ministry
-@admin.register(MarriageMinistry)
-class MarriageMinistryAdmin(admin.ModelAdmin):
-    list_display = ('title', 'start_date', 'end_date', 'status')
-    list_filter = ('status', 'meeting_type')
-    search_fields = ('title', 'description')
-    prepopulated_fields = {'slug': ('title',)}
+from django.contrib import admin
+from django_summernote.admin import SummernoteModelAdmin
+from .models import MarriageMinistry
+
+
+
 
 @admin.register(CoupleProfile)
 class CoupleProfileAdmin(admin.ModelAdmin):

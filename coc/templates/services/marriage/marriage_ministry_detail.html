@@ -1,0 +1,428 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .program-header {
+        background-color: #f8f9fa;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0.5rem;
+    }
+    .program-image {
+        max-height: 300px;
+        object-fit: cover;
+        border-radius: 0.5rem;
+    }
+    .facilitator-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .facilitator-placeholder {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: #6c757d;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    .status-upcoming {
+        background-color: #0d6efd;
+    }
+    .status-ongoing {
+        background-color: #198754;
+    }
+    .status-completed {
+        background-color: #6c757d;
+    }
+    .status-cancelled {
+        background-color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Messages Section -->
+    {% if messages %}
+    <div class="messages mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button aria-label="Close" class="btn-close" data-bs-dismiss="alert" type="button"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'services:marriage_list' %}">Marriage Ministry</a></li>
+            <li aria-current="page" class="breadcrumb-item active">{{ program.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-12">
+            <!-- Program Header -->
+            <div class="program-header shadow-sm">
+                <div class="container">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="display-5 mb-3">{{ program.title }}</h1>
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="badge status-{{ program.status }} me-3 px-3 py-2">
+                                    {{ program.get_status_display }}
+                                </span>
+                                <span class="text-muted">
+                                    <i class="bi bi-people me-2"></i>
+                                    {{ program.facilitators.count }}/{{ program.max_couples }} couples registered
+                                </span>
+                            </div>
+                            <div class="d-flex flex-wrap">
+                                <div class="me-4 mb-2">
+                                    <i class="bi bi-calendar me-2 text-primary"></i>
+                                    {{ program.start_date|date:"F j, Y" }}
+                                    {% if program.end_date %}
+                                    - {{ program.end_date|date:"F j, Y" }}
+                                    {% endif %}
+                                </div>
+                                <div class="me-4 mb-2">
+                                    <i class="bi bi-clock me-2 text-primary"></i>
+                                    {{ program.meeting_time|time:"g:i A" }}
+                                </div>
+                                <div class="mb-2">
+                                    <i class="bi bi-geo-alt me-2 text-primary"></i>
+                                    {% if program.meeting_type == 'virtual' %}
+                                    Virtual Meeting
+                                    {% elif program.meeting_type == 'hybrid' %}
+                                    Hybrid ({{ program.location }})
+                                    {% else %}
+                                    {{ program.location }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            {% if user.is_staff %}
+                            <div class="btn-group mb-3">
+                                <a class="btn btn-outline-primary"
+                                   href="{% url 'services:marriage_edit' program.slug %}">
+                                    <i class="bi bi-pencil me-2"></i>Edit
+                                </a>
+                                <a class="btn btn-outline-danger"
+                                   href="{% url 'services:marriage_delete' program.slug %}">
+                                    <i class="bi bi-trash me-2"></i>Delete
+                                </a>
+                            </div>
+                            {% endif %}
+
+                            {% if program.status == 'upcoming' or program.status == 'ongoing' %}
+                            <div class="d-block">
+                                <button class="btn btn-primary" data-bs-target="#registerModal" data-bs-toggle="modal">
+                                    <i class="bi bi-heart me-2"></i>Register Now
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Program Details -->
+                <div class="col-lg-8">
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Program Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-4">
+                                {% if program.image %}
+                                <img alt="{{ program.title }}" class="img-fluid program-image mb-4"
+                                     src="{{ program.image.url }}">
+                                {% endif %}
+
+                                <div class="program-description">
+                                    {{ program.description|safe }}
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <h5 class="mb-3">Meeting Information</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <ul class="list-group list-group-flush">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span><i
+                                                        class="bi bi-calendar-check me-2 text-primary"></i>Start Date</span>
+                                                <span class="fw-bold">{{ program.start_date|date:"F j, Y" }}</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span><i class="bi bi-calendar-x me-2 text-primary"></i>End Date</span>
+                                                <span class="fw-bold">{{ program.end_date|date:"F j, Y" }}</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span><i class="bi bi-clock me-2 text-primary"></i>Meeting Time</span>
+                                                <span class="fw-bold">{{ program.meeting_time|time:"g:i A" }}</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <ul class="list-group list-group-flush">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span><i
+                                                        class="bi bi-people me-2 text-primary"></i>Maximum Couples</span>
+                                                <span class="fw-bold">{{ program.max_couples }}</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span><i class="bi bi-geo-alt me-2 text-primary"></i>Meeting Type</span>
+                                                <span class="fw-bold">{{ program.get_meeting_type_display }}</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span><i class="bi bi-pin-map me-2 text-primary"></i>Location</span>
+                                                <span class="fw-bold">{{ program.location|default:"N/A" }}</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                {% if program.meeting_type == 'virtual' or program.meeting_type == 'hybrid' %}
+                                <div class="mt-3">
+                                    <div class="alert alert-info">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-camera-video me-3 fs-4"></i>
+                                            <div>
+                                                <h6 class="mb-1">Virtual Meeting Link</h6>
+                                                {% if program.zoom_link %}
+                                                <p class="mb-0">
+                                                    <a class="text-decoration-none" href="{{ program.zoom_link }}"
+                                                       target="_blank">
+                                                        {{ program.zoom_link }}
+                                                        <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                                    </a>
+                                                </p>
+                                                {% else %}
+                                                <p class="mb-0">The meeting link will be provided after
+                                                    registration.</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Facilitators Section -->
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Facilitators</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for facilitator in program.facilitators.all %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        {% if facilitator.profile.photo %}
+                                        <img alt="{{ facilitator.get_full_name }}" class="facilitator-avatar me-3"
+                                             src="{{ facilitator.profile.photo.url }}">
+                                        {% else %}
+                                        <div class="facilitator-placeholder me-3">
+                                            {{ facilitator.first_name|first }}{{ facilitator.last_name|first }}
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="mb-0">{{ facilitator.get_full_name }}</h6>
+                                            <small class="text-muted">{{ facilitator.profile.title|default:"Facilitator"
+                                                }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="col-12">
+                                    <p class="text-muted mb-0">No facilitators assigned yet.</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <!-- Registration Card -->
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="bi bi-clipboard-check me-2"></i>Registration</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>Spots Filled:</span>
+                                    <span class="fw-bold">{{ program.facilitators.count }}/{{ program.max_couples }}</span>
+                                </div>
+                                <div class="progress" style="height: 10px;">
+                                    {% with registered=program.facilitators.count %}
+                                    {% with percentage=registered|floatformat:0 %}
+                                    <div aria-valuemax="{{ program.max_couples }}" aria-valuemin="0"
+                                         aria-valuenow="{{ registered }}"
+                                         class="progress-bar bg-success" role="progressbar"
+                                         style="width: {% if program.max_couples > 0 %}{{ registered|divisibleby:program.max_couples|floatformat:0 }}{% else %}0{% endif %}%">
+                                    </div>
+                                    {% endwith %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+
+                            {% if program.status == 'upcoming' or program.status == 'ongoing' %}
+                            {% if program.facilitators.count < program.max_couples %}
+                            <div class="alert alert-success">
+                                <i class="bi bi-check-circle me-2"></i>
+                                Registration is open! {{ program.max_couples }} spots remaining.
+                            </div>
+                            <button class="btn btn-primary w-100" data-bs-target="#registerModal"
+                                    data-bs-toggle="modal">
+                                <i class="bi bi-heart me-2"></i>Register Now
+                            </button>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                This program is currently full.
+                            </div>
+                            <button class="btn btn-secondary w-100" disabled>
+                                <i class="bi bi-x-circle me-2"></i>Registration Full
+                            </button>
+                            {% endif %}
+                            {% elif program.status == 'completed' %}
+                            <div class="alert alert-secondary">
+                                <i class="bi bi-calendar-check me-2"></i>
+                                This program has been completed.
+                            </div>
+                            {% elif program.status == 'cancelled' %}
+                            <div class="alert alert-danger">
+                                <i class="bi bi-x-octagon me-2"></i>
+                                This program has been cancelled.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Related Programs -->
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="bi bi-collection me-2"></i>Related Programs</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group list-group-flush">
+                                {% for related in related_programs %}
+                                <a class="list-group-item list-group-item-action"
+                                   href="{% url 'services:marriage_detail' related.slug %}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ related.title }}</h6>
+                                            <small class="text-muted">
+                                                {{ related.start_date|date:"F j, Y" }}
+                                            </small>
+                                        </div>
+                                        <span class="badge status-{{ related.status }}">
+                                            {{ related.get_status_display }}
+                                        </span>
+                                    </div>
+                                </a>
+                                {% empty %}
+                                <div class="text-center py-3">
+                                    <p class="text-muted mb-0">No related programs available.</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="card-footer bg-light">
+                            <a class="btn btn-outline-primary w-100" href="{% url 'services:marriage_list' %}">
+                                <i class="bi bi-grid me-2"></i>View All Programs
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Registration Modal -->
+<div aria-hidden="true" aria-labelledby="registerModalLabel" class="modal fade" id="registerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="registerModalLabel">
+                    <i class="bi bi-heart me-2"></i>Register for {{ program.title }}
+                </h5>
+                <button aria-label="Close" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        type="button"></button>
+            </div>
+            <form action="{% url 'services:marriage_register' program.slug %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        You are registering for the following program:
+                        <ul class="mb-0 mt-2">
+                            <li><strong>Program:</strong> {{ program.title }}</li>
+                            <li><strong>Dates:</strong> {{ program.start_date|date:"F j, Y" }} - {{
+                                program.end_date|date:"F j, Y" }}
+                            </li>
+                            <li><strong>Time:</strong> {{ program.meeting_time|time:"g:i A" }}</li>
+                        </ul>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="spouse_name">Spouse/Partner's Name</label>
+                        <input class="form-control" id="spouse_name" name="spouse_name" required type="text">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="spouse_email">Spouse/Partner's Email</label>
+                        <input class="form-control" id="spouse_email" name="spouse_email" type="email">
+                        <div class="form-text">Optional, but recommended for communication.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="years_married">Years Married/Together</label>
+                        <input class="form-control" id="years_married" min="0" name="years_married" type="number">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="special_requests">Special Requests or Notes</label>
+                        <textarea class="form-control" id="special_requests" name="special_requests"
+                                  rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-check-circle me-2"></i>Complete Registration
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show registration modal if there's a registration error
+        {% if registration_error %}
+        var registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
+        registerModal.show();
+        {% endif %}
+    });
+</script>
+{% endblock %}

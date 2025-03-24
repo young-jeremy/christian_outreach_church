@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 import logging
 
 logger = logging.getLogger(__name__)
@@ -904,16 +904,28 @@ class MarriageMinistryListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return MarriageMinistry.objects.all().order_by('-start_date')
 
+
 class MarriageMinistryDetailView(DetailView):
     model = MarriageMinistry
-    template_name = 'services/marriage/program_detail.html'
-    context_object_name = 'program'
+    template_name = 'services/marriage/marriage_ministry_detail.html'
+    context_object_name = 'ministry'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.user.is_authenticated:
-            context['can_enroll'] = True  # Add enrollment logic here
-        return context
+    def get_object(self, queryset=None):
+        try:
+            # Try to get the object as normal
+            return super().get_object(queryset)
+        except Http404:
+            # If no specific ministry is found, get the first one or create a default
+            ministry = MarriageMinistry.objects.first()
+            if not ministry:
+                # Create a default ministry if none exists
+                ministry = MarriageMinistry.objects.create(
+                    title="Marriage Ministry",
+                    description="Our church's marriage ministry",
+                    status="active"
+                )
+            return ministry
+
 
 class MarriageMinistryCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = MarriageMinistry
@@ -952,21 +964,56 @@ def create_couple_profile(request):
         'form': form,
     })
 
-class MarriageResourceListView(ListView):
-    model = MarriageResource
-    template_name = 'services/marriage/resource_list.html'
+
+# In views.py
+class MarriageResourcesView(ListView):
+    model = MarriageResource  # Assuming you have a MarriageResource model
+    template_name = 'services/marriage/resources.html'
     context_object_name = 'resources'
-    paginate_by = 12
+
+    def get_queryset(self):
+        return MarriageResource.objects.filter(is_active=True).order_by('title')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Add any additional context
+        context['categories'] = MarriageResourceCategory.objects.all()
+        return context
+
 
 class MarriageCounselingCreateView(LoginRequiredMixin, CreateView):
     model = MarriageCounseling
     form_class = MarriageCounselingForm
     template_name = 'services/marriage/counseling_form.html'
 
+    # Remove the success_url attribute
+
+    def get_success_url(self):
+        # Return to the marriage list page or another appropriate page
+        return reverse('services:marriage_list')
+
     def form_valid(self, form):
-        couple = get_object_or_404(CoupleProfile, user1=self.request.user)
-        form.instance.couple = couple
+        try:
+            couple = CoupleProfile.objects.get(user=self.request.user)
+            form.instance.couple = couple
+        except CoupleProfile.DoesNotExist:
+            messages.error(self.request, "You need to create a couple profile first.")
+            return redirect('services:couple_profile_create')
+
+        messages.success(self.request,
+                         "Your counseling request has been submitted successfully. We'll contact you to confirm the appointment.")
         return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        has_profile = CoupleProfile.objects.filter(user=self.request.user).exists()
+        context['has_profile'] = has_profile
+        return context
+
+
+def counseling_success_view(request):
+    return render(request, 'services/marriage/counseling_success.html')
+
 
 class MarriageEventListView(ListView):
     model = MarriageEvent
@@ -1955,7 +2002,7 @@ def create_reading_plan(request):
 
 @login_required
 def update_reading_progress(request, pk):
-    plan = get_object_or_404(BibleReadingPlan, pk=pk, couple=request.user.couple_profile)
+    plan = get_object_or_404(BibleReadingPlan, pk=pk, couples=request.user.couple_profile)
 
     if request.method == 'POST':
         chapters_read = int(request.POST.get('chapters_read', 0))
@@ -1964,7 +2011,7 @@ def update_reading_progress(request, pk):
             plan.save()
 
             # Update reading streak
-            request.user.couple_profile.update_reading_streak()
+            update_reading_streak()
 
             messages.success(request, f'Marked {chapters_read} chapters as read!')
 
@@ -2026,10 +2073,12 @@ def counseling_request(request):
 @login_required
 def reading_plan_detail(request, pk):
     profile = request.user.couple_profile
-    plan = get_object_or_404(BibleReadingPlan, pk=pk, couple=profile)
+    plan = get_object_or_404(BibleReadingPlan, pk=pk, couples=profile)
+    rotation_degrees = plan.progress * 3.6
     return render(request, 'services/couples/reading_plan_detail.html', {
         'plan': plan,
         'profile': profile,
+        'rotation_degrees': rotation_degrees,
     })
 
 
@@ -2071,9 +2120,21 @@ def couple_reading_plans(request):
         messages.info(request, 'Please create your couple profile first to access reading plans.')
         return redirect('services:create_couple_profile')
 
-    profile = request.user
-    reading_plans = BibleReadingPlan.objects.filter(couples=profile).annotate(
-        completion_percentage=models.F('completed_chapters') * 100.0 / models.F('total_chapters')
+    # Get the user's couple profiles
+    couple_profiles = CoupleProfile.objects.filter(user=request.user)
+
+    # Check if any profiles exist
+    if not couple_profiles.exists():
+        messages.info(request, 'Please create your couple profile first to access reading plans.')
+        return redirect('services:create_couple_profile')
+
+    # Get the first profile for reading_streak (or use a default value of 0)
+    first_profile = couple_profiles.first()
+    reading_streak = getattr(first_profile, 'reading_streak', 0)
+
+    # Get reading plans for any of the user's profiles
+    reading_plans = BibleReadingPlan.objects.filter(
+        couples__in=couple_profiles
     ).order_by('-created_at')
 
     # Calculate statistics
@@ -2090,13 +2151,13 @@ def couple_reading_plans(request):
     topical_plans = reading_plans.filter(plan_type='TOPICAL').count()
 
     context = {
-        'profile': profile,
+        'profile': first_profile,  # Use the CoupleProfile instance instead of User
         'reading_plans': reading_plans,
         'statistics': {
             'total_plans': total_plans,
             'completed_plans': completed_plans,
             'active_plans': active_plans,
-            'reading_streak': profile.reading_streak,
+            'reading_streak': reading_streak,  # Use the reading_streak we got from the profile
             'plan_types': {
                 'daily': daily_plans,
                 'weekly': weekly_plans,
@@ -2115,7 +2176,16 @@ def create_reading_plan(request):
         messages.warning(request, 'Please create your couple profile first to create reading plans.')
         return redirect('services:create_couple_profile')
 
-    profile = request.user
+    # Get the user's couple profiles instead of using the User object directly
+    couple_profiles = CoupleProfile.objects.filter(user=request.user)
+
+    # Check if any profiles exist
+    if not couple_profiles.exists():
+        messages.warning(request, 'Please create your couple profile first to create reading plans.')
+        return redirect('services:create_couple_profile')
+
+    # Get the first profile to use
+    profile = couple_profiles.first()
 
     if request.method == 'POST':
         form = BibleReadingPlanForm(request.POST)
@@ -2141,10 +2211,12 @@ def create_reading_plan(request):
                     raise ValueError("Invalid chapter count")
 
                 plan.save()
+                # Add the CoupleProfile instance, not the User
                 plan.couples.add(profile)
 
-                # Update reading streak
-                profile.update_reading_streak()
+                # Update reading streak - make sure this method exists on CoupleProfile
+                if hasattr(profile, 'update_reading_streak'):
+                    profile.update_reading_streak()
 
                 messages.success(
                     request,
@@ -2174,6 +2246,7 @@ def create_reading_plan(request):
     context = {
         'form': form,
         'profile': profile,
+        # Use the CoupleProfile instance in the filter
         'existing_plans': BibleReadingPlan.objects.filter(couples=profile).count(),
         'recent_plans': BibleReadingPlan.objects.filter(couples=profile).order_by('-created_at')[:3],
     }
@@ -4280,3 +4353,144 @@ def delete_child(request, child_id):
 
     messages.success(request, f"{child_name} has been deleted successfully.")
     return redirect('services:child_list')
+
+
+@login_required
+def child_detail(request, child_id):
+    """View to display detailed information about a child"""
+    # Get the child, ensuring it belongs to the current user (or user is staff)
+    if request.user.is_staff:
+        child = get_object_or_404(Child, id=child_id)
+    else:
+        child = get_object_or_404(Child, id=child_id, parent=request.user)
+
+    # Get all enrollments for this child
+    enrollments = ChildProgramEnrollment.objects.filter(child=child).select_related('program')
+
+    # Separate enrollments into past and upcoming
+    today = timezone.now().date()
+    past_enrollments = []
+    upcoming_enrollments = []
+
+    for enrollment in enrollments:
+        if enrollment.program.date < today:
+            past_enrollments.append(enrollment)
+        else:
+            upcoming_enrollments.append(enrollment)
+
+    # Get available programs the child can enroll in
+    available_programs = ChildrenProgram.objects.filter(
+        Q(date__gte=today) &
+        ~Q(id__in=[e.program.id for e in upcoming_enrollments])
+    ).order_by('date', 'time')
+
+    # Filter programs by age group if applicable
+    if child.age is not None:
+        filtered_programs = []
+        for program in available_programs:
+            age_range = program.age_group.split('-')
+            if program.age_group == 'all' or (
+                    len(age_range) == 2 and
+                    int(age_range[0]) <= child.age <= int(age_range[1])
+            ):
+                filtered_programs.append(program)
+        available_programs = filtered_programs
+
+    # Check if there are any attendance records
+    has_attendance = any(e.check_in_time is not None for e in enrollments)
+
+    context = {
+        'child': child,
+        'upcoming_enrollments': upcoming_enrollments,
+        'past_enrollments': past_enrollments,
+        'available_programs': available_programs,
+        'has_attendance': has_attendance,
+    }
+
+    return render(request, 'services/children/child_detail.html', context)
+
+
+@login_required
+def cancel_enrollment(request, enrollment_id):
+    """Cancel a child's enrollment in a program"""
+    enrollment = get_object_or_404(ChildProgramEnrollment, id=enrollment_id, child__parent=request.user)
+    program_title = enrollment.program.title
+    child_name = enrollment.child.first_name
+    child_id = enrollment.child.id
+
+    enrollment.delete()
+
+    messages.success(request, f"{child_name}'s enrollment in {program_title} has been cancelled")
+    return redirect('services:child_detail', child_id=child_id)
+
+
+@login_required
+def edit_child(request, child_id):
+    """Edit a child's information"""
+    child = get_object_or_404(Child, id=child_id, parent=request.user)
+
+    if request.method == 'POST':
+        form = ChildRegistrationForm(request.POST, request.FILES, instance=child)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"{child.first_name}'s information has been updated")
+            return redirect('services:child_detail', child_id=child_id)
+    else:
+        form = ChildRegistrationForm(instance=child)
+
+    return render(request, 'services/children/edit_child.html', {
+        'form': form,
+        'child': child
+    })
+
+
+@login_required
+def child_list(request):
+    """View to list all children of the current user"""
+    children = Child.objects.filter(parent=request.user).order_by('first_name')
+
+    return render(request, 'services/children/child_list.html', {
+        'children': children
+    })
+
+
+@login_required
+def confirm_delete_child(request, child_id):
+    """View to confirm deletion of a child"""
+    child = get_object_or_404(Child, id=child_id, parent=request.user)
+    enrollments_count = ChildProgramEnrollment.objects.filter(child=child).count()
+
+    return render(request, 'services/confirm_delete_child.html', {
+        'child': child,
+        'enrollments_count': enrollments_count
+    })
+
+
+@login_required
+@require_POST
+def delete_child(request, child_id):
+    """View to delete a child"""
+    child = get_object_or_404(Child, id=child_id, parent=request.user)
+    child_name = f"{child.first_name} {child.last_name}"
+
+    # Delete the child
+    child.delete()
+
+    messages.success(request, f"{child_name} has been deleted successfully.")
+    return redirect('services:child_list')
+
+
+def marriage_register(request, slug):
+    program = get_object_or_404(MarriageMinistry, slug=slug)
+    if not program or not program.slug:
+        program = MarriageMinistry.objects.create(
+            title="Default Marriage Ministry",
+            slug="default-marriage-ministry"
+        )
+
+    if request.method == 'POST':
+        # Process registration logic (e.g., adding a user to the program)
+        messages.success(request, f"You have successfully registered for {program.title}.")
+        return redirect(program.get_absolute_url())  # Redirect to detail page
+
+    return render(request, 'services/marriage/register.html', {'program': program})

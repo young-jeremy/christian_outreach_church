@@ -905,9 +905,9 @@ class TopicSearchForm(forms.Form):
 class MarriageMinistryForm(forms.ModelForm):
     class Meta:
         model = MarriageMinistry
-        exclude = ['slug', 'created_at', 'updated_at']
+        exclude = ['slug']
         widgets = {
-            'description': SummernoteWidget(),
+            'description': forms.Textarea(),
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'end_date': forms.DateInput(attrs={'type': 'date'}),
             'meeting_time': forms.TimeInput(attrs={'type': 'time'}),

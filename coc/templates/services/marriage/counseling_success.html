@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Counseling Request Submitted{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                    </div>
+                    <h2 class="card-title mb-3">Request Submitted Successfully!</h2>
+                    <p class="card-text">
+                        Thank you for requesting marriage counseling. We've received your request and will
+                        contact you shortly to confirm your appointment.
+                    </p>
+                    <p class="text-muted mb-4">
+                        Please check your email for confirmation details.
+                    </p>
+                    <div class="d-grid gap-2 col-md-6 mx-auto">
+                        <a class="btn btn-primary" href="{% url 'services:marriage_list' %}">
+                            <i class="bi bi-house me-2"></i>Return to Marriage Ministry
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

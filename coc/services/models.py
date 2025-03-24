@@ -1749,10 +1749,10 @@ class MarriageMinistry(models.Model):
 
     title = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)
-    description = SummernoteTextField()
-    start_date = models.DateField()
-    end_date = models.DateField()
-    meeting_time = models.TimeField()
+    description = SummernoteTextField(null=True, blank=True)
+    start_date = models.DateField(default=timezone.now)
+    end_date = models.DateField(default=timezone.now)
+    meeting_time = models.TimeField(auto_now=True)
     meeting_type = models.CharField(max_length=20, choices=MEETING_TYPE_CHOICES)
     location = models.CharField(max_length=255, blank=True)
     zoom_link = models.URLField(blank=True)
@@ -1772,6 +1772,31 @@ class MarriageMinistry(models.Model):
 
     def get_absolute_url(self):
         return reverse('services:marriage_program_detail', kwargs={'slug': self.slug})
+
+    # Add these methods to your MarriageMinistry model
+    def get_status_display(self):
+        """Return the display value for the status field"""
+        for code, display in self.STATUS_CHOICES:
+            if code == self.status:
+                return display
+        return self.status
+
+    def get_status_color(self):
+        """Return a Bootstrap color class based on status"""
+        status_colors = {
+            'upcoming': 'primary',
+            'ongoing': 'success',
+            'completed': 'secondary',
+            'cancelled': 'danger'
+        }
+        return status_colors.get(self.status, 'primary')
+
+    def get_meeting_type_display(self):
+        """Return the display value for the meeting_type field"""
+        for code, display in self.MEETING_TYPE_CHOICES:
+            if code == self.meeting_type:
+                return display
+        return self.meeting_type
 
 
 class CoupleProfile(models.Model):
@@ -1826,6 +1851,7 @@ class CoupleProfile(models.Model):
 
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
+    last_reading_date = models.DateField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
         # Add only these new fields for approval system
     is_approved = models.BooleanField(default=False)
@@ -1859,6 +1885,19 @@ class CoupleProfile(models.Model):
 
     def get_couple_name(self):
         return f"{self.user.get_username()} & {self.partner_name}"
+
+    def update_reading_streak(self):
+        today = timezone.now().date()
+        if self.last_reading_date == today - timezone.timedelta(days=1):
+            self.reading_streak += 1
+        elif self.last_reading_date != today:
+            self.reading_streak = 1
+        self.last_reading_date = today
+        self.save()
+
+
+
+
 
 
 class MarriageEnrollment(models.Model):
@@ -2207,112 +2246,6 @@ class DiscipleshipTrack(models.Model):
             self.slug = slugify(self.title)
         super().save(*args, **kwargs)
 
-    """class CoupleProfile(models.Model):
-        MARRIAGE_STAGE_CHOICES = [
-            ('NEWLYWED', 'Newlywed (0-2 years)'),
-            ('EARLY', 'Early Years (3-7 years)'),
-            ('ESTABLISHED', 'Established (8-15 years)'),
-            ('SEASONED', 'Seasoned (15+ years)'),
-        ]
-
-        CONTACT_METHOD_CHOICES = [
-            ('EMAIL', 'Email'),
-            ('PHONE', 'Phone'),
-            ('BOTH', 'Both Email and Phone'),
-        ]
-
-        # Primary user (the one who created the profile)
-        user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='couple_profile', null=True)
-
-        # Partner Information
-        partner_name = models.CharField(max_length=100, null=True, blank=True)
-        partner_email = models.EmailField(null=True, blank=True)
-        partner_phone = models.CharField(max_length=15, blank=True)
-
-        # Relationship Details
-        anniversary = models.DateField()
-        marriage_stage = models.CharField(
-            max_length=20,
-            choices=MARRIAGE_STAGE_CHOICES,
-            default='NEWLYWED'
-        )
-
-        # Profile Details
-        profile_image = models.ImageField(upload_to='couple_profiles/', blank=True, null=True)
-        about_us = models.TextField(blank=True)
-        interests = models.TextField(blank=True)
-
-        # Contact Preferences
-        preferred_contact_method = models.CharField(
-            max_length=5,
-            choices=CONTACT_METHOD_CHOICES,
-            default='EMAIL'
-        )
-
-        # Privacy Settings
-        is_public = models.BooleanField(default=False)
-        show_anniversary = models.BooleanField(default=True)
-
-        # Reading Streak
-        reading_streak = models.IntegerField(default=0)
-        last_reading_date = models.DateField(null=True, blank=True)
-
-        # Approval System
-        is_approved = models.BooleanField(default=False)
-        approval_date = models.DateTimeField(null=True, blank=True)
-        approved_by = models.ForeignKey(
-            User,
-            on_delete=models.SET_NULL,
-            null=True,
-            blank=True,
-            related_name='approved_profiles'
-        )
-        status = models.CharField(
-            max_length=20,
-            choices=[
-                ('pending', 'Pending Approval'),
-                ('approved', 'Approved'),
-                ('rejected', 'Rejected'),
-            ],
-            default='pending'
-        )
-        rejection_reason = models.TextField(blank=True)
-
-        # Metadata
-        created_at = models.DateTimeField(auto_now_add=True)
-        updated_at = models.DateTimeField(auto_now=True)
-        reading_streak = models.IntegerField(default=0)
-        last_reading_date = models.DateField(null=True, blank=True)
-
-        def update_reading_streak(self):
-            today = timezone.now().date()
-            if self.last_reading_date == today - timezone.timedelta(days=1):
-                self.reading_streak += 1
-            elif self.last_reading_date != today:
-                self.reading_streak = 1
-            self.last_reading_date = today
-            self.save()
-
-        def __str__(self):
-            return f"{self.user.get_full_name()}'s Couple Profile"
-
-        def get_couple_name(self):
-            return f"{self.user.username()} & {self.partner_name}"
-
-        def update_reading_streak(self):
-            today = timezone.now().date()
-            if self.last_reading_date == today - timezone.timedelta(days=1):
-                self.reading_streak += 1
-            elif self.last_reading_date != today:
-                self.reading_streak = 1
-            self.last_reading_date = today
-            self.save()
-
-        def save(self, *args, **kwargs):
-            if self.status == 'approved' and not self.is_approved:
-                self.is_approved = True
-                self.approval_date = timezone.now()
-            super().save(*args, **kwargs)"""
 
 
 class DiscipleshipModule(models.Model):
