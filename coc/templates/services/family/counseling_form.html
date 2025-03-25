@@ -6,37 +6,118 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Request Family Counseling</h5>
+            <!-- Messages Section -->
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button aria-label="Close" class="btn-close" data-bs-dismiss="alert" type="button"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Form Errors -->
+            {% if form.errors %}
+            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                <h5 class="alert-heading">Please correct the following errors:</h5>
+                <ul class="mb-0">
+                    {% for field in form %}
+                    {% for error in field.errors %}
+                    <li>{{ field.label }}: {{ error }}</li>
+                    {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+                <button aria-label="Close" class="btn-close" data-bs-dismiss="alert" type="button"></button>
+            </div>
+            {% endif %}
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-people-fill me-2"></i>Request Family Counseling
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <form method="post">
+                    <p class="text-muted mb-4">
+                        Complete the form below to request a family counseling session.
+                        Our counselors will review your request and confirm your appointment.
+                    </p>
+
+                    <form method="post" novalidate>
                         {% csrf_token %}
-                        <div class="row">
-                            <div class="col-md-6">
-                                {{ form.counseling_type|as_crispy_field }}
-                            </div>
-                            <div class="col-md-6">
-                                {{ form.scheduled_time|as_crispy_field }}
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                {{ form.is_virtual|as_crispy_field }}
-                            </div>
-                            <div class="col-md-6">
-                                {{ form.zoom_link|as_crispy_field }}
+
+                        <!-- Counselor Selection -->
+                        <div class="mb-4">
+                            <h6 class="mb-3 border-bottom pb-2">
+                                <i class="bi bi-person-badge me-2"></i>Counselor Selection
+                            </h6>
+                            <div class="row">
+                                <div class="col-12">
+                                    {{ form.counselor|as_crispy_field }}
+                                </div>
                             </div>
                         </div>
-                        {{ form.notes|as_crispy_field }}
-                        <div class="mt-3">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-calendar-check"></i> Request Session
-                            </button>
+
+                        <!-- Counseling Details -->
+                        <div class="mb-4">
+                            <h6 class="mb-3 border-bottom pb-2">
+                                <i class="bi bi-info-circle me-2"></i>Counseling Details
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.counseling_type|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.scheduled_time|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Meeting Information -->
+                        <div class="mb-4">
+                            <h6 class="mb-3 border-bottom pb-2">
+                                <i class="bi bi-geo-alt me-2"></i>Meeting Information
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.is_virtual|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6" id="zoom-link-field">
+                                    {{ form.zoom_link|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="mb-4">
+                            <h6 class="mb-3 border-bottom pb-2">
+                                <i class="bi bi-chat-left-text me-2"></i>Additional Information
+                            </h6>
+                            {{ form.notes|as_crispy_field }}
+                        </div>
+
+                        <!-- Privacy Notice -->
+                        <div class="alert alert-info mb-4">
+                            <h6 class="alert-heading"><i class="bi bi-shield-lock me-2"></i>Privacy Notice</h6>
+                            <p class="mb-0 small">
+                                All information shared in this form and during counseling sessions is kept confidential.
+                                Your information will only be accessible to your assigned counselor and authorized
+                                staff.
+                            </p>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
                             <a href="{% url 'services:family_home' %}" class="btn btn-outline-secondary">
-                                Cancel
+                                <i class="bi bi-arrow-left me-2"></i>Cancel
                             </a>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-calendar-check me-2"></i>Request Session
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -44,4 +125,44 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle Zoom link field based on is_virtual checkbox
+        const isVirtualCheckbox = document.getElementById('id_is_virtual');
+        const zoomLinkField = document.getElementById('zoom-link-field');
+
+        function toggleZoomLink() {
+            if (isVirtualCheckbox && zoomLinkField) {
+                if (isVirtualCheckbox.checked) {
+                    zoomLinkField.style.display = 'block';
+                } else {
+                    zoomLinkField.style.display = 'none';
+                }
+            }
+        }
+
+        // Initial state
+        toggleZoomLink();
+
+        // Add event listener
+        if (isVirtualCheckbox) {
+            isVirtualCheckbox.addEventListener('change', toggleZoomLink);
+        }
+
+        // Set minimum date for scheduled time
+        const scheduledTimeInput = document.getElementById('id_scheduled_time');
+        if (scheduledTimeInput) {
+            // Set minimum date to today
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+
+            scheduledTimeInput.min = `${year}-${month}-${day}T00:00`;
+        }
+    });
+</script>
 {% endblock %}

@@ -76,6 +76,23 @@ urlpatterns = [
     path('enrollments/<int:enrollment_id>/cancel/', views.cancel_enrollment, name='cancel_enrollment'),
     path('child_list/', views.child_list, name='child_list'),
 
+    # ... your existing URL patterns
+
+    # Function-based views
+    path('children/resources/', views.child_resource_list, name='resource_list'),
+    path('children/resources/create/', views.child_create_resource, name='create_resource'),
+    path('children/resources/<int:resource_id>/', views.resource_detail, name='resource_detail'),
+    path('children/resources/<int:resource_id>/update/', views.child_resource_update, name='update_resource'),
+    path('children/resources/<int:resource_id>/delete/', views.child_resource_delete, name='delete_resource'),
+
+    # Class-based views (uncomment if you prefer these)
+    # path('children/resources/', views.ResourceListView.as_view(), name='resource_list'),
+    # path('children/resources/create/', views.ResourceCreateView.as_view(), name='create_resource'),
+    # path('children/resources/<int:resource_id>/', views.ResourceDetailView.as_view(), name='resource_detail'),
+    # path('children/resources/<int:resource_id>/update/', views.ResourceUpdateView.as_view(), name='update_resource'),
+    # path('children/resources/<int:resource_id>/delete/', views.ResourceDeleteView.as_view(), name='delete_resource'),
+
+
 
 
     # Testimony URLs
@@ -135,7 +152,15 @@ urlpatterns = [
     path('marriage/resources/', views.MarriageResourcesView.as_view(), name='marriage_resources'),
     path('marriage/counseling/request/', views.MarriageCounselingCreateView.as_view(), name='counseling_request'),
     path('marriage/events/', views.MarriageEventListView.as_view(), name='marriage_events'),
+
+    # Missing URLs
+    path('marriage/<slug:slug>/edit/', views.marriage_edit, name='marriage_edit'),
+    path('marriage/<slug:slug>/delete/', views.marriage_delete, name='marriage_delete'),
     path('marriage/<slug:slug>/register/', views.marriage_register, name='marriage_register'),
+    path('marriage/<slug:slug>/unregister/', views.marriage_unregister, name='marriage_unregister'),
+    path('marriage/<slug:slug>/remove-participant/', views.marriage_remove_participant,
+         name='marriage_remove_participant'),
+
 
     path('marriage/counseling/success/', views.counseling_success_view, name='counseling_success'),
 
@@ -144,15 +169,22 @@ urlpatterns = [
     path('family/events/', views.FamilyEventListView.as_view(), name='family_events'),
     path('family/resources/', views.ParentingResourceListView.as_view(), name='family_resources'),
     path('family/discussions/', views.FamilyDiscussionListView.as_view(), name='family_discussions'),
+
+    path('family/counseling/request/', views.FamilyCounselingCreateView.as_view(), name='family_counseling_request'),
+
+    path('family/discussions/create/', views.FamilyDiscussionCreateView.as_view(), name='family_discussion_create'),
     path('family/discussions/<slug:slug>/', views.FamilyDiscussionDetailView.as_view(),
          name='family_discussion_detail'),
-    path('family/counseling/request/', views.FamilyCounselingCreateView.as_view(), name='family_counseling_request'),
-    path('family/discussions/create/', views.FamilyDiscussionCreateView.as_view(), name='family_discussion_create'),
     path('family/discussions/<slug:slug>/like/', views.family_discussion_like, name='family_discussion_like'),
     path('family/discussions/<slug:slug>/comment/', views.family_discussion_comment, name='family_discussion_comment'),
     # Add this to your family life URLs
     path('family/events/create/', views.FamilyEventCreateView.as_view(), name='family_event_create'),
     path('family/resources/create/', views.FamilyResourceCreateView.as_view(), name='family_resource_create'),
+    path('family-events/<slug:slug>/', views.family_event_detail, name='family_event_detail'),
+    # Add the missing URL pattern for joining a family event
+    path('family-events/<slug:slug>/join/', views.family_event_join, name='family_event_join'),
+    # You might also want to add a URL for leaving an event
+    path('family-events/<slug:slug>/leave/', views.family_event_leave, name='family_event_leave'),
 
     # New Believers URLs
     path('new-believers/', views.NewBelieversDashboard.as_view(), name='new_believers_dashboard'),

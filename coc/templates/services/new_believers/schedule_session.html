@@ -6,6 +6,46 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-lg-8">
+            <!-- Debug Info - Remove in production -->
+            {% if debug %}
+            <div class="alert alert-info mb-3">
+                <h6>Debug Information:</h6>
+                <p>Form method: {{ request.method }}</p>
+                <p>Form errors: {{ form.errors }}</p>
+                <p>Non-field errors: {{ form.non_field_errors }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Messages Section -->
+            {% if messages %}
+            <div class="alert-container mb-3">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button aria-label="Close" class="btn-close" data-bs-dismiss="alert" type="button"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Form Errors -->
+            {% if form.errors %}
+            <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                <h5 class="alert-heading">Please correct the following errors:</h5>
+                <ul class="mb-0">
+                    {% for field in form %}
+                    {% for error in field.errors %}
+                    <li>{{ field.label }}: {{ error }}</li>
+                    {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+                <button aria-label="Close" class="btn-close" data-bs-dismiss="alert" type="button"></button>
+            </div>
+            {% endif %}
+
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Schedule Mentorship Session</h5>
@@ -14,6 +54,10 @@
                     </a>
                 </div>
                 <div class="card-body">
+                    <p class="text-muted mb-3">
+                        <small>Fields marked with an asterisk (*) are required.</small>
+                    </p>
+
                     <form class="needs-validation" method="post" novalidate>
                         {% csrf_token %}
 
@@ -110,36 +154,42 @@
         const sessionType = document.getElementById('id_session_type');
         const meetingLinkContainer = document.getElementById('meeting_link_container');
 
-        if (sessionType.value === 'virtual') {
+        if (sessionType && sessionType.value === 'virtual') {
             meetingLinkContainer.style.display = 'block';
             document.getElementById('id_meeting_link').required = true;
-        } else {
+        } else if (meetingLinkContainer) {
             meetingLinkContainer.style.display = 'none';
-            document.getElementById('id_meeting_link').required = false;
+            const meetingLinkInput = document.getElementById('id_meeting_link');
+            if (meetingLinkInput) {
+                meetingLinkInput.required = false;
+                meetingLinkInput.value = ''; // Clear the value when not needed
+            }
         }
     }
 
     // Add event listeners
     document.addEventListener('DOMContentLoaded', function() {
         const sessionType = document.getElementById('id_session_type');
-        sessionType.addEventListener('change', toggleMeetingLink);
-        toggleMeetingLink(); // Initial state
-    });
+        if (sessionType) {
+            sessionType.addEventListener('change', toggleMeetingLink);
+            toggleMeetingLink(); // Initial state
+        }
 
-    // Form validation
-    (function() {
-        'use strict'
-        var forms = document.querySelectorAll('.needs-validation')
-        Array.prototype.slice.call(forms).forEach(function(form) {
+        // Form validation
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach(function(form) {
             form.addEventListener('submit', function(event) {
                 if (!form.checkValidity()) {
-                    event.preventDefault()
-                    event.stopPropagation()
+                    event.preventDefault();
+                    event.stopPropagation();
+                    console.log('Form validation failed');
+                } else {
+                    console.log('Form validation passed');
                 }
-                form.classList.add('was-validated')
-            }, false)
-        })
-    })()
+                form.classList.add('was-validated');
+            }, false);
+        });
+    });
 </script>
 {% endblock %}
 
@@ -154,6 +204,36 @@
         position: absolute;
         left: 0;
         color: var(--bs-primary);
+    }
+
+    /* Make alerts more visible */
+    .alert {
+        border-width: 2px;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+    }
+
+    .alert-info {
+        background-color: #d1ecf1;
+        border-color: #bee5eb;
+    }
+
+    /* Required field indicator */
+    label.requiredField {
+        font-weight: 500;
+    }
+
+    label.requiredField:after {
+        content: " *";
+        color: red;
     }
 </style>
 {% endblock %}

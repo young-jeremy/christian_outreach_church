@@ -13,7 +13,8 @@ from .models import (
     SinglesMinistry,
     SinglesEvent,
     MentorshipRequest,
-    SinglesResource, SermonNote, ChildProgramEnrollment, Child, ChildProgramEnrollment, ChildAttendance
+    SinglesResource, SermonNote, ChildProgramEnrollment, Child, ChildProgramEnrollment, ChildAttendance,
+    ChildrensMinistry, ChildResource
 )
 from .forms import (
     SinglesMinistryForm,
@@ -21,7 +22,7 @@ from .forms import (
     MentorshipRequestForm,
     SinglesResourceForm,
     MentorshipMatchForm,
-    SinglesEventRegistrationForm, PrayerUpdateForm
+    SinglesEventRegistrationForm, PrayerUpdateForm, ChildProgramEnrollmentForm, ChildResourceForm, ChildCheckInForm
 )
 from django.contrib.auth.models import User
 from .models import (
@@ -49,7 +50,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 from .models import YouthProgram, YouthEvent
 from .forms import YouthProgramForm, YouthEventForm
 from django.db import models
@@ -968,7 +969,7 @@ def create_couple_profile(request):
 # In views.py
 class MarriageResourcesView(ListView):
     model = MarriageResource  # Assuming you have a MarriageResource model
-    template_name = 'services/marriage/resources.html'
+    template_name = 'services/marriage/resource_list.html'
     context_object_name = 'resources'
 
     def get_queryset(self):
@@ -1126,6 +1127,8 @@ class CoupleJournalList(LoginRequiredMixin, ListView):
         return context
 
 
+from django.contrib import messages
+
 
 class FamilyDiscussionCreateView(LoginRequiredMixin, CreateView):
     model = FamilyDiscussion
@@ -1135,7 +1138,13 @@ class FamilyDiscussionCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.author = self.request.user
+        messages.success(self.request, "Your discussion has been posted successfully!")
         return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, "There was an error with your submission. Please check the form and try again.")
+        return super().form_invalid(form)
+
 
 @login_required
 def family_discussion_like(request, slug):
@@ -1213,17 +1222,46 @@ class MentorshipSessionList(LoginRequiredMixin, ListView):
         believer = get_object_or_404(NewBelieverProfile, user=self.request.user)
         return MentorshipSession.objects.filter(mentee=believer)
 
+
 class ScheduleMentorshipSession(LoginRequiredMixin, CreateView):
     model = MentorshipSession
     form_class = MentorshipSessionForm
     template_name = 'services/new_believers/schedule_session.html'
     success_url = reverse_lazy('services:mentorship_sessions')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Add debug flag in development
+        context['debug'] = settings.DEBUG
+        return context
+
     def form_valid(self, form):
-        believer = get_object_or_404(NewBelieverProfile, user=self.request.user)
-        form.instance.mentee = believer
-        messages.success(self.request, 'Session scheduled successfully!')
-        return super().form_valid(form)
+        try:
+            # Get the believer profile or create a redirect with error message
+            try:
+                believer = NewBelieverProfile.objects.get(user=self.request.user)
+            except NewBelieverProfile.DoesNotExist:
+                messages.error(self.request, 'You need a New Believer profile to schedule mentorship sessions.')
+                return redirect('services:new_believer_profile_create')  # Redirect to profile creation
+
+            # Set the mentee field
+            form.instance.mentee = believer
+
+            # Save the form
+            response = super().form_valid(form)
+
+            # Add success message
+            messages.success(self.request, 'Session scheduled successfully!')
+            return response
+
+        except Exception as e:
+            messages.error(self.request, f'Error scheduling session: {str(e)}')
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
+
 
 class PrayerJournalList(LoginRequiredMixin, ListView):
     model = PrayerJournal
@@ -1428,6 +1466,7 @@ class FamilyDiscussionDetailView(DetailView):
         context['comment_form'] = DiscussionCommentForm()
         return context
 
+
 class FamilyCounselingCreateView(LoginRequiredMixin, CreateView):
     model = FamilyCounseling
     form_class = FamilyCounselingForm
@@ -1436,7 +1475,14 @@ class FamilyCounselingCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.family = self.request.user
+        messages.success(self.request,
+                         "Your family counseling request has been submitted successfully. We'll contact you to confirm your appointment.")
         return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, "There was an error with your submission. Please check the form and try again.")
+        return super().form_invalid(form)
+
 
 @login_required
 def submit_song_request(request):
@@ -3667,10 +3713,6 @@ def download_resource(request, resource_id):
         return redirect('services:singles_resource_detail', resource_id=resource_id)
 
 
-from .models import ChildrenProgram, Child, ChildProgramEnrollment, ChildResource
-from .forms import ChildrenProgramForm, ChildRegistrationForm, ChildCheckInForm, ResourceForm
-
-
 def children_program_list(request):
     """Main view for children's ministry page showing all programs"""
     programs = ChildrenProgram.objects.all().order_by('time')
@@ -3782,53 +3824,103 @@ def register_child(request):
 
 
 @login_required
-@require_POST
+@require_http_methods(["GET", "POST"])
 def register_child_for_program(request, program_id):
-    """View to register a specific child for a specific program"""
-    programs = ChildrenProgram.objects.all()
-    try:
-        child_id = request.POST.get('child_id')
+    """View to register a child for a specific program"""
+    # Get the program
+    program = get_object_or_404(ChildrenProgram, id=program_id)
 
-        if not child_id:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'No child ID provided'
-            })
+    # Get the children's ministry
+    children_ministry = ChildrensMinistry.objects.first()  # Adjust as needed
 
-        child = get_object_or_404(Child, id=child_id, parent=request.user)
-        program = get_object_or_404(ChildrenProgram, id=program_id)
+    # Check if children's ministry exists
+    if not children_ministry:
+        messages.error(request, 'No children\'s ministry found. Please contact the administrator.')
+        return redirect('services:children_program_detail', program_id=program_id)
 
-        # Check if already enrolled
-        if ChildProgramEnrollment.objects.filter(child=child, program=program).exists():
-            return JsonResponse({
-                'status': 'error',
-                'message': f'{child.first_name} is already enrolled in this program'
-            })
+    # Get user's children
+    user_children = Child.objects.filter(parent=request.user)
 
-        # Check if spots are available
-        if program.spots_available <= 0:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'No spots available in this program'
-            })
+    # Parse age_group to get min and max ages
+    if program.age_group == 'all':
+        min_age = 0
+        max_age = 18  # Or any upper limit you want to set
+    else:
+        # Parse age range from the format like '2-4', '5-7', etc.
+        age_range = program.age_group.split('-')
+        min_age = int(age_range[0])
+        max_age = int(age_range[1])
 
-        # Create the enrollment
-        enrollment = ChildProgramEnrollment(
-            child=child,
+    if request.method == 'POST':
+        form = ChildProgramEnrollmentForm(
+            request.POST,
+            user=request.user,
             program=program
         )
-        enrollment.save()
 
-        return JsonResponse({
-            'status': 'success',
-            'message': f'{child.first_name} has been enrolled in {program.title}'
-        })
+        # Print form errors to console for debugging
+        if not form.is_valid():
+            print(f"Form errors: {form.errors}")
+            print(f"Form data: {form.data}")
+            messages.error(request, 'Please correct the errors below')
+        else:
+            child = form.cleaned_data['child']
 
-    except Exception as e:
-        return JsonResponse({
-            'status': 'error',
-            'message': f'Error: {str(e)}'
-        })
+            # Check if already enrolled
+            if ChildProgramEnrollment.objects.filter(child=child, program=program).exists():
+                messages.error(request, f'{child.first_name} is already enrolled in this program')
+                return redirect('services:register_child_for_program', program_id=program_id)
+
+            # Check if spots are available
+            if program.spots_available <= 0:
+                messages.error(request, 'No spots available in this program')
+                return redirect('services:register_child_for_program', program_id=program_id)
+
+            # Check age eligibility
+            child_age = child.calculate_age()
+            if child_age < min_age or child_age > max_age:
+                messages.error(
+                    request,
+                    f'{child.first_name} is {child_age} years old and not eligible for this program (ages {min_age}-{max_age})'
+                )
+                return redirect('services:register_child_for_program', program_id=program_id)
+
+            try:
+                # Create the enrollment
+                enrollment = form.save(commit=False)
+                enrollment.program = program
+                enrollment.children_ministry = children_ministry
+                enrollment.save()
+
+                messages.success(
+                    request,
+                    f'{child.first_name} has been successfully enrolled in {program.title}'
+                )
+                return redirect('services:children_program_detail', program_id=program_id)
+
+            except Exception as e:
+                print(f"Enrollment error: {str(e)}")
+                messages.error(request, f'Error enrolling child: {str(e)}')
+                return redirect('services:register_child_for_program', program_id=program_id)
+    else:
+        # GET request - display the form
+        # Explicitly set the children_ministry field to ensure it's properly initialized
+        initial_data = {'children_ministry': children_ministry.id}
+        form = ChildProgramEnrollmentForm(
+            user=request.user,
+            program=program,
+            initial=initial_data
+        )
+
+    context = {
+        'form': form,
+        'program': program,
+        'user_children': user_children,
+        'min_age': min_age,
+        'max_age': max_age,
+    }
+
+    return render(request, 'services/children/register_child_for_program.html', context)
 
 
 @login_required
@@ -3924,7 +4016,7 @@ def children_ministry_list(request):
     events = ChildrenProgram.objects.filter(
         date__gte=today
     ).order_by('date', 'time')
-    return render(request, 'services/children/children_events.html', {
+    return render(request, 'services/children/list.html', {
         'events': events,
     })
 
@@ -4494,3 +4586,420 @@ def marriage_register(request, slug):
         return redirect(program.get_absolute_url())  # Redirect to detail page
 
     return render(request, 'services/marriage/register.html', {'program': program})
+
+
+# views.py (in your services app)
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from .models import MarriageMinistry
+from .forms import MarriageMinistryForm, MarriageRegistrationForm
+
+
+# Existing views...
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def marriage_edit(request, slug):
+    ministry = get_object_or_404(MarriageMinistry, slug=slug)
+
+    if request.method == 'POST':
+        form = MarriageMinistryForm(request.POST, instance=ministry)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Marriage ministry updated successfully.")
+            return redirect('services:marriage_detail', slug=ministry.slug)
+    else:
+        form = MarriageMinistryForm(instance=ministry)
+
+    return render(request, 'services/marriage/marriage_ministry_edit.html', {
+        'form': form,
+        'ministry': ministry,
+        'is_edit': True
+    })
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def marriage_delete(request, slug):
+    ministry = get_object_or_404(MarriageMinistry, slug=slug)
+
+    if request.method == 'POST':
+        ministry.delete()
+        messages.success(request, "Marriage ministry deleted successfully.")
+        return redirect('services:marriage_list')
+
+    return redirect('services:marriage_detail', slug=slug)
+
+
+@login_required
+def marriage_register(request, slug):
+    ministry = get_object_or_404(MarriageMinistry, slug=slug)
+
+    # Check if already registered
+    if request.user in ministry.facilitators.all():
+        messages.info(request, "You are already registered for this ministry.")
+        return redirect('services:marriage_detail', slug=slug)
+
+    # Check if ministry is full
+    if ministry.facilitators.count() >= ministry.max_couples:
+        messages.error(request, "This ministry is currently full.")
+        return redirect('services:marriage_detail', slug=slug)
+
+    if request.method == 'POST':
+        form = MarriageRegistrationForm(request.POST)
+        if form.is_valid():
+            registration = form.save(commit=False)
+            registration.user = request.user
+            registration.ministry = ministry
+            registration.save()
+
+            # Add user to facilitators
+            ministry.facilitators.add(request.user)
+
+            messages.success(request, "You have successfully registered for this ministry.")
+            return redirect('services:marriage_detail', slug=slug)
+        else:
+            # If form is invalid, show the modal again with errors
+            return render(request, 'services/marriage/marriage_ministry_detail.html', {
+                'ministry': ministry,
+                'registration_form': form,
+                'registration_error': True
+            })
+
+    return redirect('services:marriage_detail', slug=slug)
+
+
+@login_required
+def marriage_unregister(request, slug):
+    ministry = get_object_or_404(MarriageMinistry, slug=slug)
+
+    if request.method == 'POST':
+        # Check if user is registered
+        if request.user in ministry.facilitators.all():
+            # Remove user from facilitators
+            ministry.facilitators.remove(request.user)
+
+            # Delete registration record if it exists
+            from .models import MarriageRegistration
+            MarriageRegistration.objects.filter(user=request.user, ministry=ministry).delete()
+
+            messages.success(request, "Your registration has been cancelled.")
+        else:
+            messages.error(request, "You are not registered for this ministry.")
+
+    return redirect('services:marriage_detail', slug=slug)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def marriage_remove_participant(request, slug):
+    ministry = get_object_or_404(MarriageMinistry, slug=slug)
+
+    if request.method == 'POST':
+        couple_id = request.POST.get('couple_id')
+
+        if couple_id:
+            from .models import MarriageRegistration
+            try:
+                registration = MarriageRegistration.objects.get(id=couple_id, ministry=ministry)
+                user = registration.user
+
+                # Remove user from facilitators
+                ministry.facilitators.remove(user)
+
+                # Delete registration
+                registration.delete()
+
+                messages.success(request, f"{user.get_full_name()} has been removed from this ministry.")
+            except MarriageRegistration.DoesNotExist:
+                messages.error(request, "Registration not found.")
+        else:
+            messages.error(request, "Invalid request.")
+
+    return redirect('services:marriage_detail', slug=slug)
+
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import FamilyEvent
+
+
+# Your existing view functions
+
+@login_required
+def family_event_join(request, slug):
+    """
+    Allow a user to join a family event
+    """
+    event = get_object_or_404(FamilyEvent, slug=slug)
+
+    # Check if the event is already at capacity
+    if event.participants.count() >= event.max_participants:
+        messages.error(request, "Sorry, this event has reached its maximum capacity.")
+        return redirect('services:family_event_detail', slug=slug)
+
+    # Check if user is already a participant
+    if request.user in event.participants.all():
+        messages.info(request, "You are already registered for this event.")
+    else:
+        # Add user to participants
+        event.participants.add(request.user)
+        messages.success(request, f"You have successfully registered for {event.title}.")
+
+    return redirect('services:family_event_detail', slug=slug)
+
+
+@login_required
+def family_event_leave(request, slug):
+    """
+    Allow a user to leave a family event
+    """
+    event = get_object_or_404(FamilyEvent, slug=slug)
+
+    # Check if user is a participant
+    if request.user in event.participants.all():
+        # Remove user from participants
+        event.participants.remove(request.user)
+        messages.success(request, f"You have successfully unregistered from {event.title}.")
+    else:
+        messages.info(request, "You are not registered for this event.")
+
+    return redirect('services:family_event_detail', slug=slug)
+
+
+# In services/views.py
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import FamilyEvent
+
+
+@login_required
+def family_event_detail(request, slug):
+    """
+    Display details of a specific family event
+    """
+    event = get_object_or_404(FamilyEvent, slug=slug)
+
+    # Check if user is already registered
+    is_registered = request.user in event.participants.all()
+
+    # Check if event is full
+    is_full = event.participants.count() >= event.max_participants
+
+    # Get list of participants (if user is organizer)
+    participants = None
+    if request.user == event.organizer:
+        participants = event.participants.all()
+
+    context = {
+        'event': event,
+        'is_registered': is_registered,
+        'is_full': is_full,
+        'participants': participants,
+        'remaining_spots': max(0, event.max_participants - event.participants.count()),
+    }
+
+    return render(request, 'services/family/family_event_detail.html', context)
+
+
+@login_required
+def child_resource_list(request):
+    """View to list all resources with optional filtering"""
+    resources = ChildResource.objects.all().order_by('-created_at')
+
+    # Filter by resource type if specified
+    resource_type = request.GET.get('type')
+    if resource_type:
+        resources = resources.filter(resource_type=resource_type)
+
+    # Filter by age group if specified
+    age_group = request.GET.get('age')
+    if age_group:
+        resources = resources.filter(age_group=age_group)
+
+    context = {
+        'resources': resources,
+        'resource_types': ChildResource.RESOURCE_TYPE_CHOICES,
+        'age_groups': ChildResource._meta.get_field('age_group').choices,
+        'selected_type': resource_type,
+        'selected_age': age_group,
+    }
+
+    return render(request, 'services/children/resource_list.html', context)
+
+
+@login_required
+def child_resource_detail(request, resource_id):
+    """View to display a single resource"""
+    resource = get_object_or_404(ChildResource, id=resource_id)
+
+    context = {
+        'resource': resource,
+    }
+
+    return render(request, 'services/children/resource_detail.html', context)
+
+
+@login_required
+def child_create_resource(request):
+    """View to create a new resource"""
+    if request.method == 'POST':
+        form = ChildResourceForm(request.POST, request.FILES)
+        if form.is_valid():
+            resource = form.save()
+            messages.success(request, f'Resource "{resource.title}" has been created successfully!')
+            return redirect('services:resource_detail', resource_id=resource.id)
+    else:
+        form = ChildResourceForm()
+
+    context = {
+        'form': form,
+        'title': 'Create New Resource',
+        'button_text': 'Create Resource',
+    }
+
+    return render(request, 'services/children/resource_form.html', context)
+
+
+@login_required
+def child_resource_update(request, resource_id):
+    """View to update an existing resource"""
+    resource = get_object_or_404(ChildResource, id=resource_id)
+
+    if request.method == 'POST':
+        form = ChildResourceForm(request.POST, request.FILES, instance=resource)
+        if form.is_valid():
+            resource = form.save()
+            messages.success(request, f'Resource "{resource.title}" has been updated successfully!')
+            return redirect('services:resource_detail', resource_id=resource.id)
+    else:
+        form = ChildResourceForm(instance=resource)
+
+    context = {
+        'form': form,
+        'resource': resource,
+        'title': 'Update Resource',
+        'button_text': 'Update Resource',
+    }
+
+    return render(request, 'services/children/resource_form.html', context)
+
+
+@login_required
+def child_resource_delete(request, resource_id):
+    """View to delete a resource"""
+    resource = get_object_or_404(ChildResource, id=resource_id)
+
+    if request.method == 'POST':
+        resource_title = resource.title
+        resource.delete()
+        messages.success(request, f'Resource "{resource_title}" has been deleted successfully!')
+        return redirect('services:resource_list')
+
+    context = {
+        'resource': resource,
+    }
+
+    return render(request, 'services/children/resource_confirm_delete.html', context)
+
+
+# Class-based views (alternative approach)
+
+class ChildResourceListView(LoginRequiredMixin, ListView):
+    model = ChildResource
+    template_name = 'services/children/resource_list.html'
+    context_object_name = 'resources'
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        # Filter by resource type if specified
+        resource_type = self.request.GET.get('type')
+        if resource_type:
+            queryset = queryset.filter(resource_type=resource_type)
+
+        # Filter by age group if specified
+        age_group = self.request.GET.get('age')
+        if age_group:
+            queryset = queryset.filter(age_group=age_group)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['resource_types'] = ChildResource.RESOURCE_TYPE_CHOICES
+        context['age_groups'] = ChildResource._meta.get_field('age_group').choices
+        context['selected_type'] = self.request.GET.get('type')
+        context['selected_age'] = self.request.GET.get('age')
+        return context
+
+
+class ChildResourceDetailView(LoginRequiredMixin, DetailView):
+    model = ChildResource
+    template_name = 'services/children/resource_detail.html'
+    context_object_name = 'resource'
+    pk_url_kwarg = 'resource_id'
+
+
+class ChildResourceCreateView(LoginRequiredMixin, CreateView):
+    model = ChildResource
+    form_class = ChildResourceForm
+    template_name = 'services/children/resource_form.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Create New Resource'
+        context['button_text'] = 'Create Resource'
+        return context
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, f'Resource "{self.object.title}" has been created successfully!')
+        return response
+
+    def get_success_url(self):
+        return reverse_lazy('services:resource_detail', kwargs={'resource_id': self.object.id})
+
+
+class ChildResourceUpdateView(LoginRequiredMixin, UpdateView):
+    model = ChildResource
+    form_class = ChildResourceForm
+    template_name = 'services/children/resource_form.html'
+    pk_url_kwarg = 'resource_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Update Resource'
+        context['button_text'] = 'Update Resource'
+        context['resource'] = self.object
+        return context
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, f'Resource "{self.object.title}" has been updated successfully!')
+        return response
+
+    def get_success_url(self):
+        return reverse_lazy('services:resource_detail', kwargs={'resource_id': self.object.id})
+
+
+class ChildResourceDeleteView(LoginRequiredMixin, DeleteView):
+    model = ChildResource
+    template_name = 'services/children/resource_confirm_delete.html'
+    context_object_name = 'resource'
+    pk_url_kwarg = 'resource_id'
+    success_url = reverse_lazy('services:resource_list')
+
+    def delete(self, request, *args, **kwargs):
+        resource = self.get_object()
+        resource_title = resource.title
+        response = super().delete(request, *args, **kwargs)
+        messages.success(self.request, f'Resource "{resource_title}" has been deleted successfully!')
+        return response

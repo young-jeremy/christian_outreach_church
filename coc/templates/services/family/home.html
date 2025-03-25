@@ -186,7 +186,7 @@
                         </h6>
                         <p class="mb-1 small">{{ discussion.content|safe|truncatewords:30 }}</p>
                         <small class="text-muted">
-                            By {{ discussion.author.get_full_name }} |
+                            By {{ discussion.author.username }} |
                             {{ discussion.created_at|timesince }} ago |
                             <i class="bi bi-chat-dots"></i> {{ discussion.comments.count }} comments |
                             <i class="bi bi-heart"></i> {{ discussion.likes.count }} likes

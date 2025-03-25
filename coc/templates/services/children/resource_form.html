@@ -1,0 +1,144 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="h3 mb-0">{{ title }}</h1>
+                </div>
+                <div class="card-body">
+                    <form enctype="multipart/form-data" method="post">
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ form.title.id_for_label }}">Title</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                            <div class="text-danger">
+                                {% for error in form.title.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="text-danger">
+                                {% for error in form.description.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ form.resource_type.id_for_label }}">Resource Type</label>
+                            {{ form.resource_type }}
+                            {% if form.resource_type.errors %}
+                            <div class="text-danger">
+                                {% for error in form.resource_type.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3 file-field">
+                            <label class="form-label" for="{{ form.file.id_for_label }}">File</label>
+                            {{ form.file }}
+                            <small class="form-text text-muted">Required for PDF and Activity resources</small>
+                            {% if form.file.errors %}
+                            <div class="text-danger">
+                                {% for error in form.file.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3 url-field">
+                            <label class="form-label" for="{{ form.url.id_for_label }}">URL</label>
+                            {{ form.url }}
+                            <small class="form-text text-muted">Required for Video and External Link resources</small>
+                            {% if form.url.errors %}
+                            <div class="text-danger">
+                                {% for error in form.url.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ form.age_group.id_for_label }}">Age Group</label>
+                            {{ form.age_group }}
+                            {% if form.age_group.errors %}
+                            <div class="text-danger">
+                                {% for error in form.age_group.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a class="btn btn-secondary" href="{% url 'services:resource_list' %}">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-save"></i> {{ button_text }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Show/hide file and URL fields based on resource type
+    document.addEventListener('DOMContentLoaded', function() {
+        const resourceTypeSelect = document.getElementById('{{ form.resource_type.id_for_label }}');
+        const fileField = document.querySelector('.file-field');
+        const urlField = document.querySelector('.url-field');
+        
+        function updateFields() {
+            const resourceType = resourceTypeSelect.value;
+            
+            if (resourceType === 'pdf' || resourceType === 'activity') {
+                fileField.style.display = 'block';
+                urlField.style.display = 'none';
+            } else if (resourceType === 'video' || resourceType === 'link') {
+                fileField.style.display = 'none';
+                urlField.style.display = 'block';
+            } else {
+                fileField.style.display = 'block';
+                urlField.style.display = 'block';
+            }
+        }
+        
+        // Initial update
+        updateFields();
+        
+        // Update on change
+        resourceTypeSelect.addEventListener('change', updateFields);
+    });
+</script>
+{% endblock %}

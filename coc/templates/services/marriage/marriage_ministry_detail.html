@@ -3,13 +3,13 @@
 
 {% block extra_css %}
 <style>
-    .program-header {
+    .ministry-header {
         background-color: #f8f9fa;
         padding: 2rem 0;
         margin-bottom: 2rem;
         border-radius: 0.5rem;
     }
-    .program-image {
+    .ministry-image {
         max-height: 300px;
         object-fit: cover;
         border-radius: 0.5rem;
@@ -31,17 +31,26 @@
         justify-content: center;
         font-size: 1.2rem;
     }
-    .status-upcoming {
-        background-color: #0d6efd;
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        color: white;
+        font-weight: 500;
     }
-    .status-ongoing {
-        background-color: #198754;
-    }
-    .status-completed {
-        background-color: #6c757d;
-    }
-    .status-cancelled {
-        background-color: #dc3545;
+    .status-upcoming { background-color: #0d6efd; }
+    .status-ongoing { background-color: #198754; }
+    .status-completed { background-color: #6c757d; }
+    .status-cancelled { background-color: #dc3545; }
+    .couple-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #495057;
     }
 </style>
 {% endblock %}
@@ -63,47 +72,47 @@
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'services:marriage_list' %}">Marriage Ministry</a></li>
-            <li aria-current="page" class="breadcrumb-item active">{{ program.title }}</li>
+            <li aria-current="page" class="breadcrumb-item active">{{ ministry.title }}</li>
         </ol>
     </nav>
 
     <div class="row">
         <div class="col-12">
-            <!-- Program Header -->
-            <div class="program-header shadow-sm">
+            <!-- Ministry Header -->
+            <div class="ministry-header shadow-sm">
                 <div class="container">
                     <div class="row align-items-center">
                         <div class="col-md-8">
-                            <h1 class="display-5 mb-3">{{ program.title }}</h1>
+                            <h1 class="display-5 mb-3">{{ ministry.title }}</h1>
                             <div class="d-flex align-items-center mb-3">
-                                <span class="badge status-{{ program.status }} me-3 px-3 py-2">
-                                    {{ program.get_status_display }}
+                                <span class="status-badge status-{{ ministry.status }} me-3">
+                                    {{ ministry.get_status_display }}
                                 </span>
                                 <span class="text-muted">
                                     <i class="bi bi-people me-2"></i>
-                                    {{ program.facilitators.count }}/{{ program.max_couples }} couples registered
+                                    {{ ministry.facilitators.count }}/{{ ministry.max_couples }} couples registered
                                 </span>
                             </div>
                             <div class="d-flex flex-wrap">
                                 <div class="me-4 mb-2">
                                     <i class="bi bi-calendar me-2 text-primary"></i>
-                                    {{ program.start_date|date:"F j, Y" }}
-                                    {% if program.end_date %}
-                                    - {{ program.end_date|date:"F j, Y" }}
+                                    {{ ministry.start_date|date:"F j, Y" }}
+                                    {% if ministry.end_date %}
+                                    - {{ ministry.end_date|date:"F j, Y" }}
                                     {% endif %}
                                 </div>
                                 <div class="me-4 mb-2">
                                     <i class="bi bi-clock me-2 text-primary"></i>
-                                    {{ program.meeting_time|time:"g:i A" }}
+                                    {{ ministry.meeting_time|time:"g:i A" }}
                                 </div>
                                 <div class="mb-2">
                                     <i class="bi bi-geo-alt me-2 text-primary"></i>
-                                    {% if program.meeting_type == 'virtual' %}
+                                    {% if ministry.meeting_type == 'virtual' %}
                                     Virtual Meeting
-                                    {% elif program.meeting_type == 'hybrid' %}
-                                    Hybrid ({{ program.location }})
+                                    {% elif ministry.meeting_type == 'hybrid' %}
+                                    Hybrid ({{ ministry.location }})
                                     {% else %}
-                                    {{ program.location }}
+                                    {{ ministry.location }}
                                     {% endif %}
                                 </div>
                             </div>
@@ -112,22 +121,38 @@
                             {% if user.is_staff %}
                             <div class="btn-group mb-3">
                                 <a class="btn btn-outline-primary"
-                                   href="{% url 'services:marriage_edit' program.slug %}">
+                                   href="{% url 'services:marriage_edit' ministry.slug %}">
                                     <i class="bi bi-pencil me-2"></i>Edit
                                 </a>
-                                <a class="btn btn-outline-danger"
-                                   href="{% url 'services:marriage_delete' program.slug %}">
+                                <button class="btn btn-outline-danger" data-bs-target="#deleteModal" data-bs-toggle="modal"
+                                        type="button">
                                     <i class="bi bi-trash me-2"></i>Delete
-                                </a>
+                                </button>
                             </div>
                             {% endif %}
 
-                            {% if program.status == 'upcoming' or program.status == 'ongoing' %}
-                            <div class="d-block">
-                                <button class="btn btn-primary" data-bs-target="#registerModal" data-bs-toggle="modal">
-                                    <i class="bi bi-heart me-2"></i>Register Now
-                                </button>
-                            </div>
+                            {% if ministry.status == 'upcoming' or ministry.status == 'ongoing' %}
+                            {% if ministry.facilitators.count < ministry.max_couples %}
+                            {% if user.is_authenticated %}
+                            {% if user in ministry.facilitators.all %}
+                            <button class="btn btn-success" disabled>
+                                <i class="bi bi-check-circle me-2"></i>Already Registered
+                            </button>
+                            {% else %}
+                            <button class="btn btn-primary" data-bs-target="#registerModal" data-bs-toggle="modal">
+                                <i class="bi bi-heart me-2"></i>Register Now
+                            </button>
+                            {% endif %}
+                            {% else %}
+                            <a class="btn btn-primary" href="{% url 'login' %}?next={{ request.path }}">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Login to Register
+                            </a>
+                            {% endif %}
+                            {% else %}
+                            <button class="btn btn-secondary" disabled>
+                                <i class="bi bi-x-circle me-2"></i>Registration Full
+                            </button>
+                            {% endif %}
                             {% endif %}
                         </div>
                     </div>
@@ -135,21 +160,16 @@
             </div>
 
             <div class="row">
-                <!-- Program Details -->
+                <!-- Ministry Details -->
                 <div class="col-lg-8">
                     <div class="card mb-4 shadow-sm">
                         <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Program Details</h5>
+                            <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Ministry Details</h5>
                         </div>
                         <div class="card-body">
                             <div class="mb-4">
-                                {% if program.image %}
-                                <img alt="{{ program.title }}" class="img-fluid program-image mb-4"
-                                     src="{{ program.image.url }}">
-                                {% endif %}
-
-                                <div class="program-description">
-                                    {{ program.description|safe }}
+                                <div class="ministry-description">
+                                    {{ ministry.description|safe }}
                                 </div>
                             </div>
 
@@ -161,15 +181,15 @@
                                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                                 <span><i
                                                         class="bi bi-calendar-check me-2 text-primary"></i>Start Date</span>
-                                                <span class="fw-bold">{{ program.start_date|date:"F j, Y" }}</span>
+                                                <span class="fw-bold">{{ ministry.start_date|date:"F j, Y" }}</span>
                                             </li>
                                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                                 <span><i class="bi bi-calendar-x me-2 text-primary"></i>End Date</span>
-                                                <span class="fw-bold">{{ program.end_date|date:"F j, Y" }}</span>
+                                                <span class="fw-bold">{{ ministry.end_date|date:"F j, Y" }}</span>
                                             </li>
                                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                                 <span><i class="bi bi-clock me-2 text-primary"></i>Meeting Time</span>
-                                                <span class="fw-bold">{{ program.meeting_time|time:"g:i A" }}</span>
+                                                <span class="fw-bold">{{ ministry.meeting_time|time:"g:i A" }}</span>
                                             </li>
                                         </ul>
                                     </div>
@@ -178,32 +198,32 @@
                                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                                 <span><i
                                                         class="bi bi-people me-2 text-primary"></i>Maximum Couples</span>
-                                                <span class="fw-bold">{{ program.max_couples }}</span>
+                                                <span class="fw-bold">{{ ministry.max_couples }}</span>
                                             </li>
                                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                                 <span><i class="bi bi-geo-alt me-2 text-primary"></i>Meeting Type</span>
-                                                <span class="fw-bold">{{ program.get_meeting_type_display }}</span>
+                                                <span class="fw-bold">{{ ministry.get_meeting_type_display }}</span>
                                             </li>
                                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                                 <span><i class="bi bi-pin-map me-2 text-primary"></i>Location</span>
-                                                <span class="fw-bold">{{ program.location|default:"N/A" }}</span>
+                                                <span class="fw-bold">{{ ministry.location|default:"N/A" }}</span>
                                             </li>
                                         </ul>
                                     </div>
                                 </div>
 
-                                {% if program.meeting_type == 'virtual' or program.meeting_type == 'hybrid' %}
+                                {% if ministry.meeting_type == 'virtual' or ministry.meeting_type == 'hybrid' %}
                                 <div class="mt-3">
                                     <div class="alert alert-info">
                                         <div class="d-flex align-items-center">
                                             <i class="bi bi-camera-video me-3 fs-4"></i>
                                             <div>
                                                 <h6 class="mb-1">Virtual Meeting Link</h6>
-                                                {% if program.zoom_link %}
+                                                {% if ministry.zoom_link and user in ministry.facilitators.all %}
                                                 <p class="mb-0">
-                                                    <a class="text-decoration-none" href="{{ program.zoom_link }}"
+                                                    <a class="text-decoration-none" href="{{ ministry.zoom_link }}"
                                                        target="_blank">
-                                                        {{ program.zoom_link }}
+                                                        {{ ministry.zoom_link }}
                                                         <i class="bi bi-box-arrow-up-right ms-1"></i>
                                                     </a>
                                                 </p>
@@ -227,19 +247,19 @@
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                {% for facilitator in program.facilitators.all %}
+                                {% for facilitator in ministry.facilitators.all %}
                                 <div class="col-md-6 mb-3">
                                     <div class="d-flex align-items-center">
-                                        {% if facilitator.profile.photo %}
-                                        <img alt="{{ facilitator.get_full_name }}" class="facilitator-avatar me-3"
-                                             src="{{ facilitator.profile.photo.url }}">
+                                        {% if facilitator.profile.avatar %}
+                                        <img alt="{{ facilitator.username }}" class="facilitator-avatar me-3"
+                                             height="100" src="{{ facilitator.profile.avatar.url }}" width="150">
                                         {% else %}
                                         <div class="facilitator-placeholder me-3">
                                             {{ facilitator.first_name|first }}{{ facilitator.last_name|first }}
                                         </div>
                                         {% endif %}
                                         <div>
-                                            <h6 class="mb-0">{{ facilitator.get_full_name }}</h6>
+                                            <h6 class="mb-0">{{ facilitator.username }}</h6>
                                             <small class="text-muted">{{ facilitator.profile.title|default:"Facilitator"
                                                 }}</small>
                                         </div>
@@ -253,6 +273,63 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Registered Couples Section (visible to staff only) -->
+                    {% if user.is_staff and registered_couples %}
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="bi bi-people me-2"></i>Registered Couples</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                    <tr>
+                                        <th>Couple</th>
+                                        <th>Years Together</th>
+                                        <th>Registered On</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for couple in registered_couples %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="couple-avatar me-2">
+                                                    {{ couple.user.first_name|first }}{{ couple.user.last_name|first }}
+                                                </div>
+                                                <div>
+                                                    <div>{{ couple.user.username }}</div>
+                                                    <small class="text-muted">& {{ couple.spouse_name }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ couple.years_married|default:"N/A" }}</td>
+                                        <td>{{ couple.registered_at|date:"M d, Y" }}</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a class="btn btn-outline-primary"
+                                                   href="mailto:{{ couple.user.email }}">
+                                                    <i class="bi bi-envelope"></i>
+                                                </a>
+                                                <button class="btn btn-outline-danger" data-bs-target="#removeModal"
+                                                        data-bs-toggle="modal"
+                                                        data-couple-id="{{ couple.id }}"
+                                                        data-couple-name="{{ couple.user.username }}"
+                                                        type="button">
+                                                    <i class="bi bi-x"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
 
                 <!-- Sidebar -->
@@ -266,62 +343,138 @@
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span>Spots Filled:</span>
-                                    <span class="fw-bold">{{ program.facilitators.count }}/{{ program.max_couples }}</span>
+                                    <span class="fw-bold">{{ ministry.facilitators.count }}/{{ ministry.max_couples }}</span>
                                 </div>
                                 <div class="progress" style="height: 10px;">
-                                    {% with registered=program.facilitators.count %}
-                                    {% with percentage=registered|floatformat:0 %}
-                                    <div aria-valuemax="{{ program.max_couples }}" aria-valuemin="0"
+                                    {% with registered=ministry.facilitators.count %}
+                                    <div aria-valuemax="{{ ministry.max_couples }}" aria-valuemin="0"
+                                         class="progress-bar bg-success"
                                          aria-valuenow="{{ registered }}"
-                                         class="progress-bar bg-success" role="progressbar"
-                                         style="width: {% if program.max_couples > 0 %}{{ registered|divisibleby:program.max_couples|floatformat:0 }}{% else %}0{% endif %}%">
+                                         role="progressbar"
+                                         style="width: {% if ministry.max_couples > 0 %}{{ registered|floatformat:0 }}0%{% else %}0%{% endif %}">
                                     </div>
-                                    {% endwith %}
                                     {% endwith %}
                                 </div>
                             </div>
 
-                            {% if program.status == 'upcoming' or program.status == 'ongoing' %}
-                            {% if program.facilitators.count < program.max_couples %}
+                            {% if ministry.status == 'upcoming' or ministry.status == 'ongoing' %}
+                            {% if ministry.facilitators.count < ministry.max_couples %}
                             <div class="alert alert-success">
                                 <i class="bi bi-check-circle me-2"></i>
-                                Registration is open! {{ program.max_couples }} spots remaining.
+                                Registration is open! Spots remaining: {{ ministry.max_couples }} - {{
+                                ministry.facilitators.count }}
                             </div>
+                            {% if user.is_authenticated %}
+                            {% if user in ministry.facilitators.all %}
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                You are already registered for this ministry.
+                            </div>
+                            <button class="btn btn-outline-danger w-100" data-bs-target="#cancelModal"
+                                    data-bs-toggle="modal">
+                                <i class="bi bi-x-circle me-2"></i>Cancel Registration
+                            </button>
+                            {% else %}
                             <button class="btn btn-primary w-100" data-bs-target="#registerModal"
                                     data-bs-toggle="modal">
                                 <i class="bi bi-heart me-2"></i>Register Now
                             </button>
+                            {% endif %}
+                            {% else %}
+                            <a class="btn btn-primary w-100" href="{% url 'login' %}?next={{ request.path }}">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Login to Register
+                            </a>
+                            {% endif %}
                             {% else %}
                             <div class="alert alert-warning">
                                 <i class="bi bi-exclamation-triangle me-2"></i>
-                                This program is currently full.
+                                This ministry is currently full.
                             </div>
                             <button class="btn btn-secondary w-100" disabled>
                                 <i class="bi bi-x-circle me-2"></i>Registration Full
                             </button>
                             {% endif %}
-                            {% elif program.status == 'completed' %}
+                            {% elif ministry.status == 'completed' %}
                             <div class="alert alert-secondary">
                                 <i class="bi bi-calendar-check me-2"></i>
-                                This program has been completed.
+                                This ministry has been completed.
                             </div>
-                            {% elif program.status == 'cancelled' %}
+                            {% elif ministry.status == 'cancelled' %}
                             <div class="alert alert-danger">
                                 <i class="bi bi-x-octagon me-2"></i>
-                                This program has been cancelled.
+                                This ministry has been cancelled.
                             </div>
                             {% endif %}
                         </div>
                     </div>
 
-                    <!-- Related Programs -->
+                    <!-- Ministry Benefits -->
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="bi bi-star me-2"></i>Benefits</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <div class="d-flex">
+                                        <div class="me-3 text-primary">
+                                            <i class="bi bi-chat-heart fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <h6>Improved Communication</h6>
+                                            <p class="mb-0 text-muted">Learn effective communication techniques to
+                                                strengthen your relationship.</p>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <div class="d-flex">
+                                        <div class="me-3 text-primary">
+                                            <i class="bi bi-people fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <h6>Community Support</h6>
+                                            <p class="mb-0 text-muted">Connect with other couples facing similar
+                                                challenges and joys.</p>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <div class="d-flex">
+                                        <div class="me-3 text-primary">
+                                            <i class="bi bi-book fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <h6>Biblical Foundation</h6>
+                                            <p class="mb-0 text-muted">Build your marriage on solid biblical principles
+                                                and values.</p>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <div class="d-flex">
+                                        <div class="me-3 text-primary">
+                                            <i class="bi bi-tools fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <h6>Practical Tools</h6>
+                                            <p class="mb-0 text-muted">Gain practical tools and resources to navigate
+                                                marriage challenges.</p>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Related Ministries -->
                     <div class="card shadow-sm">
                         <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-collection me-2"></i>Related Programs</h5>
+                            <h5 class="mb-0"><i class="bi bi-collection me-2"></i>Related Ministries</h5>
                         </div>
                         <div class="card-body">
                             <div class="list-group list-group-flush">
-                                {% for related in related_programs %}
+                                {% for related in related_ministries %}
                                 <a class="list-group-item list-group-item-action"
                                    href="{% url 'services:marriage_detail' related.slug %}">
                                     <div class="d-flex justify-content-between align-items-center">
@@ -331,21 +484,21 @@
                                                 {{ related.start_date|date:"F j, Y" }}
                                             </small>
                                         </div>
-                                        <span class="badge status-{{ related.status }}">
+                                        <span class="badge status-badge status-{{ related.status }}">
                                             {{ related.get_status_display }}
                                         </span>
                                     </div>
                                 </a>
                                 {% empty %}
                                 <div class="text-center py-3">
-                                    <p class="text-muted mb-0">No related programs available.</p>
+                                    <p class="text-muted mb-0">No related ministries available.</p>
                                 </div>
                                 {% endfor %}
                             </div>
                         </div>
                         <div class="card-footer bg-light">
                             <a class="btn btn-outline-primary w-100" href="{% url 'services:marriage_list' %}">
-                                <i class="bi bi-grid me-2"></i>View All Programs
+                                <i class="bi bi-grid me-2"></i>View All Ministries
                             </a>
                         </div>
                     </div>
@@ -361,23 +514,23 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="registerModalLabel">
-                    <i class="bi bi-heart me-2"></i>Register for {{ program.title }}
+                    <i class="bi bi-heart me-2"></i>Register for {{ ministry.title }}
                 </h5>
                 <button aria-label="Close" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         type="button"></button>
             </div>
-            <form action="{% url 'services:marriage_register' program.slug %}" method="post">
+            <form action="{% url 'services:marriage_register' ministry.slug %}" method="post">
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle me-2"></i>
-                        You are registering for the following program:
+                        You are registering for the following ministry:
                         <ul class="mb-0 mt-2">
-                            <li><strong>Program:</strong> {{ program.title }}</li>
-                            <li><strong>Dates:</strong> {{ program.start_date|date:"F j, Y" }} - {{
-                                program.end_date|date:"F j, Y" }}
+                            <li><strong>Ministry:</strong> {{ ministry.title }}</li>
+                            <li><strong>Dates:</strong> {{ ministry.start_date|date:"F j, Y" }} - {{
+                                ministry.end_date|date:"F j, Y" }}
                             </li>
-                            <li><strong>Time:</strong> {{ program.meeting_time|time:"g:i A" }}</li>
+                            <li><strong>Time:</strong> {{ ministry.meeting_time|time:"g:i A" }}</li>
                         </ul>
                     </div>
 
@@ -413,6 +566,96 @@
         </div>
     </div>
 </div>
+
+<!-- Cancel Registration Modal -->
+<div aria-hidden="true" aria-labelledby="cancelModalLabel" class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="cancelModalLabel">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Cancel Registration
+                </h5>
+                <button aria-label="Close" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        type="button"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel your registration for <strong>{{ ministry.title }}</strong>?</p>
+                <p>This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">Keep Registration
+                </button>
+                <form action="{% url 'services:marriage_unregister' ministry.slug %}" method="post">
+                    {% csrf_token %}
+                    <button class="btn btn-danger" type="submit">
+                        <i class="bi bi-x-circle me-2"></i>Cancel Registration
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Ministry Modal (Admin Only) -->
+{% if user.is_staff %}
+<div aria-hidden="true" aria-labelledby="deleteModalLabel" class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi bi-trash me-2"></i>Delete Ministry
+                </h5>
+                <button aria-label="Close" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        type="button"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong>{{ ministry.title }}</strong>?</p>
+                <p>This action cannot be undone and will remove all registrations.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+                <form action="{% url 'services:marriage_delete' ministry.slug %}" method="post">
+                    {% csrf_token %}
+                    <button class="btn btn-danger" type="submit">
+                        <i class="bi bi-trash me-2"></i>Delete Ministry
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Remove Participant Modal (Admin Only) -->
+<div aria-hidden="true" aria-labelledby="removeModalLabel" class="modal fade" id="removeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="removeModalLabel">
+                    <i class="bi bi-person-x me-2"></i>Remove Participant
+                </h5>
+                <button aria-label="Close" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        type="button"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to remove <strong id="coupleName"></strong> from this ministry?</p>
+                <p>This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+                <form action="{% url 'services:marriage_remove_participant' ministry.slug %}" id="removeParticipantForm"
+                      method="post">
+                    {% csrf_token %}
+                    <input id="coupleIdInput" name="couple_id" type="hidden">
+                    <button class="btn btn-danger" type="submit">
+                        <i class="bi bi-person-x me-2"></i>Remove Participant
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}
 
 {% block extra_js %}
@@ -423,6 +666,25 @@
         var registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
         registerModal.show();
         {% endif %}
+
+        // Handle remove participant modal
+        var removeModal = document.getElementById('removeModal');
+        if (removeModal) {
+            removeModal.addEventListener('show.bs.modal', function(event) {
+                var button = event.relatedTarget;
+                var coupleId = button.getAttribute('data-couple-id');
+                var coupleName = button.getAttribute('data-couple-name');
+
+                document.getElementById('coupleIdInput').value = coupleId;
+                document.getElementById('coupleName').textContent = coupleName;
+            });
+        }
+
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
     });
 </script>
 {% endblock %}

@@ -1,5 +1,6 @@
 {% extends 'base_dashboard.html' %}
 {% load static %}
+{% load widget_tweaks %}
 
 {% block content %}
     <div class="container py-4">
@@ -59,7 +60,7 @@
                                                 </div>
 
                                                 <h5 class="mt-3">Program Enrollments</h5>
-                                                {% with enrollments=children_enrollments|get_item:child %}
+                                                {% with enrollments=children_enrollments %}
                                                     {% if enrollments %}
                                                         <div class="table-responsive">
                                                             <table class="table table-striped">
@@ -97,7 +98,7 @@
                                                 {% endwith %}
 
                                                 <div class="mt-3">
-                                                    <a href="{% url 'services:children' %}" class="btn btn-primary">
+                                                    <a class="btn btn-primary" href="{% url 'services:child_list' %}">
                                                         Enroll in Programs
                                                     </a>
                                                     <a href="{% url 'services:edit_child' child.id %}"
@@ -137,7 +138,7 @@
                             <a href="{% url 'services:child_checkin' %}" class="btn btn-primary">
                                 <i class="bi bi-calendar-check"></i> Check-In Children
                             </a>
-                            <a href="{% url 'services:children' %}" class="btn btn-outline-primary">
+                            <a class="btn btn-outline-primary" href="{% url 'services:children_ministry_list' %}">
                                 <i class="bi bi-list-check"></i> View All Programs
                             </a>
                             <a href="{% url 'services:children_resources' %}" class="btn btn-outline-primary">
@@ -155,7 +156,7 @@
                         {% if upcoming_programs %}
                             <div class="list-group">
                                 {% for program in upcoming_programs %}
-                                    <a href="{% url 'services:children' %}"
+                                <a href="{% url 'services:child_list' %}"
                                        class="list-group-item list-group-item-action">
                                         <div class="d-flex w-100 justify-content-between">
                                             <h5 class="mb-1">{{ program.title }}</h5>

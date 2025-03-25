@@ -893,6 +893,12 @@ class Child(models.Model):
                 (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
         )
 
+    def calculate_age(self):
+        """Calculate the child's age in years"""
+        today = date.today()
+        born = self.date_of_birth
+        return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+
     @property
     def is_adult(self):
         return self.age >= 18
@@ -1751,11 +1757,13 @@ class MarriageMinistry(models.Model):
     slug = models.SlugField(unique=True)
     description = SummernoteTextField(null=True, blank=True)
     start_date = models.DateField(default=timezone.now)
+    requirements = models.CharField(max_length=500, null=True, blank=True)
     end_date = models.DateField(default=timezone.now)
     meeting_time = models.TimeField(auto_now=True)
     meeting_type = models.CharField(max_length=20, choices=MEETING_TYPE_CHOICES)
     location = models.CharField(max_length=255, blank=True)
     zoom_link = models.URLField(blank=True)
+    image = models.ImageField(default='static/img/coc.png')
     max_couples = models.PositiveIntegerField(default=10)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='upcoming')
     facilitators = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='facilitated_programs')
@@ -3017,3 +3025,20 @@ class SinglesResource(models.Model):
 
     def __str__(self):
         return self.title
+
+
+# models.py (add this to your existing models file)
+class MarriageRegistration(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    ministry = models.ForeignKey(MarriageMinistry, on_delete=models.CASCADE)
+    spouse_name = models.CharField(max_length=100)
+    spouse_email = models.EmailField(blank=True, null=True)
+    years_married = models.PositiveIntegerField(blank=True, null=True)
+    special_requests = models.TextField(blank=True)
+    registered_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'ministry')
+
+    def __str__(self):
+        return f"{self.user.get_full_name()} - {self.ministry.title}"

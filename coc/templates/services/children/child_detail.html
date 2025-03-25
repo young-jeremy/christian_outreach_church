@@ -311,7 +311,7 @@
                                         </p>
                                     </div>
                                     <div>
-                                        <form action="{% url 'services:enroll_child' child.id program.id %}"
+                                        <form action="{% url 'services:register_child_for_program'  program.id %}"
                                               method="post">
                                             {% csrf_token %}
                                             <button class="btn btn-sm btn-success" type="submit">

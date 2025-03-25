@@ -33,7 +33,7 @@
                 <p class="mb-1">{{ discussion.content|safe|truncatewords:50 }}</p>
                 <div class="d-flex justify-content-between align-items-center">
                     <small class="text-muted">
-                        By {{ discussion.author.get_full_name }} |
+                        By {{ discussion.author.username }} |
                         <i class="bi bi-chat-dots"></i> {{ discussion.comments.count }} comments |
                         <i class="bi bi-heart"></i> {{ discussion.likes.count }} likes
                     </small>

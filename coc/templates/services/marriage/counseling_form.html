@@ -55,6 +55,7 @@
 
                     <form method="post" novalidate>
                         {% csrf_token %}
+                        <input name="form_submitted" type="hidden" value="1">
 
                         <!-- Counselor Selection -->
                         <div class="mb-4">
@@ -65,13 +66,15 @@
                                 <label class="form-label" for="{{ form.counselor.id_for_label }}">
                                     Counselor <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select {% if form.counselor.errors %}is-invalid{% endif %}" id="{{ form.counselor.id_for_label }}"
+                                <select class="form-select {% if form.counselor.errors %}is-invalid{% endif %}"
+                                        id="{{ form.counselor.id_for_label }}"
                                         name="{{ form.counselor.name }}"
                                         required>
                                     <option value="">Select a counselor</option>
                                     {% for value, text in form.fields.counselor.choices %}
-                                    <option %} %}selected{% endif form.counselor.value== if value value="{{ value }}"
-                                            {%>
+                                    <option form.counselor.value|stringformat:
+                                            if value="{{ value }}" {%
+                                    "s" == value|stringformat:"s" %}selected{% endif %}>
                                         {{ text }}
                                     </option>
                                     {% endfor %}
@@ -118,7 +121,8 @@
                                         Urgency
                                     </label>
                                     <div class="form-check form-switch">
-                                        <input %} %}checked{%
+                                        <input %}
+                                               %}checked{%
                                                class="form-check-input"
                                                endif
                                                form.is_urgent.value id="{{ form.is_urgent.id_for_label }}" if name="{{ form.is_urgent.name }}" type="checkbox" {%>
@@ -145,9 +149,11 @@
                                         id="{{ form.meeting_type.id_for_label }}"
                                         name="{{ form.meeting_type.name }}"
                                         required>
+                                    <option value="">Select meeting type</option>
                                     {% for value, text in form.fields.meeting_type.choices %}
-                                    <option %} %}selected{% endif form.meeting_type.value== if value value="{{ value }}"
-                                            {%>
+                                    <option form.meeting_type.value|stringformat:
+                                            if value="{{ value }}" {%
+                                    "s" == value|stringformat:"s" %}selected{% endif %}>
                                         {{ text }}
                                     </option>
                                     {% endfor %}
@@ -269,14 +275,102 @@
 
         // Form validation
         const form = document.querySelector('form');
+
+        // Add hidden form_submitted field on load to ensure the form is properly initialized
+        if (!document.querySelector('input[name="form_submitted"]')) {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'form_submitted';
+            hiddenInput.value = '1';
+            form.appendChild(hiddenInput);
+        }
+
+        // Pre-select default values if none are selected
+        const counselorSelect = document.getElementById('{{ form.counselor.id_for_label }}');
+        const meetingTypeSelect = document.getElementById('{{ form.meeting_type.id_for_label }}');
+
+        // Ensure counselor has a default option if none is selected
+        if (counselorSelect && counselorSelect.value === "") {
+            // If there's at least one option besides the placeholder
+            if (counselorSelect.options.length > 1) {
+                // Select the first non-empty option
+                for (let i = 1; i < counselorSelect.options.length; i++) {
+                    if (counselorSelect.options[i].value) {
+                        counselorSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Ensure meeting type has a default option if none is selected
+        if (meetingTypeSelect && meetingTypeSelect.value === "") {
+            // If there's at least one option besides the placeholder
+            if (meetingTypeSelect.options.length > 1) {
+                // Select the first non-empty option
+                for (let i = 1; i < meetingTypeSelect.options.length; i++) {
+                    if (meetingTypeSelect.options[i].value) {
+                        meetingTypeSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Custom form validation
         form.addEventListener('submit', function(event) {
-            if (!form.checkValidity()) {
+            let isValid = true;
+
+            // Check counselor field
+            if (counselorSelect && counselorSelect.value === "") {
+                counselorSelect.classList.add('is-invalid');
+                if (!counselorSelect.nextElementSibling || !counselorSelect.nextElementSibling.classList.contains('invalid-feedback')) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.classList.add('invalid-feedback');
+                    errorDiv.textContent = 'Please select a counselor';
+                    counselorSelect.parentNode.insertBefore(errorDiv, counselorSelect.nextSibling);
+                }
+                isValid = false;
+            } else if (counselorSelect) {
+                counselorSelect.classList.remove('is-invalid');
+            }
+
+            // Check meeting type field
+            if (meetingTypeSelect && meetingTypeSelect.value === "") {
+                meetingTypeSelect.classList.add('is-invalid');
+                if (!meetingTypeSelect.nextElementSibling || !meetingTypeSelect.nextElementSibling.classList.contains('invalid-feedback')) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.classList.add('invalid-feedback');
+                    errorDiv.textContent = 'Please select a meeting type';
+                    meetingTypeSelect.parentNode.insertBefore(errorDiv, meetingTypeSelect.nextSibling);
+                }
+                isValid = false;
+            } else if (meetingTypeSelect) {
+                meetingTypeSelect.classList.remove('is-invalid');
+            }
+
+            if (!isValid) {
                 event.preventDefault();
                 event.stopPropagation();
             }
-
-            form.classList.add('was-validated');
         });
+
+        // Add change event listeners to remove invalid class when value changes
+        if (counselorSelect) {
+            counselorSelect.addEventListener('change', function() {
+                if (this.value !== "") {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        }
+
+        if (meetingTypeSelect) {
+            meetingTypeSelect.addEventListener('change', function() {
+                if (this.value !== "") {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        }
     });
 </script>
 {% endblock %}

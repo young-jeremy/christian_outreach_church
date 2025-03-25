@@ -1,0 +1,38 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Delete Resource{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h1 class="h3 mb-0">Delete Resource</h1>
+                </div>
+                <div class="card-body">
+                    <p class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Are you sure you want to delete the resource <strong>"{{ resource.title }}"</strong>?
+                        This action cannot be undone.
+                    </p>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a class="btn btn-secondary"
+                               href="{% url 'services:resource_detail' resource_id=resource.id %}">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button class="btn btn-danger" type="submit">
+                                <i class="fas fa-trash"></i> Delete Resource
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -5,7 +5,7 @@ from django.core.validators import FileExtensionValidator
 from django_summernote.widgets import SummernoteWidget
 
 from accounts.models import User
-from .models import MensMinistry, MensEvent, ChildResource
+from .models import MensMinistry, MensEvent, ChildResource, ChildProgramEnrollment
 from .models import SeniorsMinistry, SeniorsEvent, TransportationRequest
 from .models import SinglesMinistry, SinglesEvent, MentorshipRequest, SinglesResource
 from .models import WomensMinistry, MinistryEvent
@@ -83,6 +83,30 @@ from django import forms
 from .models import Child
 
 
+class ChildProgramEnrollmentForm(forms.ModelForm):
+    child = forms.ModelChoiceField(
+        queryset=Child.objects.none(),
+        empty_label="Select a child",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    class Meta:
+        model = ChildProgramEnrollment
+        fields = ['child', 'children_ministry']
+        widgets = {
+            'children_ministry': forms.HiddenInput(),
+        }
+
+    def __init__(self, *args, user=None, program=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user:
+            # Only show children belonging to this user
+            self.fields['child'].queryset = Child.objects.filter(parent=user)
+
+        # Add program information for display purposes
+        self.program = program
+
+
 class ChildRegistrationForm(forms.ModelForm):
     class Meta:
         model = Child
@@ -117,12 +141,17 @@ class ChildCheckInForm(forms.Form):
         # )
 
 
-class ResourceForm(forms.ModelForm):
+class ChildResourceForm(forms.ModelForm):
     class Meta:
         model = ChildResource
         fields = ['title', 'description', 'resource_type', 'file', 'url', 'age_group']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'resource_type': forms.Select(attrs={'class': 'form-control'}),
+            'file': forms.FileInput(attrs={'class': 'form-control'}),
+            'url': forms.URLInput(attrs={'class': 'form-control'}),
+            'age_group': forms.Select(attrs={'class': 'form-control'}),
         }
 
     def clean(self):
@@ -1036,11 +1065,19 @@ class FamilyCounselingForm(forms.ModelForm):
         model = FamilyCounseling
         exclude = ['family', 'created_at', 'status']
         widgets = {
+            'counselor': forms.Select(attrs={'class': 'form-select'}),
             'scheduled_time': forms.DateTimeInput(
                 attrs={'type': 'datetime-local'}
             ),
             'notes': forms.Textarea(attrs={'rows': 4}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make sure counselor field is required
+        if 'counselor' in self.fields:
+            self.fields['counselor'].required = True
+            self.fields['counselor'].help_text = "Select the counselor you'd like to meet with"
 
 
 class FamilyDiscussionForm(forms.ModelForm):
@@ -1048,7 +1085,24 @@ class FamilyDiscussionForm(forms.ModelForm):
         model = FamilyDiscussion
         fields = ['title', 'content']
         widgets = {
-            'content': SummernoteWidget(),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter discussion title'}),
+            'content': SummernoteWidget(attrs={'summernote': {'height': '300px', 'toolbar': [
+                ['style', ['style']],
+                ['font', ['bold', 'underline', 'clear']],
+                ['color', ['color']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['table', ['table']],
+                ['insert', ['link', 'picture']],
+                ['view', ['fullscreen', 'codeview', 'help']],
+            ]}}),
+        }
+        labels = {
+            'title': 'Discussion Title',
+            'content': 'Discussion Content',
+        }
+        help_texts = {
+            'title': 'Give your discussion a clear, descriptive title',
+            'content': 'Share your thoughts, questions, or insights with the community',
         }
 
 
@@ -1092,13 +1146,36 @@ class DiscipleshipModuleForm(forms.ModelForm):
 class MentorshipSessionForm(forms.ModelForm):
     class Meta:
         model = MentorshipSession
-        exclude = ['completed']
+        exclude = ['completed', 'mentee', 'feedback']  # Explicitly exclude mentee
         widgets = {
             'scheduled_time': forms.DateTimeInput(
                 attrs={'type': 'datetime-local'}
             ),
             'notes': forms.Textarea(attrs={'rows': 4}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make required fields more obvious
+        for field_name, field in self.fields.items():
+            if field.required:
+                field.label = f"{field.label} *"
+
+    def clean_scheduled_time(self):
+        scheduled_time = self.cleaned_data.get('scheduled_time')
+        if scheduled_time and scheduled_time < timezone.now():
+            raise forms.ValidationError("Scheduled time cannot be in the past.")
+        return scheduled_time
+
+    def clean(self):
+        cleaned_data = super().clean()
+        session_type = cleaned_data.get('session_type')
+        meeting_link = cleaned_data.get('meeting_link')
+
+        if session_type == 'virtual' and not meeting_link:
+            self.add_error('meeting_link', 'Meeting link is required for virtual sessions.')
+
+        return cleaned_data
 
 
 class PrayerJournalForm(forms.ModelForm):
@@ -1542,3 +1619,17 @@ class SinglesEventRegistrationForm(forms.Form):
         ),
         help_text='I have read and accept the event guidelines'
     )
+
+
+# forms.py (add this to your existing forms file)
+from django import forms
+from .models import MarriageMinistry, MarriageRegistration
+
+
+class MarriageRegistrationForm(forms.ModelForm):
+    class Meta:
+        model = MarriageRegistration
+        fields = ['spouse_name', 'spouse_email', 'years_married', 'special_requests']
+        widgets = {
+            'special_requests': forms.Textarea(attrs={'rows': 3}),
+        }

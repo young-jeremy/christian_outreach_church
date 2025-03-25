@@ -1,61 +1,171 @@
 {% extends 'base_dashboard.html' %}
 {% load static %}
-{% load service_filters %}
+{% load crispy_forms_tags %}
+
+{% block title %}Enroll in {{ program.title }}{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container py-4">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Register for {{ program.title }}</h4>
+        <div class="col-lg-8">
+            <!-- Messages Section -->
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button aria-label="Close" class="btn-close" data-bs-dismiss="alert" type="button"></button>
                 </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-plus-fill me-2"></i>Enroll in Program
+                    </h5>
+                    <a class="btn btn-sm btn-outline-light" href="{% url 'services:children_ministry_list' %}">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Programs
+                    </a>
+                </div>
+
                 <div class="card-body">
-                    <div class="mb-4">
-                        <h5>Program Details</h5>
-                        <p><strong>Date:</strong> {{ program.date|date:"F j, Y" }}</p>
-                        <p><strong>Time:</strong> {{ program.time|time:"g:i A" }}</p>
-                        <p><strong>Location:</strong> {{ program.location }}</p>
-                        <p><strong>Age Group:</strong> {{ program.get_age_group_display }}</p>
-                        <p><strong>Spots Available:</strong> {{ program.spots_available }}
-                            of {{ program.max_children }}</p>
+                    <!-- Program Details -->
+                    <div class="program-details mb-4 p-3 bg-light rounded">
+                        <h4 class="mb-2">{{ program.title }}</h4>
+                        <div class="d-flex justify-content-between flex-wrap">
+                            <div>
+                                <p class="mb-1"><i class="bi bi-calendar-event me-2"></i>{{ program.date|date:"F j, Y"
+                                    }}</p>
+                                <p class="mb-1"><i class="bi bi-clock me-2"></i>{{ program.time|time:"g:i A" }}</p>
+                                <p class="mb-1"><i class="bi bi-geo-alt me-2"></i>{{ program.location }}</p>
+                            </div>
+                            <div class="text-end">
+                                <p class="mb-1"><span class="badge bg-{{ program.spots_available  }}">
+                                    {{ program.spots_available }} spot{{ program.spots_available|pluralize }} available
+                                </span></p>
+                                <p class="mb-1"><span class="badge bg-info">Ages {{ min_age }} - {{ max_age }}</span>
+                                </p>
+                            </div>
+                        </div>
+                        <p class="mt-3">{{ program.description }}</p>
                     </div>
 
-                    {% if user.children.exists %}
+                    {% if program.spots_available <= 0 %}
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Sorry!</strong> This program is currently full. Please check back later or contact the
+                        children's ministry for assistance.
+                    </div>
+                    {% else %}
+                    <!-- Enrollment Form -->
+                    <h5 class="mb-3">Enroll Your Child</h5>
+
+                    {% if user_children %}
                     <form action="{% url 'services:register_child_for_program' program.id %}" method="post">
                         {% csrf_token %}
 
-                        <div class="mb-4">
-                            <label class="form-label" for="{{ form.child.id_for_label }}">Select Child to
-                                Register</label>
-                            {{ form.child }}
-                            {% if form.child.errors %}
-                            <div class="text-danger">
-                                {% for error in form.child.errors %}
+                        <!-- Display non-field errors -->
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        <!-- Children's Ministry Field - Make it visible if there are errors -->
+                        {% if form.children_ministry.errors %}
+                        <div class="mb-3 border border-danger rounded p-3 bg-light">
+                            <label class="form-label text-danger" for="id_children_ministry">Children's Ministry
+                                (Required)</label>
+                            <select class="form-select is-invalid" id="id_children_ministry" name="children_ministry">
+                                <option value="">Select a ministry</option>
+                                {% for ministry in children_ministries %}
+                                <option %} %}selected{% endif form.children_ministry.value== if
+                                        ministry.id value="{{ ministry.id }}" {%>
+                                    {{ ministry.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">
+                                {% for error in form.children_ministry.errors %}
                                 {{ error }}
                                 {% endfor %}
                             </div>
-                            {% endif %}
+                            <small class="text-danger mt-1">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                Please select a children's ministry to continue.
+                            </small>
+                        </div>
+                        {% else %}
+                        <!-- Keep the hidden field if no errors -->
+                        {{ form.children_ministry }}
+                        {% endif %}
+
+                        <!-- Child field -->
+                        <div class="mb-3">
+                            {{ form.child|as_crispy_field }}
                         </div>
 
-                        <div class="d-flex justify-content-between">
-                            <a class="btn btn-outline-secondary"
-                               href="{% url 'services:children_program_detail' program.id %}">
-                                <i class="bi bi-arrow-left me-2"></i>Back to Program
+                        <!-- Debug information to help identify the issue -->
+                        {% if debug %}
+                        <div class="alert alert-info mb-3">
+                            <h6>Debug Information:</h6>
+                            <p>Children's Ministry ID: {{ form.children_ministry.value|default:"Not set" }}</p>
+                            <p>Form Data: {{ form.data }}</p>
+                            <p>Initial Data: {{ form.initial }}</p>
+                        </div>
+                        {% endif %}
+
+                        <div class="form-text mb-3">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Only children between ages {{ min_age }} and {{ max_age }} can be enrolled in this program.
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a class="btn btn-outline-secondary" href="{% url 'services:children_ministry_list' %}">
+                                <i class="bi bi-x-circle me-1"></i> Cancel
                             </a>
                             <button class="btn btn-primary" type="submit">
-                                <i class="bi bi-check-circle me-2"></i>Register Child
+                                <i class="bi bi-check-circle me-1"></i> Enroll Child
                             </button>
                         </div>
                     </form>
                     {% else %}
-                    <div class="alert alert-warning">
-                        <p>You need to register a child before enrolling in programs.</p>
-                        <a class="btn btn-primary mt-2" href="{% url 'services:register_child' %}">
-                            Register a Child
-                        </a>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>No children registered.</strong> You need to register your children before enrolling
+                        them in programs.
+                        <div class="mt-3">
+                            <a class="btn btn-sm btn-primary" href="{% url 'services:register_child' %}">
+                                <i class="bi bi-plus-circle me-1"></i> Register a Child
+                            </a>
+                        </div>
                     </div>
                     {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-info-circle me-2"></i>Important Information</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">Please arrive 15 minutes before the program starts for check-in.
+                        </li>
+                        <li class="list-group-item">Children must be picked up by a parent or authorized guardian.</li>
+                        <li class="list-group-item">Please inform us of any allergies or special needs your child may
+                            have.
+                        </li>
+                        <li class="list-group-item">For questions, contact the Children's Ministry at <a
+                                href="mailto:children@church.org">children@church.org</a>.
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>

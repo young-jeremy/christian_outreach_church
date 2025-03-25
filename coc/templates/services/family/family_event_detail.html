@@ -1,0 +1,230 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block title %}{{ event.title }} | Family Events{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Event Details -->
+        <div class="col-lg-8">
+            <!-- Alerts -->
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+                {{ message }}
+                <button aria-label="Close" class="btn-close" data-bs-dismiss="alert" type="button"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- Event Header -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h1 class="card-title mb-3">{{ event.title }}</h1>
+
+                    <div class="d-flex flex-wrap mb-3">
+                        <span class="badge bg-primary me-2 mb-2">
+                            <i class="bi bi-tag me-1"></i>{{ event.get_event_type_display }}
+                        </span>
+
+                        {% if is_full %}
+                        <span class="badge bg-danger me-2 mb-2">
+                                <i class="bi bi-x-circle me-1"></i>Full
+                            </span>
+                        {% else %}
+                        <span class="badge bg-success me-2 mb-2">
+                                <i class="bi bi-check-circle me-1"></i>{{ remaining_spots }} spots left
+                            </span>
+                        {% endif %}
+
+                        {% if is_registered %}
+                        <span class="badge bg-info me-2 mb-2">
+                                <i class="bi bi-person-check me-1"></i>You're Registered
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-box bg-light rounded-circle p-3 me-3">
+                                    <i class="bi bi-calendar-event text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">Date & Time</h6>
+                                    <p class="mb-0 text-muted">
+                                        {{ event.date|date:"F j, Y" }} at {{ event.time|time:"g:i A" }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-box bg-light rounded-circle p-3 me-3">
+                                    <i class="bi bi-geo-alt text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">Location</h6>
+                                    <p class="mb-0 text-muted">
+                                        {% if event.virtual_link %}
+                                        Virtual Event
+                                        {% if request.user in event.participants.all %}
+                                        <a class="ms-2" href="{{ event.virtual_link }}" target="_blank">
+                                            <i class="bi bi-box-arrow-up-right"></i> Join
+                                        </a>
+                                        {% endif %}
+                                        {% else %}
+                                        {{ event.location }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5 class="mb-3">About This Event</h5>
+                        <div class="event-description">
+                            {{ event.description|safe }}
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-between align-items-center">
+                        <div class="mb-3 mb-md-0">
+                            <p class="mb-0 text-muted">
+                                <small>Organized by: {{ event.organizer.username|default:event.organizer.username
+                                    }}</small>
+                            </p>
+                        </div>
+
+                        <div class="d-flex">
+                            <a class="btn btn-outline-secondary me-2" href="{% url 'services:family_events' %}">
+                                <i class="bi bi-arrow-left me-1"></i> Back to Events
+                            </a>
+
+                            {% if is_registered %}
+                            <a class="btn btn-outline-danger" href="{% url 'services:family_event_leave' event.slug %}">
+                                <i class="bi bi-x-circle me-1"></i> Cancel Registration
+                            </a>
+                            {% else %}
+                            {% if not is_full %}
+                            <a class="btn btn-primary" href="{% url 'services:family_event_join' event.slug %}">
+                                <i class="bi bi-check-circle me-1"></i> Register Now
+                            </a>
+                            {% else %}
+                            <button class="btn btn-secondary" disabled>
+                                <i class="bi bi-x-circle me-1"></i> Event Full
+                            </button>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Organizer Section -->
+            {% if request.user == event.organizer %}
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-people me-2"></i>Participant Management</h5>
+                </div>
+                <div class="card-body">
+                    <p>
+                        <strong>Registration Status:</strong>
+                        {{ event.participants.count }} / {{ event.max_participants }} participants
+                    </p>
+
+                    {% if participants %}
+                    <h6 class="mb-3">Registered Participants</h6>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Registered On</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for participant in participants %}
+                            <tr>
+                                <td>{{ participant.username|default:participant.username }}</td>
+                                <td>{{ participant.email }}</td>
+                                <td>{{ participant.date_joined|date:"M d, Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        No participants have registered for this event yet.
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-3">
+                        <a class="btn btn-outline-primary btn-sm" href="#">
+                            <i class="bi bi-pencil me-1"></i> Edit Event
+                        </a>
+                        <a class="btn btn-outline-danger btn-sm ms-2" href="#">
+                            <i class="bi bi-trash me-1"></i> Cancel Event
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4 mt-4 mt-lg-0">
+            <!-- Registration Info -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Event Information</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Event Type</span>
+                            <span class="badge bg-primary rounded-pill">{{ event.get_event_type_display }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Maximum Participants</span>
+                            <span>{{ event.max_participants }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Current Registrations</span>
+                            <span>{{ event.participants.count }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Spots Remaining</span>
+                            <span>{{ remaining_spots }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Created On</span>
+                            <span>{{ event.created_at|date:"M d, Y" }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Related Events -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-calendar-event me-2"></i>Similar Events</h5>
+                </div>
+                <div class="card-body">
+                    <!-- This would be populated with actual similar events -->
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Check back soon for similar events.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
