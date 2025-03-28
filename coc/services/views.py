@@ -22,7 +22,8 @@ from .forms import (
     MentorshipRequestForm,
     SinglesResourceForm,
     MentorshipMatchForm,
-    SinglesEventRegistrationForm, PrayerUpdateForm, ChildProgramEnrollmentForm, ChildResourceForm, ChildCheckInForm
+    SinglesEventRegistrationForm, PrayerUpdateForm, ChildProgramEnrollmentForm, ChildResourceForm, ChildCheckInForm,
+    TrackNoteForm
 )
 from django.contrib.auth.models import User
 from .models import (
@@ -1364,6 +1365,7 @@ def update_prayer_status(request, pk):
     
     return redirect('services:prayer_journal')
 
+
 @login_required
 def complete_module(request, track_slug, module_id):
     module = get_object_or_404(DiscipleshipModule, id=module_id)
@@ -1379,6 +1381,7 @@ def complete_module(request, track_slug, module_id):
     
     messages.success(request, 'Module marked as completed!')
     return redirect('services:track_detail', slug=track_slug)
+
 
 @login_required
 def complete_mentorship_session(request, session_id):
@@ -5003,3 +5006,20 @@ class ChildResourceDeleteView(LoginRequiredMixin, DeleteView):
         response = super().delete(request, *args, **kwargs)
         messages.success(self.request, f'Resource "{resource_title}" has been deleted successfully!')
         return response
+
+
+@login_required
+def add_track_note(request, slug):
+    track = get_object_or_404(DiscipleshipTrack, slug=slug)
+
+    if request.method == 'POST':
+        form = TrackNoteForm(request.POST)
+        if form.is_valid():
+            note = form.save(commit=False)
+            note.track = track
+            note.save()
+            messages.success(request, 'Note added successfully!')
+        else:
+            messages.error(request, 'There was an error adding your note.')
+
+    return redirect('services:track_detail', slug=slug)

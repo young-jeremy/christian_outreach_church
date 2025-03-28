@@ -2255,6 +2255,15 @@ class DiscipleshipTrack(models.Model):
         super().save(*args, **kwargs)
 
 
+class TrackNote(models.Model):
+    title = models.CharField(max_length=100, null=True, blank=True)
+    track = models.ForeignKey(DiscipleshipTrack, on_delete=models.CASCADE, related_name='notes')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Note for {self.track.title} - {self.created_at.strftime('%Y-%m-%d')}"
+
 
 class DiscipleshipModule(models.Model):
     track = models.ForeignKey(DiscipleshipTrack, on_delete=models.CASCADE)

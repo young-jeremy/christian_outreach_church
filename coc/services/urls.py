@@ -193,6 +193,8 @@ urlpatterns = [
     path('new-believers/discipleship/', views.DiscipleshipTrackList.as_view(), name='discipleship_tracks'),
     path('new-believers/discipleship/<slug:slug>/', views.DiscipleshipTrackDetail.as_view(), name='track_detail'),
     path('new-believers/mentorship/', views.MentorshipSessionList.as_view(), name='mentorship_sessions'),
+
+    path('discipleship/series/<slug:slug>/add-note/', views.add_track_note, name='add_track_note'),
     path('new-believers/mentorship/schedule/', views.ScheduleMentorshipSession.as_view(), name='schedule_session'),
     path('new-believers/prayer-journal/', views.PrayerJournalList.as_view(), name='prayer_journal'),
     path('new-believers/bible-reading/', views.BibleReadingPlanList.as_view(), name='bible_reading_plans'),

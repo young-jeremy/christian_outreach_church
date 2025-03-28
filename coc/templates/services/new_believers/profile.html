@@ -108,7 +108,7 @@
                     {% for session in mentorship_sessions %}
                     <div class="list-group-item">
                         <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">Session with {{ session.mentor.get_full_name }}</h6>
+                            <h6 class="mb-1">Session with {{ session.mentor.username }}</h6>
                             <small>{{ session.scheduled_time|timeuntil }}</small>
                         </div>
                         <p class="mb-1">{{ session.get_session_type_display }}</p>

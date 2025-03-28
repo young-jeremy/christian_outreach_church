@@ -5,7 +5,7 @@ from django.core.validators import FileExtensionValidator
 from django_summernote.widgets import SummernoteWidget
 
 from accounts.models import User
-from .models import MensMinistry, MensEvent, ChildResource, ChildProgramEnrollment
+from .models import MensMinistry, MensEvent, ChildResource, ChildProgramEnrollment, TrackNote
 from .models import SeniorsMinistry, SeniorsEvent, TransportationRequest
 from .models import SinglesMinistry, SinglesEvent, MentorshipRequest, SinglesResource
 from .models import WomensMinistry, MinistryEvent
@@ -1132,6 +1132,17 @@ class DiscipleshipTrackForm(forms.ModelForm):
         widgets = {
             'description': SummernoteWidget(),
         }
+
+
+class TrackNoteForm(forms.ModelForm):
+    class Meta:
+        model = TrackNote
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Add a note about this track...'}),
+        }
+
+
 
 
 class DiscipleshipModuleForm(forms.ModelForm):
